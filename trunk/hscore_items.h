@@ -3,7 +3,6 @@
 
 #define I_HS_ITEMS "hscore_items-1"
 
-
 typedef struct Ihscoreitems
 {
 	INTERFACE_HEAD_DECL
@@ -16,9 +15,9 @@ typedef struct Ihscoreitems
 
 	void (*triggerEvent)(Player *p, int ship, const char *event);
 
+	int (*getFreeItemTypeSpots)(Player *p, int ship, ItemType *type);
+
 	//more required, i'm sure
 } Ihscoreitems;
-
-
 
 #endif //HSCORE_ITEMS_H

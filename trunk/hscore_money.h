@@ -3,7 +3,7 @@
 
 #define I_HS_ITEMS "hscore_money-1"
 
-enum
+typedef enum MoneyType
 {
 	//for /?give
 	MONEY_TYPE_GIVE,
