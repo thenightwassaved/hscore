@@ -934,22 +934,22 @@ local void LoadPlayerShips(Player *p, Arena *arena) //fetch ships from MySQL. Wi
 
 local void LoadCategoryItems(Arena *arena)
 {
-	mysql->Query(loadCategoryItemsQueryCallback, arena, 1, "SELECT item_id, category_id FROM hs_category_items, hs_categories WHERE category_id = id AND arena = ?", getArenaIdentifier(arena));
+	mysql->Query(loadCategoryItemsQueryCallback, arena, 1, "SELECT item_id, category_id FROM hs_category_items, hs_categories WHERE category_id = id AND arena = ? ORDER BY hs_category_items.order ASC", getArenaIdentifier(arena));
 }
 
 local void LoadCategoryList(Arena *arena) //leads to LoadCategoryItems() being called
 {
-	mysql->Query(loadArenaCategoriesQueryCallback, arena, 1, "SELECT id, name, description FROM hs_categories WHERE arena = ?", getArenaIdentifier(arena));
+	mysql->Query(loadArenaCategoriesQueryCallback, arena, 1, "SELECT id, name, description FROM hs_categories WHERE arena = ? ORDER BY hs_categories.order ASC", getArenaIdentifier(arena));
 }
 
 local void LoadStoreItems(Arena *arena)
 {
-	mysql->Query(loadStoreItemsQueryCallback, arena, 1, "SELECT item_id, store_id FROM hs_store_items, hs_stores WHERE store_id = id AND arena = ?", getArenaIdentifier(arena));
+	mysql->Query(loadStoreItemsQueryCallback, arena, 1, "SELECT item_id, store_id FROM hs_store_items, hs_stores WHERE store_id = id AND arena = ? ORDER BY hs_store_items.order ASC", getArenaIdentifier(arena));
 }
 
 local void LoadStoreList(Arena *arena) //leads to LoadStoreItems() being called
 {
-	mysql->Query(loadArenaStoresQueryCallback, arena, 1, "SELECT id, name, description, region FROM hs_stores WHERE arena = ?", getArenaIdentifier(arena));
+	mysql->Query(loadArenaStoresQueryCallback, arena, 1, "SELECT id, name, description, region FROM hs_stores WHERE arena = ? ORDER BY hs_stores.order ASC", getArenaIdentifier(arena));
 }
 
 local void LoadEvents()
