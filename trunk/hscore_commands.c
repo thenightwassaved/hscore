@@ -121,7 +121,7 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 			Link *link;
 
 			database->lock();
-			for (link = LLGetHead(&playerData->hull[ship]->inventoryEntryList); link; link = link->next) //MUTEX
+			for (link = LLGetHead(&playerData->hull[ship]->inventoryEntryList); link; link = link->next)
 			{
 				InventoryEntry *entry = link->data;
 				Item *item = entry->item;

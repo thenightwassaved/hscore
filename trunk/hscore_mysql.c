@@ -129,6 +129,7 @@ local void * work_thread(void *dummy)
 	{
 		/* the pthread_cond_wait inside MPRemove is a cancellation point */
 		cmd = MPRemove(&dbq);
+		if (!cmd) break;
 
 		switch (cmd->type)
 		{
@@ -292,7 +293,7 @@ EXPORT int MM_hscore_mysql(int action, Imodman *mm, Arena *arena)
 			return MM_FAIL;
 
 		/* kill worker thread */
-		pthread_cancel(wthd);
+		MPAdd(&dbq, NULL);
 		pthread_join(wthd, NULL);
 
 		MPDestroy(&dbq);

@@ -12,6 +12,7 @@ local Ilogman *lm;
 local Ichat *chat;
 local Icmdman *cmd;
 local Iplayerdata *pd;
+local Igame *game;
 local Ihscoredatabase *database;
 
 //interface prototypes
@@ -298,6 +299,62 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 	}
 }
 
+local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with lock held
+{
+	Item *item = entry->item;
+
+	if (event->action == ACTION_REMOVE_ITEM) //removes event->data amount of the items from the ship's inventory
+	{
+		//FIXME
+	}
+	else if (event->action == ACTION_REMOVE_ITEM_AMMO) //removes event->data amount of the item's ammo type from inventory
+	{
+		//FIXME
+	}
+	else if (event->action == ACTION_PRIZE) //sends prize #event->data to the player
+	{
+		int prize = event->data && 0x1F;
+		int count = event->data >> 5;
+
+		if (count == 0)
+		{
+			count = 1;
+		}
+
+		Target t;
+		t.type = T_PLAYER;
+		t.u.p = p;
+
+		game->GivePrize(&t, prize, count);
+	}
+	else if (event->action == ACTION_SET_INVENTORY_DATA) //sets the item's inventory data to event->data.
+	{
+		entry->data = event->data;
+	}
+	else if (event->action == 	ACTION_INCREMENT_INVENTORY_DATA) //does a ++ on inventory data.
+	{
+		entry->data++;
+	}
+	else if (event->action == ACTION_DECREMENT_INVENTORY_DATA) //does a -- on inventory data. A "datazero" event may be generated as a result.
+	{
+		entry->data--;
+	}
+	else if (event->action == ACTION_SPEC) //Specs the player.
+	{
+		game->SetFreqAndShip(p, SHIP_SPEC, p->arena->specfreq);
+	}
+	else if (event->action == ACTION_SHIP_RESET) //sends a shipreset packet and reprizes all items (antideath, really)
+	{
+		Target t;
+		t.type = T_PLAYER;
+		t.u.p = p;
+
+		game->ShipReset(&t);
+		//FIXME
+	}
+
+}
+
 local int getItemCount(Player *p, Item *item, int ship)
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
@@ -502,14 +559,116 @@ local int getPropertySum(Player *p, int ship, const char *propString)
 	return count;
 }
 
-local void triggerEvent(Player *p, int ship, const char *event)
+local void triggerEvent(Player *p, int ship, const char *eventName)
 {
-	//FIXME
+	PerPlayerData *playerData = database->getPerPlayerData(p);
+
+	if (eventName == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to trigger event with NULL string.");
+		return;
+	}
+
+	if (!database->areShipsLoaded(p))
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to trigger event on a player with unloaded ships");
+		return;
+	}
+
+	if (ship < 0 || 7 < ship)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to trigger event on ship %i", ship);
+		return;
+	}
+
+	if (playerData->hull[ship] == NULL)
+	{
+		//not unusual or dangerous
+		return;
+	}
+
+	Link *link;
+	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+
+	database->lock();
+	for (link = LLGetHead(inventoryList); link; link = link->next)
+	{
+		InventoryEntry *entry = link->data;
+		Item *item = entry->item;
+
+		Link *eventLink;
+		for (eventLink = LLGetHead(&item->eventList); eventLink; eventLink = eventLink->next)
+		{
+			Event *event = eventLink->data;
+
+			if (strcmp(event->name, eventName) == 0)
+			{
+				doEvent(p, entry, event);
+				break;
+			}
+		}
+	}
+	database->unlock();
 }
 
-local void triggerEventOnItem(Player *p, Item *item, int ship, const char *event)
+local void triggerEventOnItem(Player *p, Item *triggerItem, int ship, const char *event)
 {
-	//FIXME
+	PerPlayerData *playerData = database->getPerPlayerData(p);
+
+	if (eventName == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to trigger item event with NULL string.");
+		return;
+	}
+
+	if (triggerItem == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to trigger item event with NULL item.");
+		return;
+	}
+
+	if (!database->areShipsLoaded(p))
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to trigger item event on a player with unloaded ships");
+		return;
+	}
+
+	if (ship < 0 || 7 < ship)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to trigger item event on ship %i", ship);
+		return;
+	}
+
+	if (playerData->hull[ship] == NULL)
+	{
+		//not unusual or dangerous
+		return;
+	}
+
+	Link *link;
+	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+
+	database->lock();
+	for (link = LLGetHead(inventoryList); link; link = link->next)
+	{
+		InventoryEntry *entry = link->data;
+		Item *item = entry->item;
+		if (item == triggerItem)
+		{
+			Link *eventLink;
+			for (eventLink = LLGetHead(&item->eventList); eventLink; eventLink = eventLink->next)
+			{
+				Event *event = eventLink->data;
+
+				if (strcmp(event->name, eventName) == 0)
+				{
+					doEvent(p, entry, event);
+					break;
+				}
+			}
+		}
+	}
+	database->unlock();
 }
 
 local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship)
@@ -582,14 +741,16 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 		chat = mm->GetInterface(I_CHAT, ALLARENAS);
 		cmd = mm->GetInterface(I_CMDMAN, ALLARENAS);
 		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
+		game = mm->GetInterface(I_GAME, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
 
-		if (!lm || !chat || !cmd || !pd || !database)
+		if (!lm || !chat || !cmd || !pd || !game || !database)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(chat);
 			mm->ReleaseInterface(cmd);
 			mm->ReleaseInterface(pd);
+			mm->ReleaseInterface(game);
 			mm->ReleaseInterface(database);
 
 			return MM_FAIL;
@@ -616,6 +777,7 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(chat);
 		mm->ReleaseInterface(cmd);
 		mm->ReleaseInterface(pd);
+		mm->ReleaseInterface(game);
 		mm->ReleaseInterface(database);
 
 		return MM_OK;
