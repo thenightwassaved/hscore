@@ -316,7 +316,7 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 			if (p->p_ship != SHIP_SPEC)
 			{
 				//check - counts
-				sellItem(p, item, 1, p_ship); //FIXME
+				sellItem(p, item, 1, p->p_ship); //FIXME
 				return;
 			}
 			else
