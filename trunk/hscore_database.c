@@ -28,6 +28,7 @@ local void UnloadItemTypeList();
 local void UnloadAllPerArenaData();
 local void UnloadAllPerPlayerData();
 local void LoadPlayerGlobals(Player *p);
+local void LoadPlayerShipItems(Player *p, Arena *arena);
 local void LoadPlayerShips(Player *p, Arena *arena);
 local void LoadCategoryItems(Arena *arena);
 local void LoadCategoryList(Arena *arena);
@@ -386,6 +387,68 @@ local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *pass
 	lm->LogP(L_DRIVEL, "hscore_database", p, "loaded globals from MySQL.");
 }
 
+local void loadPlayerShipItemsQueryCallback(int status, db_res *result, void *passedData)
+{
+	int results;
+	db_row *row;
+
+	Player *p = passedData;
+	PerPlayerData *playerData = getPerPlayerData(p);
+
+	if (status != 0 || result == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "Unexpected database error during player ship item load.");
+		return;
+	}
+
+	results = mysql->GetRowCount(result);
+
+	while ((row = mysql->GetRow(result)))
+	{
+		int itemID = atoi(mysql->GetField(row, 0));	//item_id
+		int count = atoi(mysql->GetField(row, 1));	//count
+		int data = atoi(mysql->GetField(row, 2));	//data
+		int ship = atoi(mysql->GetField(row, 3));	//ship
+
+		Item *item = getItemByID(itemID);
+
+		if (0 <= ship && ship < 8)
+		{
+			if (playerData->hull[ship] != NULL)
+			{
+				if (item != NULL)
+				{
+					ShipHull *hull = playerData->hull[ship]
+
+					InventoryEntry *inventoryEntry = amalloc(sizeof(*inventoryEntry));
+
+					inventoryEntry->item = item;
+					inventoryEntry->count = count;
+					inventoryEntry->data = data;
+
+					LLAdd(&hull->inventoryEntryList, inventoryEntry);
+				}
+				else
+				{
+					lm->LogP(L_ERROR, "hscore_database", p, "Bad item id (%i) attached to ship %i", itemID, ship);
+				}
+			}
+			else
+			{
+				lm->LogP(L_ERROR, "hscore_database", p, "Item %i attached to ship %i, but no ship hull exists there!", itemID, ship);
+			}
+		}
+		else
+		{
+			lm->LogP(L_ERROR, "hscore_database", p, "Extreme error! item %i attached to ship %i", itemID, ship);
+		}
+	}
+
+	playerData->shipsLoaded = 1;
+
+	lm->LogP(L_DRIVEL, "hscore_database", p, "%i ship items were loaded from MySQL.", results);
+}
+
 local void loadPlayerShipsQueryCallback(int status, db_res *result, void *passedData)
 {
 	int results;
@@ -426,6 +489,8 @@ local void loadPlayerShipsQueryCallback(int status, db_res *result, void *passed
 	playerData->shipsLoaded = 1;
 
 	lm->LogP(L_DRIVEL, "hscore_database", p, "%i ships were loaded from MySQL.", results);
+
+	LoadPlayerShipItems(p, p->arena); //load the inventory for the ship
 }
 
 local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedData)
@@ -757,7 +822,12 @@ local void LoadPlayerGlobals(Player *p) //fetch globals from MySQL
 	mysql->Query(loadPlayerGlobalsQueryCallback, p, 1, "SELECT id, money, exp, money_give, money_grant, money_buysell, money_kill, money_flag, money_ball, money_event FROM hs_players WHERE name = ?", p->name);
 }
 
-local void LoadPlayerShips(Player *p, Arena *arena) //fetch ships from MySQL
+local void LoadPlayerShipItems(Player *p, Arena *arena) //fetch ship items from MySQL
+{
+	mysql->Query(loadPlayerShipItemsQueryCallback, p, 1, "SELECT item_id, count, data, ship FROM hs_player_ship_items, hs_player_ships WHERE player_id = # AND arena = ? AND ship_id = id", playerData->id, getArenaIdentifier(arena));
+}
+
+local void LoadPlayerShips(Player *p, Arena *arena) //fetch ships from MySQL. Will call LoadPlayerShipItems()
 {
 	if (isLoaded(p))
 	{
