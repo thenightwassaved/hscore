@@ -105,7 +105,7 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 		{
 			if (money->getExp(p) >= item->expRequired)
 			{
-				if (items->getItemCount(p, item, ship) + count > item->max)
+				if (items->getItemCount(p, item, ship) + count <= item->max)
 				{
 					if (item->type1 != NULL)
 					{
