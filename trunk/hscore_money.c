@@ -19,15 +19,66 @@ local void giveExp(Player *p, int amount);
 local void setExp(Player *p, int amount);
 local int getExp(Player *p);
 
+static char *moneyTypeNames[] =
+{
+	"Give",
+	"Grant",
+	"Buy&Sell",
+	"Kill",
+	"Flag",
+	"Ball",
+	"Event"
+};
+
 local helptext_t moneyHelp =
 "Targets: none or player\n"
-"Args: [-d]\n"
+"Args: [{-d}]\n"
 "Shows you your money and exp.\n"
-"The -d switch will give additional details.\n";
+"When sent to another player, the {-d} switch will give additional details.\n";
 
 local void moneyCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	//FIXME
+    if (target->type == T_PLAYER) //private command
+    {
+		Player *t = target->u.p
+
+		if (database->isLoaded(t))
+		{
+			if (strstr(params, "-d")) //wants details
+			{
+				int total = 0;
+
+				chat->SendMessage(p, "Player %s: Exp: %i, Money: %i", t->name, getExp(t), getMoney(t));
+
+				for (int i = 0; i < MONEY_TYPE_COUNT; i++)
+				{
+					chat->SendMessage(p, "%s money: $%i", moneyTypeNames[i], getMoneyType(t, i));
+					total += getMoneyType(t, i);
+				}
+
+				chat->SendMessage(p, "Difference: $%i", getMoney(t) - total);
+			}
+			else //no details
+			{
+				chat->SendMessage(p, "Player %s has $%i dollars in their account, and %i experience.", t->name, getMoney(t), getExp(t));
+			}
+		}
+		else
+		{
+			chat->SendMessage(p, "Player %s has no data loaded.", t->name);
+		}
+    }
+    else //not private, assume public
+    {
+        if (database->isLoaded(p))
+        {
+            chat->SendMessage(p, "You have $%i dollars in your account and %i experience.", getMoney(p), getExp(p));
+        }
+        else
+        {
+            chat->SendMessage(p, "You have no data loaded.");
+        }
+    }
 }
 
 local helptext_t grantHelp =
