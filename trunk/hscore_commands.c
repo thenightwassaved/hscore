@@ -11,6 +11,7 @@ local Ilogman *lm;
 local Ichat *chat;
 local Iconfig *cfg;
 local Icmdman *cmd;
+local Ihscoreitems *items;
 local Ihscoredatabase *database;
 
 local helptext_t shipsHelp =
@@ -112,7 +113,7 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 		if (playerData->hull[ship] != NULL)
 		{
 			chat->SendMessage(p, "+------------------+");
-			chat->SendMessage(p, "| %-16s |", shipName[ship]);
+			chat->SendMessage(p, "| %-16s |", shipNames[ship]);
 			chat->SendMessage(p, "+------------------+-------+------------+------------------+-------+------------------+-------+");
 			chat->SendMessage(p, "| Item Name        | Count | Ammo Count | Item Type 1      | Usage | Item Type 2      | Usage |");
 			chat->SendMessage(p, "+------------------+-------+------------+------------------+-------+------------------+-------+");
@@ -182,14 +183,16 @@ EXPORT int MM_hscore_commands(int action, Imodman *_mm, Arena *arena)
 		chat = mm->GetInterface(I_CHAT, ALLARENAS);
 		cfg = mm->GetInterface(I_CONFIG, ALLARENAS);
 		cmd = mm->GetInterface(I_CMDMAN, ALLARENAS);
+		items = mm->GetInterface(I_HSCORE_ITEMS, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
 
-		if (!lm || !chat || !cfg || !cmd || !database)
+		if (!lm || !chat || !cfg || !cmd || !items || !database)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(chat);
 			mm->ReleaseInterface(cfg);
 			mm->ReleaseInterface(cmd);
+			mm->ReleaseInterface(items);
 			mm->ReleaseInterface(database);
 
 			return MM_FAIL;
@@ -203,6 +206,7 @@ EXPORT int MM_hscore_commands(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(chat);
 		mm->ReleaseInterface(cfg);
 		mm->ReleaseInterface(cmd);
+		mm->ReleaseInterface(items);
 		mm->ReleaseInterface(database);
 
 		return MM_OK;
