@@ -60,7 +60,7 @@ local void printCategoryItems(Player *p, Category *category)
 			}
 		}
 
-		chat->SendMessage(p, "| %-16s | %-9i | %-10i | %-6i | %-8s | %-32s |", item->name, item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->shortDescription);
+		chat->SendMessage(p, "| %-16s | %-9i | %-10i | %-6i | %-8s | %-32s |", item->name, item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->shortDesc);
 	}
 
 	chat->SendMessage(p, "+------------------+-----------+------------+--------+----------+----------------------------------+");
