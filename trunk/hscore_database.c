@@ -1,4 +1,4 @@
-#include <std.h>
+#include <stdlib.h>
 
 #include "asss.h"
 #include "hscore.h"
