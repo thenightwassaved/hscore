@@ -304,7 +304,7 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 		item->typeDelta1 = atoi(mysql->GetField(row, 10));			//type1_delta
 		item->typeDelta2 = atoi(mysql->GetField(row, 11));			//type2_delta
 
-		item->typeDelta2 = atoi(mysql->GetField(row, 12));			//max
+		item->max = atoi(mysql->GetField(row, 12));					//max
 
 		item->delayStatusWrite = atoi(mysql->GetField(row, 13));	//delay_write
 		item->ammoID = atoi(mysql->GetField(row, 14));				//ammo
