@@ -110,9 +110,9 @@ local ItemType * getItemTypeByID(int id)
 //|                          |
 //+--------------------------+
 
-local char * getArenaIdentifier(Arena *arena)
+local const char * getArenaIdentifier(Arena *arena)
 {
-	char *arenaIdent = cfg->GetStr(arena->cfg, "Hyperspace", "ArenaIdentifier");
+	const char *arenaIdent = cfg->GetStr(arena->cfg, "Hyperspace", "ArenaIdentifier");
 
 	if (arenaIdent == NULL)
 	{
@@ -420,6 +420,8 @@ local void loadArenaStoresQueryCallback(int status, db_res *result, void *passed
 	{
 		Store *store = amalloc(sizeof(*store));
 
+		LLInit(&(store->itemList));
+
 		store->id = atoi(mysql->GetField(row, 0));					//id
 		astrncpy(store->name, mysql->GetField(row, 1), 32);			//name
 		astrncpy(store->description, mysql->GetField(row, 2), 200);	//description
@@ -511,6 +513,8 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 	while ((row = mysql->GetRow(result)))
 	{
 		Category *category = amalloc(sizeof(*category));
+
+		LLInit(&(category->itemList));
 
 		category->id = atoi(mysql->GetField(row, 0));					//id
 		astrncpy(category->name, mysql->GetField(row, 1), 32);			//name

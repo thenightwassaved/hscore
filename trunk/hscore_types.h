@@ -106,7 +106,7 @@ typedef struct Category
 	char name[32]; //displayed on ?buy
 	char description[64]; //displayed inline on the ?buy menu
 
-	LinkedList *itemList; //a list of member items that are displayed
+	LinkedList itemList; //a list of member items that are displayed
 
 	int id; //mysql use
 } Category;
@@ -117,7 +117,7 @@ typedef struct Store
 	char description[200]; //displayed in ?storeinfo
 	char region[16]; //region that defines the store
 
-	LinkedList *itemList; //a list of items that can be purchaced here
+	LinkedList itemList; //a list of items that can be purchaced here
 
 	int id; //mysql use
 } Store;
