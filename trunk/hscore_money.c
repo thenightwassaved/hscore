@@ -40,7 +40,7 @@ local void moneyCommand(const char *command, const char *params, Player *p, cons
 {
     if (target->type == T_PLAYER) //private command
     {
-		Player *t = target->u.p
+		Player *t = target->u.p;
 
 		if (database->isLoaded(t))
 		{
