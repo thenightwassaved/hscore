@@ -25,6 +25,9 @@ typedef enum EventAction
 	//Specs the player.
 	ACTION_SPEC,
 
+	//sends a shipreset packet and reprizes all items (antideath, really)
+	ACTION_SHIP_RESET
+
 	//we need a lot more
 } EventAction;
 
