@@ -387,7 +387,7 @@ local void addItem(Player *p, Item *item, int ship, int amount)
 		}
 	}
 
-	database->updateItem(p, ship, item, count, data);
+	database->updateItem(p, ship, item, count + amount, data);
 }
 
 local Item * getItemByName(const char *name, Arena *arena)
