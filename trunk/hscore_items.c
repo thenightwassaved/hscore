@@ -428,7 +428,7 @@ local int getPropertySum(Player *p, int ship, const char *propString)
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
 
-	if (event == NULL)
+	if (propString == NULL)
 	{
 		lm->LogP(L_ERROR, "hscore_items", p, "asked to get props for NULL string.");
 		return 0;
@@ -465,7 +465,7 @@ local int getPropertySum(Player *p, int ship, const char *propString)
 
 		if (item->ammo != NULL)
 		{
-			if (getItemCount(p, ship, item->ammo) <= 0)
+			if (getItemCount(p, item->ammo, ship) <= 0)
 			{
 				continue; //out of ammo, ignore the item.
 			}
