@@ -11,6 +11,7 @@ local Ilogman *lm;
 local Ichat *chat;
 local Iconfig *cfg;
 local Icmdman *cmd;
+local Iplayerdata *pd;
 local Ihscoredatabase *database;
 
 //interface prototypes
@@ -181,13 +182,13 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 	{
 		if (force)
 		{
-          LinkedList set = LL_INITIALIZER;
-            Link *link;
-            pd->TargetToSet(target, &set);
+			LinkedList set = LL_INITIALIZER;
+			Link *link;
+			pd->TargetToSet(target, &set);
 
-            for (link = LLGetHead(&set); link; link = link->next)
-            {
-				Player *t = link->data
+			for (link = LLGetHead(&set); link; link = link->next)
+			{
+				Player *t = link->data;
 
 				if (db->Loaded(t))
 				{
@@ -215,7 +216,7 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 
 			LLEmpty(&set);
 
-            chat->SendMessage(p, "You granted $%i to %i players.", amount, count);
+			chat->SendMessage(p, "You granted $%i to %i players.", amount, count);
 		}
 		else
 		{
@@ -297,12 +298,12 @@ local void giveCommand(const char *command, const char *params, Player *p, const
 		{
 			if (database->isLoaded(t))
 			{
-	            int minMoney = cfg->GetInt(GLOBAL, "hyperspace", "minmoney", 1000);
-	            int minGive = cfg->GetInt(GLOBAL, "hyperspace", "mingive", 1);
-	            int maxGive = cfg->GetInt(GLOBAL, "hyperspace", "maxgive", 100000000);
+				int minMoney = cfg->GetInt(GLOBAL, "hyperspace", "minmoney", 1000);
+				int minGive = cfg->GetInt(GLOBAL, "hyperspace", "mingive", 1);
+				int maxGive = cfg->GetInt(GLOBAL, "hyperspace", "maxgive", 100000000);
 
-	            if (getMoney(p) - amount >= minMoney)
-	            {
+				if (getMoney(p) - amount >= minMoney)
+				{
 					if (amount <= maxGive)
 					{
 						if (amount >= minGive)
@@ -521,12 +522,13 @@ EXPORT int MM_hscore_money(int action, Imodman *_mm, Arena *arena)
 		cmd = mm->GetInterface(I_CMDMAN, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
 
-		if (!lm || !chat || !cfg || !cmd || !database)
+		if (!lm || !chat || !cfg || !cmd || !pd || !database)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(chat);
 			mm->ReleaseInterface(cfg);
 			mm->ReleaseInterface(cmd);
+			mm->ReleaseInterface(pd);
 			mm->ReleaseInterface(database);
 
 			return MM_FAIL;
@@ -565,6 +567,7 @@ EXPORT int MM_hscore_money(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(chat);
 		mm->ReleaseInterface(cfg);
 		mm->ReleaseInterface(cmd);
+		mm->ReleaseInterface(pd);
 		mm->ReleaseInterface(database);
 
 		return MM_OK;
