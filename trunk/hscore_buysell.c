@@ -199,20 +199,81 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 
 local void buyShip(Player *p, int ship)
 {
-	//FIXME
+	int buyPrice = cfg->GetInt(p->arena->cfg, shipNames[ship], "BuyPrice", 0);
+	int expRequired = cfg->GetInt(p->arena->cfg, shipNames[ship], "ExpRequired", 0);
 
-	database->addShip(p, ship);
+	if (buyPrice != 0)
+	{
+		if (database->areShipsLoaded(p))
+		{
+			PerPlayerData *playerData = database->getPerPlayerData(p);
+			if (playerData->hulls[ship] == NULL)
+			{
+				if (money->getMoney(p) >= buyPrice)
+				{
+					if (money->getExp(p) >= expRequired)
+					{
+						database->addShip(p, ship);
 
-	chat->SendMessage(p, "<buy ship #%i>", ship);
+						//FIXME: add some way of giving intial items
+
+						money->giveMoney(p, -buyPrice, MONEY_TYPE_BUYSELL);
+
+						chat->SendMessage(p, "You purchaced a %s for $%i.", shipNames[ship], buyPrice);
+					}
+					else
+					{
+						chat->SendMessage(p, "You need %i more experience to buy item %s.", item->expRequired - money->getExp(p), item->name);
+					}
+				}
+				else
+				{
+					chat->SendMessage(p, "You do not have enough money to buy item %s. You need $%i more.", item->name, item->buyPrice * count - money->getMoney(p));
+				}
+			}
+			else
+			{
+				chat->SendMessage(p, "You already own a %s.", shipNames[ship]);
+			}
+		}
+		else
+		{
+			chat->SendMessage(p, "Your ships are not loaded.");
+		}
+	}
+	else
+	{
+		chat->SendMessage(p, "Ship %s is not avalible for sale in this arena.", shipNames[ship]);
+	}
 }
 
 local void sellShip(Player *p, int ship)
 {
-	//FIXME
+	int sellPrice = cfg->GetInt(p->arena->cfg, shipNames[ship], "SellPrice", 0);
+
+	if (database->areShipsLoaded(p))
+	{
+		PerPlayerData *playerData = database->getPerPlayerData(p);
+		if (playerData->hulls[ship] != NULL)
+		{
+			//FIXME: add checking for non-empty ships
+			database->removeShip(p, ship);
+
+			money->giveMoney(p, sellPrice, MONEY_TYPE_BUYSELL);
+
+			chat->SendMessage(p, "You sold your %s for $%i.", shipNames[ship], sellPrice);
+		}
+		else
+		{
+			chat->SendMessage(p, "You do not own a %s.", shipNames[ship]);
+		}
+	}
+	else
+	{
+		chat->SendMessage(p, "Your ships are not loaded.");
+	}
 
 	database->removeShip(p, ship);
-
-	chat->SendMessage(p, "<sell ship #%i>", ship);
 }
 
 local helptext_t buyHelp =
@@ -267,9 +328,26 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 			{
 				if (p->p_ship != SHIP_SPEC)
 				{
-					//check - counts
-					buyItem(p, item, 1, p->p_ship); //FIXME
-					return;
+					PerPlayerData *playerData = database->getPerPlayerData(p);
+					if (playerData->hulls[ship] != NULL)
+					{
+						//check - counts
+						buyItem(p, item, 1, p->p_ship);
+						return;
+					}
+					else
+					{
+						int buyPrice = cfg->GetInt(p->arena->cfg, shipNames[ship], "BuyPrice", 0);
+
+						if (buyPrice == 0)
+						{
+							chat->SendMessage(p, "No items can be loaded onto a %s in this arena.", shipNames[ship]);
+						}
+						else
+						{
+							chat->SendMessage(p, "You do not own a %s.", shipNames[ship]);
+						}
+					}
 				}
 				else
 				{
@@ -315,9 +393,26 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 		{
 			if (p->p_ship != SHIP_SPEC)
 			{
-				//check - counts
-				sellItem(p, item, 1, p->p_ship); //FIXME
-				return;
+				PerPlayerData *playerData = database->getPerPlayerData(p);
+				if (playerData->hulls[ship] != NULL)
+				{
+					//check - counts
+					sellItem(p, item, 1, p->p_ship);
+					return;
+				}
+				else
+				{
+					int buyPrice = cfg->GetInt(p->arena->cfg, shipNames[ship], "BuyPrice", 0);
+
+					if (buyPrice == 0)
+					{
+						chat->SendMessage(p, "No items can be loaded onto a %s in this arena.", shipNames[ship]);
+					}
+					else
+					{
+						chat->SendMessage(p, "You do not own a %s.", shipNames[ship]);
+					}
+				}
 			}
 			else
 			{
