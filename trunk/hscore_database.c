@@ -27,7 +27,9 @@ local void UnloadItemList();
 local void UnloadItemTypeList();
 local void LoadPlayerGlobals(Player *p);
 local void LoadPlayerShips(Player *p, Arena *arena);
+local void LoadCategoryItems(Arena *arena);
 local void LoadCategoryList(Arena *arena);
+local void LoadStoreItems(Arena *arena);
 local void LoadStoreList(Arena *arena);
 local void LoadEvents();
 local void LoadProperties();
@@ -102,6 +104,24 @@ local ItemType * getItemTypeByID(int id)
 	return NULL;
 }
 
+//+--------------------------+
+//|                          |
+//|  Misc Utility Functions  |
+//|                          |
+//+--------------------------+
+
+local char * getArenaIdentifier(Arena *arena)
+{
+	char *arenaIdent = cfg->GetStr(arena->cfg, "Hyperspace", "ArenaIdentifier");
+
+	if (arenaIdent == NULL)
+	{
+		arenaIdent = arena->basename; //default fallback
+	}
+
+	return arenaIdent;
+}
+
 //+------------------------+
 //|                        |
 //|  Post-Query Functions  |
@@ -149,7 +169,7 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 
 	if (results == 0)
 	{
-	    lm->Log(L_WARN, "<hscore_database> No properties returned from MySQL query.");
+		lm->Log(L_WARN, "<hscore_database> No properties returned from MySQL query.");
 	}
 
 	while ((row = mysql->GetRow(result)))
@@ -159,13 +179,13 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 
 		if (item != NULL)
 		{
-	    	Property *property = amalloc(sizeof(*property));
+			Property *property = amalloc(sizeof(*property));
 
-	    	astrncpy(property->name, mysql->GetField(row, 1), 16);	//name
-	    	property->value = atoi(mysql->GetField(row, 2));		//value
+			astrncpy(property->name, mysql->GetField(row, 1), 16);	//name
+			property->value = atoi(mysql->GetField(row, 2));		//value
 
-        	//add the item type to the list
-        	LLAdd(&(item->propertyList), property);
+			//add the item type to the list
+			LLAdd(&(item->propertyList), property);
 		}
 		else
 		{
@@ -173,7 +193,8 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 		}
 	}
 
-	lm->Log(L_DRIVEL, "<hscore_database> %i properties were loaded from MySQL.", results);}
+	lm->Log(L_DRIVEL, "<hscore_database> %i properties were loaded from MySQL.", results);
+}
 
 local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 {
@@ -190,7 +211,7 @@ local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 
 	if (results == 0)
 	{
-	    lm->Log(L_WARN, "<hscore_database> No events returned from MySQL query.");
+		lm->Log(L_WARN, "<hscore_database> No events returned from MySQL query.");
 	}
 
 	while ((row = mysql->GetRow(result)))
@@ -200,16 +221,16 @@ local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 
 		if (item != NULL)
 		{
-	    	Event *event = amalloc(sizeof(*event));
+			Event *event = amalloc(sizeof(*event));
 
-	    	astrncpy(event->event, mysql->GetField(row, 1), 16);	//event
-	    	event->action = atoi(mysql->GetField(row, 2));			//action
-        	event->data = atoi(mysql->GetField(row, 3));			//data
-        	astrncpy(event->message, mysql->GetField(row, 4), 200);	//message
+			astrncpy(event->event, mysql->GetField(row, 1), 16);	//event
+			event->action = atoi(mysql->GetField(row, 2));			//action
+			event->data = atoi(mysql->GetField(row, 3));			//data
+			astrncpy(event->message, mysql->GetField(row, 4), 200);	//message
 
 
-        	//add the item type to the list
-        	LLAdd(&(item->eventList), event);
+			//add the item type to the list
+			LLAdd(&(item->eventList), event);
 		}
 		else
 		{
@@ -235,12 +256,12 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 
 	if (results == 0)
 	{
-	    lm->Log(L_WARN, "<hscore_database> No items returned from MySQL query.");
+		lm->Log(L_WARN, "<hscore_database> No items returned from MySQL query.");
 	}
 
 	while ((row = mysql->GetRow(result)))
 	{
-	    Item *item = amalloc(sizeof(*item));
+		Item *item = amalloc(sizeof(*item));
 
 		LLInit(&(item->propertyList));
 		LLInit(&(item->eventList));
@@ -262,8 +283,8 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 		item->delayStatusWrite = atoi(mysql->GetField(row, 12));	//delay_write
 		item->ammoID = atoi(mysql->GetField(row, 13));				//ammo
 
-        //add the item type to the list
-        LLAdd(&itemList, item);
+		//add the item type to the list
+		LLAdd(&itemList, item);
 	}
 
 	lm->Log(L_DRIVEL, "<hscore_database> %i items were loaded from MySQL.", results);
@@ -291,19 +312,19 @@ local void loadItemTypesQueryCallback(int status, db_res *result, void *passedDa
 
 	if (results == 0)
 	{
-	    lm->Log(L_WARN, "<hscore_database> No item types returned from MySQL query.");
+		lm->Log(L_WARN, "<hscore_database> No item types returned from MySQL query.");
 	}
 
 	while ((row = mysql->GetRow(result)))
 	{
-	    ItemType *itemType = amalloc(sizeof(*itemType));
+		ItemType *itemType = amalloc(sizeof(*itemType));
 
-	    itemType->id = atoi(mysql->GetField(row, 0));			//id
-        astrncpy(itemType->name, mysql->GetField(row, 1), 32);	//name
-        itemType->max = atoi(mysql->GetField(row, 2));			//max
+		itemType->id = atoi(mysql->GetField(row, 0));			//id
+		astrncpy(itemType->name, mysql->GetField(row, 1), 32);	//name
+		itemType->max = atoi(mysql->GetField(row, 2));			//max
 
-        //add the item type to the list
-        LLAdd(&itemTypeList, itemType);
+		//add the item type to the list
+		LLAdd(&itemTypeList, itemType);
 	}
 
 	lm->Log(L_DRIVEL, "<hscore_database> %i item types were loaded from MySQL.", results);
@@ -320,14 +341,187 @@ local void loadPlayerShipsQueryCallback(int status, db_res *result, void *passed
 	//FIXME
 }
 
+local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedData)
+{
+	int results;
+	db_row *row;
+
+	Arena *arena = passedData;
+	PerArenaData *arenaData = getPerArenaData(arena);
+
+	if (status != 0 || result == NULL)
+	{
+		lm->Log(L_ERROR, "<hscore_database> Unexpected database error during store item load for arena %s.", arena->name);
+		return;
+	}
+
+	results = mysql->GetRowCount(result);
+
+	if (results == 0)
+	{
+		//no big deal
+		return;
+	}
+
+	while ((row = mysql->GetRow(result)))
+	{
+		Link *link;
+		int itemID = atoi(mysql->GetField(row, 0));		//item_id
+		int storeID = atoi(mysql->GetField(row, 1));	//store_id
+
+		Item *item = getItemByID(itemID);
+		if (item == NULL)
+		{
+			lm->Log(L_ERROR, "<hscore_database> item id %i not found (linked to store id %i)", itemID, storeID);
+			continue;
+		}
+
+		for (link = LLGetHead(&(arenaData->storeList)); link; link = link->next)
+		{
+			Store *store = link->data;
+
+			if (store->id == storeID)
+			{
+				//add the item to the store's list
+				LLAdd(&(store->itemList), item);
+				break;
+			}
+		}
+
+		//FIXME: Add error on bad storeID
+	}
+
+	lm->Log(L_DRIVEL, "<hscore_database> %i store items were loaded for arena %s from MySQL.", results, arena->name);
+}
+
 local void loadArenaStoresQueryCallback(int status, db_res *result, void *passedData)
 {
-	//FIXME
+	int results;
+	db_row *row;
+
+	Arena *arena = passedData;
+	PerArenaData *arenaData = getPerArenaData(arena);
+
+	if (status != 0 || result == NULL)
+	{
+		lm->Log(L_ERROR, "<hscore_database> Unexpected database error during store load for arena %s.", arena->name);
+		return;
+	}
+
+	results = mysql->GetRowCount(result);
+
+	if (results == 0)
+	{
+		//no big deal
+		return;
+	}
+
+	while ((row = mysql->GetRow(result)))
+	{
+		Store *store = amalloc(sizeof(*store));
+
+		store->id = atoi(mysql->GetField(row, 0));					//id
+		astrncpy(store->name, mysql->GetField(row, 1), 32);			//name
+		astrncpy(store->description, mysql->GetField(row, 2), 200);	//description
+		astrncpy(store->region, mysql->GetField(row, 3), 16);		//region
+
+		//add the item type to the list
+		LLAdd(&(arenaData->storeList), store);
+	}
+
+	lm->Log(L_DRIVEL, "<hscore_database> %i stores were loaded for arena %s from MySQL.", results, arena->name);
+	LoadStoreItems(arena); //now that all the stores are in, load the items into them.
+}
+
+local void loadCategoryItemsQueryCallback(int status, db_res *result, void *passedData)
+{
+	int results;
+	db_row *row;
+
+	Arena *arena = passedData;
+	PerArenaData *arenaData = getPerArenaData(arena);
+
+	if (status != 0 || result == NULL)
+	{
+		lm->Log(L_ERROR, "<hscore_database> Unexpected database error during category item load for arena %s.", arena->name);
+		return;
+	}
+
+	results = mysql->GetRowCount(result);
+
+	if (results == 0)
+	{
+		//no big deal
+		return;
+	}
+
+	while ((row = mysql->GetRow(result)))
+	{
+		Link *link;
+		int itemID = atoi(mysql->GetField(row, 0));		//item_id
+		int categoryID = atoi(mysql->GetField(row, 1));	//category_id
+
+		Item *item = getItemByID(itemID);
+		if (item == NULL)
+		{
+			lm->Log(L_ERROR, "<hscore_database> item id %i not found (linked to category id %i)", itemID, categoryID);
+			continue;
+		}
+
+		for (link = LLGetHead(&(arenaData->categoryList)); link; link = link->next)
+		{
+			Category *category = link->data;
+
+			if (category->id == categoryID)
+			{
+				//add the item to the category's list
+				LLAdd(&(category->itemList), item);
+				break;
+			}
+		}
+
+		//FIXME: Add error on bad categoryID
+	}
+
+	lm->Log(L_DRIVEL, "<hscore_database> %i cateogry items were loaded for arena %s from MySQL.", results, arena->name);
 }
 
 local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *passedData)
 {
-	//FIXME
+	int results;
+	db_row *row;
+
+	Arena *arena = passedData;
+	PerArenaData *arenaData = getPerArenaData(arena);
+
+	if (status != 0 || result == NULL)
+	{
+		lm->Log(L_ERROR, "<hscore_database> Unexpected database error during category load for arena %s.", arena->name);
+		return;
+	}
+
+	results = mysql->GetRowCount(result);
+
+	if (results == 0)
+	{
+		//no big deal
+		return;
+	}
+
+	while ((row = mysql->GetRow(result)))
+	{
+		Category *category = amalloc(sizeof(*category));
+
+		category->id = atoi(mysql->GetField(row, 0));					//id
+		astrncpy(category->name, mysql->GetField(row, 1), 32);			//name
+		astrncpy(category->description, mysql->GetField(row, 2), 64);	//description
+
+		//add the item type to the list
+		LLAdd(&(arenaData->categoryList), category);
+	}
+
+	lm->Log(L_DRIVEL, "<hscore_database> %i categories were loaded for arena %s from MySQL.", results, arena->name);
+	LoadCategoryItems(arena); //now that all the stores are in, load the items into them.
 }
 
 //+------------------+
@@ -404,19 +598,29 @@ local void LoadPlayerGlobals(Player *p) //fetch globals from MySQL
 	//FIXME
 }
 
-local void LoadPlayerShips(Player *p, Arena *arena) //fetch globals from MySQL
+local void LoadPlayerShips(Player *p, Arena *arena) //fetch ships from MySQL
 {
 	//FIXME
 }
 
-local void LoadCategoryList(Arena *arena)
+local void LoadCategoryItems(Arena *arena)
 {
-	//FIXME
+	mysql->Query(loadCategoryItemsQueryCallback, arena, 1, "SELECT item_id, category_id FROM hs_category_items, hs_categories WHERE category_id = id AND arena = ?", getArenaIdentifier(arena));
 }
 
-local void LoadStoreList(Arena *arena)
+local void LoadCategoryList(Arena *arena) //leads to LoadCategoryItems() being called
 {
-	//FIXME
+	mysql->Query(loadArenaCategoriesQueryCallback, arena, 1, "SELECT id, name, description FROM hs_categories WHERE arena = ?", getArenaIdentifier(arena));
+}
+
+local void LoadStoreItems(Arena *arena)
+{
+	mysql->Query(loadStoreItemsQueryCallback, arena, 1, "SELECT item_id, store_id FROM hs_store_items, hs_stores WHERE store_id = id AND arena = ?", getArenaIdentifier(arena));
+}
+
+local void LoadStoreList(Arena *arena) //leads to LoadStoreItems() being called
+{
+	mysql->Query(loadArenaStoresQueryCallback, arena, 1, "SELECT id, name, description, region FROM hs_stores WHERE arena = ?", getArenaIdentifier(arena));
 }
 
 local void LoadEvents()

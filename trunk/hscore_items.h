@@ -11,6 +11,8 @@ typedef struct Ihscoreitems
 	void (*addItem)(Player *p, Item *item, int ship, int amount);
 	void (*removeItem)(Player *p, Item *item, int ship, int amount);
 
+	Item * (*getItemByName)(const char *name, Arena *arena);
+
 	int (*getPropertySum)(Player *p, int ship, const char *prop);
 
 	void (*triggerEvent)(Player *p, int ship, const char *event);

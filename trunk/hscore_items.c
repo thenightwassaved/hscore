@@ -68,6 +68,11 @@ local void removeItem(Player *p, Item *item, int ship, int amount)
 	//FIXME
 }
 
+local Item * getItemByName(const char *name, Arena *arena)
+{
+	//FIXME
+}
+
 local int getPropertySum(Player *p, int ship, const char *prop)
 {
 	//FIXME
@@ -86,7 +91,7 @@ local int getFreeItemTypeSpots(Player *p, int ship, ItemType *type)
 local Ihscoreitems interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_ITEMS, "hscore_items")
-	hasItem, addItem, removeItem, getPropertySum,
+	hasItem, addItem, removeItem, getItemByName, getPropertySum,
 	triggerEvent, getFreeItemTypeSpots,
 };
 
