@@ -64,7 +64,7 @@ local void moneyCommand(const char *command, const char *params, Player *p, cons
 			}
 			else //no details
 			{
-				chat->SendMessage(p, "Player %s has $%i dollars in their account, and %i experience.", t->name, getMoney(t), getExp(t));
+				chat->SendMessage(p, "Player %s has $%i in their account, and %i experience.", t->name, getMoney(t), getExp(t));
 			}
 		}
 		else
@@ -76,7 +76,7 @@ local void moneyCommand(const char *command, const char *params, Player *p, cons
 	{
 		if (database->isLoaded(p))
 		{
-			chat->SendMessage(p, "You have $%i dollars in your account and %i experience.", getMoney(p), getExp(p));
+			chat->SendMessage(p, "You have $%i in your account and %i experience.", getMoney(p), getExp(p));
 		}
 		else
 		{
@@ -773,12 +773,12 @@ local void showMoneyCommand(const char *command, const char *params, Player *p, 
 		{
 			if (strstr(params, "-e")) //wants exp too
 			{
-				chat->SendMessage(t, "Player %s has $%i dollars in their account and %i experience.", p->name, getMoney(p), getExp(p));
+				chat->SendMessage(t, "Player %s has $%i in their account and %i experience.", p->name, getMoney(p), getExp(p));
 				chat->SendMessage(p, "Sent money and exp status to %s", t->name);
 			}
 			else //no exp
 			{
-				chat->SendMessage(t, "Player %s has $%i dollars in their account.", p->name, getMoney(p));
+				chat->SendMessage(t, "Player %s has $%i in their account.", p->name, getMoney(p));
 				chat->SendMessage(p, "Sent money status to %s", t->name);
 			}
 		}
