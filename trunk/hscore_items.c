@@ -601,7 +601,7 @@ local void triggerEvent(Player *p, int ship, const char *eventName)
 		{
 			Event *event = eventLink->data;
 
-			if (strcmp(event->name, eventName) == 0)
+			if (strcmp(event->event, eventName) == 0)
 			{
 				doEvent(p, entry, event);
 				break;
@@ -611,7 +611,7 @@ local void triggerEvent(Player *p, int ship, const char *eventName)
 	database->unlock();
 }
 
-local void triggerEventOnItem(Player *p, Item *triggerItem, int ship, const char *event)
+local void triggerEventOnItem(Player *p, Item *triggerItem, int ship, const char *eventName)
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
 
@@ -660,7 +660,7 @@ local void triggerEventOnItem(Player *p, Item *triggerItem, int ship, const char
 			{
 				Event *event = eventLink->data;
 
-				if (strcmp(event->name, eventName) == 0)
+				if (strcmp(event->event, eventName) == 0)
 				{
 					doEvent(p, entry, event);
 					break;
