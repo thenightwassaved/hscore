@@ -1,7 +1,7 @@
 #ifndef HSCORE_DATABASE_H
 #define HSCORE_DATABASE_H
 
-#define I_HSCORE_DB "hscore_db-1"
+#define I_HSCORE_DATABASE "hscore_db-1"
 
 typedef struct PlayerData
 {
@@ -21,7 +21,7 @@ typedef struct ArenaData
 	LinkedList *categoryList;
 } HSPlayerData;
 
-typedef struct Ihscore_db
+typedef struct Ihscore_database
 {
 	INTERFACE_HEAD_DECL
 
@@ -34,7 +34,7 @@ typedef struct Ihscore_db
 	void (*addShip)(Player *p, int ship, linkedList *itemList);
 	void (*removeShip)(Player *p, int ship); //NOTE: will destroy all items on the ship
 
-	HSPlayerData * (*getHSPlayerData)(Player *p); //should only be used by hscore modules
-} Ihscore_db;
+	PlayerData * (*getPlayerData)(Player *p); //should only be used by hscore modules
+} Ihscore_database;
 
 #endif //HSCORE_DATABASE_H
