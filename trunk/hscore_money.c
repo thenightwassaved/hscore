@@ -124,7 +124,7 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 		return;
 	}
 
-	while (*next == ',' || *next == ' ') next++; //remove whitespace before the message
+	while (*next == ' ') next++; //remove whitespace before the message
 
 	message = next;
 	if (message[0] == '\0')
@@ -136,18 +136,51 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 	{
 		Player *t = target->u.p;
 
-		if (database->isLoaded(t))
+		if (!force)
 		{
-			chat->SendMessage(p, "Force: %i, Quiet: %i, Player: %s, Amount %i, Message: %s", force, quiet, t->name, amount, message);
+			if (database->isLoaded(t))
+			{
+				giveMoney(t, amount, MONEY_TYPE_GRANT);
+
+				if (quiet)
+				{
+					chat->SendMessage(p, "Quietly gave player %s $%i.", t->name, amount);
+				}
+				else
+				{
+					if (message == NULL)
+					{
+						chat->SendMessage(t, "You were granted $%i.", amount);
+					}
+					else
+					{
+						chat->SendMessage(t, "You were granted $%i %s", amount, message);
+					}
+
+					chat->SendMessage(p, "Gave player %s $%i.", t->name, amount);
+				}
+			}
+			else
+			{
+				chat->SendMessage(p, "Player %s has no data loaded.", t->name);
+			}
 		}
 		else
 		{
-			chat->SendMessage(p, "Player %s has no data loaded.", t->name);
+			chat->SendMessage(p, "Whoa there, bud. The -f is only for arena and freq messages.");
 		}
 	}
 	else //not private
 	{
-		chat->SendMessage(p, "Not implemented yet.");
+		if (force)
+		{
+			//FIXME
+			chat->SendMessage(p, "Not implemented yet.");
+		}
+		else
+		{
+			chat->SendMessage(p, "For typo safety, the -f must be specified for arena and freq targets.");
+		}
 	}
 }
 
