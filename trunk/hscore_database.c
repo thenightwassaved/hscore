@@ -125,7 +125,7 @@ local Item * getItemByID(int id)
 local ItemType * getItemTypeByID(int id)
 {
 	Link *link;
-	Item *returnValue = NULL;
+	ItemType *returnValue = NULL;
 
 	lock();
 	for (link = LLGetHead(&itemTypeList); link; link = link->next)
