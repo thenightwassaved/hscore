@@ -1,0 +1,24 @@
+
+
+
+    --- prefix_name.h ---
+
+    #ifndef PREFIX_NAME_H
+    #define PREFIX_NAME_H
+
+    typedef struct Example
+    {
+        int memberVariable; //Comment
+        int memberVariable2[16];
+    } Example;
+
+    typedef struct Iprefixname
+    {
+        int (*memberFunction)(int parameterOne, int parameterTwo);
+    } Iprefixname;
+
+    #endif //PREFIX_NAME_H
+   
+    --- prefix_name.h ---
+
+
