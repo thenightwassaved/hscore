@@ -762,7 +762,7 @@ local void LoadPlayerShips(Player *p, Arena *arena) //fetch ships from MySQL
 	if (isLoaded(p))
 	{
 		PerPlayerData *playerData = getPerPlayerData(p);
-		mysql->Query(loadPlayerShipsQueryCallback, p, 1, "SELECT id, ship WHERE player_id = # AND arena = ?", playerData->id, getArenaIdentifier(arena));
+		mysql->Query(loadPlayerShipsQueryCallback, p, 1, "SELECT id, ship FROM hs_player_ships WHERE player_id = # AND arena = ?", playerData->id, getArenaIdentifier(arena));
 	}
 	else
 	{
