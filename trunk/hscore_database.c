@@ -406,6 +406,39 @@ local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *pass
 	lm->LogP(L_DRIVEL, "hscore_database", p, "loaded globals from MySQL.");
 }
 
+local void loadShipIDQueryCallback(int status, db_res *result, void *passedData)
+{
+	int results;
+	db_row *row;
+
+	ShipHull *hull = passedData;
+
+	if (status != 0 || result == NULL)
+	{
+		lm->Log(L_ERROR, "<hscore_database> Unexpected database error during ship ID load.");
+		return;
+	}
+
+	results = mysql->GetRowCount(result);
+
+	if (results == 0)
+	{
+		lm->Log(L_ERROR, "<hscore_database> No ship ID results returned. Expect things to go to hell.");
+		return;
+	}
+
+	if (results > 1)
+	{
+		lm->Log(L_ERROR, "<hscore_database> More than one ship ID returned. Using first.");
+	}
+
+	row = mysql->GetRow(result);
+
+	int id = atoi(mysql->GetField(row, 0));
+
+	hull->id = id;
+}
+
 local void loadPlayerShipItemsQueryCallback(int status, db_res *result, void *passedData)
 {
 	int results;
@@ -954,7 +987,7 @@ local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST 
 
 				if (shipID == -1)
 				{
-					lm->LogP(L_DEBUG, "hscore_database", p, "waiting for ship id load");
+					lm->LogP(L_DRIVEL, "hscore_database", p, "waiting for ship id load");
 
 					while (shipID == -1)
 					{
@@ -968,7 +1001,7 @@ local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST 
 
 					if (entry->item->delayStatusWrite)
 					{
-						mysql->Query(NULL, NULL, 0, "REPLACE INTO hs_player_ship_items VALUES (#,#,#,#)", shipID, entry->item->id, newCount, newData);
+						mysql->Query(NULL, NULL, 0, "REPLACE INTO hs_player_ship_items VALUES (#,#,#,#)", shipID, entry->item->id, entry->count, entry->data);
 					}
 				}
 			}
@@ -1162,7 +1195,7 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 
 	if (shipID == -1)
 	{
-		lm->LogP(L_DEBUG, "hscore_database", p, "waiting for ship id load");
+		lm->LogP(L_DRIVEL, "hscore_database", p, "waiting for ship id load");
 
 		while (shipID == -1)
 		{
@@ -1272,7 +1305,7 @@ local void removeShip(Player *p, int ship)
 
 	if (shipID == -1)
 	{
-		lm->LogP(L_DEBUG, "hscore_database", p, "waiting for ship id load");
+		lm->LogP(L_DRIVEL, "hscore_database", p, "waiting for ship id load");
 
 		while (shipID == -1)
 		{
