@@ -67,7 +67,7 @@ local LinkedList * getItemList();
 local LinkedList * getStoreList(Arena *arena);
 local LinkedList * getCategoryList(Arena *arena);
 local void updateItem(Player *p, int ship, Item *item, int newCount, int newData);
-local void addShip(Player *p, int ship, LinkedList *itemList);
+local void addShip(Player *p, int ship);
 local void removeShip(Player *p, int ship);
 local PerPlayerData *getPerPlayerData(Player *p);
 
@@ -917,24 +917,67 @@ local void StorePlayerGlobals(Player *p) //store player globals. MUST FINISH IN 
 {
 	PerPlayerData *playerData = getPerPlayerData(p);
 
-	//FIXME, make sure to validate the data
-
-	mysql->Query(NULL, NULL, 0, "UPDATE hs_players SET money = #, exp = #, money_give = #, money_grant = #, money_buysell = #, money_kill = #, money_flag = #, money_ball = #, money_event = # WHERE id = #",
-		playerData->money,
-		playerData->exp,
-		playerData->moneyType[MONEY_TYPE_GIVE],
-		playerData->moneyType[MONEY_TYPE_GRANT],
-		playerData->moneyType[MONEY_TYPE_BUYSELL],
-		playerData->moneyType[MONEY_TYPE_KILL],
-		playerData->moneyType[MONEY_TYPE_FLAG],
-		playerData->moneyType[MONEY_TYPE_BALL],
-		playerData->moneyType[MONEY_TYPE_EVENT],
-		playerData->id);
+	if (isLoaded(p))
+	{
+		mysql->Query(NULL, NULL, 0, "UPDATE hs_players SET money = #, exp = #, money_give = #, money_grant = #, money_buysell = #, money_kill = #, money_flag = #, money_ball = #, money_event = # WHERE id = #",
+			playerData->money,
+			playerData->exp,
+			playerData->moneyType[MONEY_TYPE_GIVE],
+			playerData->moneyType[MONEY_TYPE_GRANT],
+			playerData->moneyType[MONEY_TYPE_BUYSELL],
+			playerData->moneyType[MONEY_TYPE_KILL],
+			playerData->moneyType[MONEY_TYPE_FLAG],
+			playerData->moneyType[MONEY_TYPE_BALL],
+			playerData->moneyType[MONEY_TYPE_EVENT],
+			playerData->id);
+	}
+	else
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to store unloaded player");
+	}
 }
 
 local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST FINISH IN ONE QUERY LEVEL
 {
-	//FIXME, make sure to validate the data
+	PerPlayerData *playerData = getPerPlayerData(p);
+
+	if (areShipsLoaded(p))
+	{
+		for (int i = 0; i < 8; i++)
+		{
+			if (playerData->hull[i] != NULL)
+			{
+				Link *link;
+				LinkedList *inventoryList = &playerData->hull[i]->inventoryEntryList;
+
+				int shipID = playerData->hull[i]->id;
+
+				if (shipID == -1)
+				{
+					lm->LogP(L_DEBUG, "hscore_database", p, "waiting for ship id load");
+
+					while (shipID == -1)
+					{
+						shipID = playerData->hull[i]->id;
+					}
+				}
+
+				for (link = LLGetHead(inventoryList); link; link = link->next)
+				{
+					InventoryEntry *entry = link->data;
+
+					if (entry->item->delayStatusWrite)
+					{
+						mysql->Query(NULL, NULL, 0, "REPLACE INTO hs_player_ship_items VALUES (#,#,#,#)", shipID, entry->item->id, newCount, newData);
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to store unloaded player");
+	}
 }
 
 local void StoreAllPerPlayerData()
@@ -1106,10 +1149,26 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 		return;
 	}
 
+	if (playerData->hull[ship] == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to update item on unowned ship %i", ship);
+		return;
+	}
+
 	Link *link;
 	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
 	int shipID = playerData->hull[ship]->id;
+
+	if (shipID == -1)
+	{
+		lm->LogP(L_DEBUG, "hscore_database", p, "waiting for ship id load");
+
+		while (shipID == -1)
+		{
+			shipID = playerData->hull[ship]->id;
+		}
+	}
 
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
@@ -1128,14 +1187,17 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 					entry->count = newCount;
 					entry->data = newData;
 
-					mysql->Query(NULL, NULL, 0, "REPLACE INTO hs_player_ship_items VALUES (#,#,#,#)", shipID, item->id, newCount, newData);
+					if (!item->delayStatusWrite)
+					{
+						mysql->Query(NULL, NULL, 0, "REPLACE INTO hs_player_ship_items VALUES (#,#,#,#)", shipID, item->id, newCount, newData);
+					}
 				}
 			}
 			else
 			{
-				LLRemove(inventoryList, entry);
 				mysql->Query(NULL, NULL, 0, "DELETE FROM hs_player_ship_items WHERE ship_id = # AND item_id = #", shipID, item->id);
 
+				LLRemove(inventoryList, entry);
 				afree(entry);
 			}
 
@@ -1163,14 +1225,67 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 	}
 }
 
-local void addShip(Player *p, int ship, LinkedList *inventoryList)
+local void addShip(Player *p, int ship) //the ships id may not be valid until later
 {
-	//FIXME
+	PerPlayerData *playerData = getPerPlayerData(p);
+
+	if (ship < 0 || 7 < ship)
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to add ship %i", ship);
+		return;
+	}
+
+	if (playerData->hull[ship] != NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to add owned ship %i", ship);
+		return;
+	}
+
+	ShipHull *hull = amalloc(sizeof(*hull));
+
+	LLInit(&hull->inventoryEntryList);
+	hull->id = -1;
+
+	playerData->hull[ship] = hull;
+
+	mysql->Query(NULL, NULL, 0, "INSERT INTO hs_player_ships VALUES (NULL, #, #, ?)", playerData->id, ship, getArenaIdentifier(p->arena));
+	mysql->Query(loadShipIDQueryCallback, hull, 1, "SELECT id FROM hs_player_ships WHERE player_id = # AND ship = #", playerData->id, ship);
 }
 
 local void removeShip(Player *p, int ship)
 {
-	//FIXME
+	PerPlayerData *playerData = getPerPlayerData(p);
+
+	if (ship < 0 || 7 < ship)
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to add ship %i", ship);
+		return;
+	}
+
+	if (playerData->hull[ship] == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to removed unowned ship %i", ship);
+		return;
+	}
+
+	int shipID = playerData->hull[ship]->id;
+
+	if (shipID == -1)
+	{
+		lm->LogP(L_DEBUG, "hscore_database", p, "waiting for ship id load");
+
+		while (shipID == -1)
+		{
+			shipID = playerData->hull[ship]->id;
+		}
+	}
+
+	mysql->Query(NULL, NULL, 0, "DELETE FROM hs_player_ship_items WHERE ship_id = #", shipID); //empty the ship
+	mysql->Query(NULL, NULL, 0, "DELETE FROM hs_player_ships WHERE id = #", shipID);
+
+	UnloadPlayerShip(playerData->hull[ship]);
+
+	playerData->hull[ship] = NULL;
 }
 
 //getPerPlayerData declared elsewhere

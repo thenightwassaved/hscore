@@ -39,7 +39,7 @@ typedef struct Ihscoredatabase
 	//a newCount of 0 will delete the item from the database
 	void (*updateItem)(Player *p, int ship, Item *item, int newCount, int newData);
 
-	void (*addShip)(Player *p, int ship, LinkedList *inventoryList);
+	void (*addShip)(Player *p, int ship);
 	void (*removeShip)(Player *p, int ship); //NOTE: will destroy all items on the ship
 
 	PerPlayerData * (*getPerPlayerData)(Player *p); //should only be used by hscore modules
