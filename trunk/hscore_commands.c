@@ -161,7 +161,19 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 		}
 		else
 		{
+			int buyPrice = cfg->GetInt(p->arena->cfg, shipNames[i], "BuyPrice", 0);
 
+			if (buyPrice == 0)
+			{
+				chat->SendMessage(p, "No items can be loaded onto a %s in this arena.", shipNames[ship]);
+			}
+			else
+			{
+				if (p == t)
+					chat->SendMessage(p, "You do not own a %s.", shipNames[ship]);
+				else
+					chat->SendMessage(p, "Player %s does not own a %s.", t->name, shipNames[ship]);
+			}
 		}
 	}
 	else
