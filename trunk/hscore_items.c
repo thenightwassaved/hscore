@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "asss.h"
 #include "hscore.h"
 #include "hscore_database.h"
@@ -71,15 +73,15 @@ local void removeItem(Player *p, Item *item, int ship, int amount)
 
 local Item * getItemByName(const char *name, Arena *arena)
 {
-	PerArenaData *arenaData = database->getPerArenaData(arena);
-	Link catLink;
+	LinkedList *categoryList = database->getCategoryList(arena);
+	Link *catLink;
 
 	//to deal with the fact that an item name is only unique per arena,
 	//we scan the items in the categories rather than the item list
-	for (catLink = LLGetHead(&(arenaData->categoryList)); catLink; catLink = catLink->next)
+	for (catLink = LLGetHead(categoryList); catLink; catLink = catLink->next)
 	{
 		Category *category = catLink->data;
-		Link itemLink
+		Link *itemLink;
 
 		for (itemLink = LLGetHead(&(category->itemList)); itemLink; itemLink = itemLink->next)
 		{
