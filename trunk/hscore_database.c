@@ -25,6 +25,8 @@ local void UnloadCategoryList(Arena *arena);
 local void UnloadStoreList(Arena *arena);
 local void UnloadItemList();
 local void UnloadItemTypeList();
+local void UnloadAllPerArenaData();
+local void UnloadAllPerPlayerData();
 local void LoadPlayerGlobals(Player *p);
 local void LoadPlayerShips(Player *p, Arena *arena);
 local void LoadCategoryItems(Arena *arena);
@@ -595,7 +597,7 @@ local void UnloadStoreList(Arena *arena)
 
 local void UnloadItemListEnumCallback(const void *ptr)
 {
-	Item *item = ptr;
+	Item *item = (Item*)ptr;
 
 	LLEnum(&(item->propertyList), afree);
 	LLEnum(&(item->eventList), afree);
@@ -619,6 +621,16 @@ local void UnloadItemTypeList()
 	lm->Log(L_DRIVEL, "<hscore_database> Freed %i item types.", LLCount(&itemTypeList));
 
 	LLEmpty(&itemTypeList);
+}
+
+local void UnloadAllPerArenaData()
+{
+	//FIXME
+}
+
+local void UnloadAllPerPlayerData()
+{
+	//FIXME
 }
 
 //+------------------+
@@ -693,6 +705,11 @@ local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST 
 	//FIXME
 }
 
+local void StoreAllPerPlayerData()
+{
+	//FIXME
+}
+
 //+---------------------+
 //|                     |
 //|  Command Functions  |
@@ -730,11 +747,12 @@ local void allocatePlayerCallback(Player *p, int allocating)
 {
 	if (allocating) //player is being allocated
 	{
+		//make sure we "zero out" the necessary data
 		InitPerPlayerData(p);
 	}
 	else //p is being deallocated
 	{
-
+		//already taken care of on disconnect
 	}
 }
 
@@ -941,12 +959,12 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 		mm->UnregCallback(CB_PLAYERACTION, playerActionCallback, ALLARENAS);
 		mm->UnregCallback(CB_ARENAACTION, arenaActionCallback, ALLARENAS);
 
-		//FIXME
-		//save and unload all player data
-		//unload all arena data (stores and categories)
+		SaveAllPerPlayerData();
+
+		UnloadAllPerPlayerData();
+		UnloadAllPerArenaData();
 
 		UnloadItemList();
-
 		UnloadItemTypeList();
 
 		pd->FreePlayerData(playerDataKey);

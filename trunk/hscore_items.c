@@ -56,6 +56,7 @@ local void removeItemCommand(const char *command, const char *params, Player *p,
 local int hasItem(Player *p, Item *item, int ship)
 {
 	//FIXME
+	return 0;
 }
 
 local void addItem(Player *p, Item *item, int ship, int amount)
@@ -70,12 +71,34 @@ local void removeItem(Player *p, Item *item, int ship, int amount)
 
 local Item * getItemByName(const char *name, Arena *arena)
 {
-	//FIXME
+	PerArenaData *arenaData = database->getPerArenaData(arena);
+	Link catLink;
+
+	//to deal with the fact that an item name is only unique per arena,
+	//we scan the items in the categories rather than the item list
+	for (catLink = LLGetHead(&(arenaData->categoryList)); catLink; catLink = catLink->next)
+	{
+		Category *category = catLink->data;
+		Link itemLink
+
+		for (itemLink = LLGetHead(&(category->itemList)); itemLink; itemLink = itemLink->next)
+		{
+			Item *item = itemLink->data;
+
+			if (strcasecmp(item->name, name) == 0)
+			{
+				return item;
+			}
+		}
+	}
+
+	return NULL;
 }
 
 local int getPropertySum(Player *p, int ship, const char *prop)
 {
 	//FIXME
+	return 0;
 }
 
 local void triggerEvent(Player *p, int ship, const char *event)
@@ -86,6 +109,7 @@ local void triggerEvent(Player *p, int ship, const char *event)
 local int getFreeItemTypeSpots(Player *p, int ship, ItemType *type)
 {
 	//FIXME
+	return 0;
 }
 
 local Ihscoreitems interface =

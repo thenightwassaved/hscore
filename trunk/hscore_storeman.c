@@ -30,11 +30,13 @@ local void storeInfoCommand(const char *command, const char *params, Player *p, 
 local int canBuyItem(Player *p, Item *item)
 {
 	//FIXME
+	return 0;
 }
 
 local int canSellItem(Player *p, Item *item)
 {
 	//FIXME
+	return 0;
 }
 
 local void buyingItem(Player *p, Item *item)
