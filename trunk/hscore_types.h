@@ -1,18 +1,6 @@
 #ifndef HSCORE_TYPES_H
 #define HSCORE_TYPES_H
 
-static char *shipNames[] =
-{
-	"Warbird",
-	"Javelin",
-	"Spider",
-	"Leviathan",
-	"Terrier",
-	"Weasel",
-	"Lancaster",
-	"Shark"
-};
-
 typedef enum EventAction
 {
 	//removes event->data amount of the items from the ship's inventory
