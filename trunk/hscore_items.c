@@ -299,13 +299,95 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 
 local int getItemCount(Player *p, Item *item, int ship)
 {
-	//FIXME
-	return 0;
+	PerPlayerData *playerData = database->getPerPlayerData(p);
+
+	if (item == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to get item count of NULL item");
+		return 0;
+	}
+
+	if (!database->areShipsLoaded(p))
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to get item count on a player with unloaded ships");
+		return 0;
+	}
+
+	if (ship < 0 || 7 < ship)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to get item count on ship %i", ship);
+		return 0;
+	}
+
+	if (playerData->hull[ship] == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to get item count on unowned ship %i", ship);
+		return 0;
+	}
+
+	Link *link;
+	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+
+	for (link = LLGetHead(inventoryList); link; link = link->next)
+	{
+		InventoryEntry *entry = link->data;
+
+		if (entry->item == item)
+		{
+			return entry->count;
+		}
+	}
+
+	return 0; //don't have it
 }
 
 local void addItem(Player *p, Item *item, int ship, int amount)
 {
-	//FIXME
+	PerPlayerData *playerData = database->getPerPlayerData(p);
+
+	if (item == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to add a NULL item.");
+		return;
+	}
+
+	if (!database->areShipsLoaded(p))
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to add item to a player with unloaded ships");
+		return;
+	}
+
+	if (ship < 0 || 7 < ship)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to add item to ship %i", ship);
+		return;
+	}
+
+	if (playerData->hull[ship] == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to add item to unowned ship %i", ship);
+		return;
+	}
+
+	Link *link;
+	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+
+	int data = 0;
+	int count = 0;
+
+	for (link = LLGetHead(inventoryList); link; link = link->next)
+	{
+		InventoryEntry *entry = link->data;
+
+		if (entry->item == item)
+		{
+			data = entry->data;
+			count = entry->count;
+			break;
+		}
+	}
+
+	database->updateItem(p, ship, item, count, data);
 }
 
 local Item * getItemByName(const char *name, Arena *arena)
