@@ -79,8 +79,42 @@ local helptext_t shipStatusHelp =
 
 local void shipStatusCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	//note, watch out for speccers not passing in a ship number. Could easily cause an array bounds error
-	//FIXME
+	Player *t = (target->type == T_PLAYER) ? target->u.p : p;
+
+	int ship = atoi(params);
+	if (ship == 0)
+	{
+		ship = t->p_ship;
+	}
+	else
+	{
+		ship--; //warbird is 0, not 1
+	}
+
+	if (ship == SHIP_SPEC)
+	{
+		chat->SendMessage(p, "Spectators do not have a ship status. Please use ?shipstatus <ship> to check the status on a certain hull.");
+		return;
+	}
+
+	if (ship >= 8 || ship < 0)
+	{
+		chat->SendMessage(p, "Ship out of range. Please choose a ship from 1 to 8.");
+		return;
+	}
+
+	if (database->isLoaded(t))
+	{
+		//FIXME
+		chat->SendMessage(p, "<FIXME: Ship status for player %s's %s>.", t->name, shipNames[ship]);
+	}
+	else
+	{
+		if (p == t)
+			chat->SendMessage(p, "Unexpected error: Your zone data is not loaded.");
+		else
+			chat->SendMessage(p, "Unexpected error: %s's zone data is not loaded.", t->name);
+	}
 }
 
 EXPORT int MM_hscore_commands(int action, Imodman *_mm, Arena *arena)
