@@ -97,18 +97,104 @@ local void printShipList(Player *p)
 	chat->SendMessage(p, "+-----------+-----------+------------+--------+----------------------------------------------------+");
 }
 
-local void buyItem(Player *p, Item *item, int count)
+local void buyItem(Player *p, Item *item, int count, int ship)
 {
-	items->addItem(p, item, p->p_ship, count);
+	if ((item->shipsAllowed >> ship) & 0x1)
+	{
+		if (money->getMoney(p) >= item->buyPrice * count)
+		{
+			if (money->getExp(p) >= item->expRequired)
+			{
+				if (items->getItemCount(p, item, ship) + count > item->max)
+				{
+					if (item->type1 != NULL)
+					{
+						if (items->getFreeItemTypeSpots(Player *p, item->type1, int ship) - (item->typeDelta1 * count) < 0) //have no free spots
+						{
+							chat->SendMessage(p, "You do not have enough free %s spots.", item->type1->name);
+							return;
+						}
+					}
 
-	chat->SendMessage(p, "<buy item %s>", item->name);
+					if (item->type2 != NULL)
+					{
+						if (items->getFreeItemTypeSpots(Player *p, item->type2, int ship) - (item->typeDelta2 * count) < 0) //have no free spots
+						{
+							chat->SendMessage(p, "You do not have enough free %s spots.", item->type2->name);
+							return;
+						}
+					}
+
+					item->addItem(p, item, ship, count);
+
+					money->giveMoney(p, -item->buyPrice * count, MONEY_TYPE_BUYSELL);
+
+					//FIXME: Call event
+
+					chat->SendMessage(p, "You purchaced %i of item %s for $%i.", count, item->name, item->buyPrice * count);
+				}
+				else
+				{
+					chat->SendMessage(p, "You many only have %i of item %s on your ship.", item->max, item->name);
+				}
+			}
+			else
+			{
+				chat->SendMessage(p, "You need %i more experience to buy item %s.", item->expRequired - money->getExp(p), item->name);
+			}
+		}
+		else
+		{
+			chat->SendMessage(p, "You do not have enough money to buy item %s. You need $%i more.", item->name, item->buyPrice * count - money->getMoney(p));
+		}
+	}
+	else
+	{
+		chat->SendMessage(p, "Item %s is not allowed on a %s.", item->name, shipNames[ship]);
+	}
 }
 
-local void sellItem(Player *p, Item *item, int count)
+local void sellItem(Player *p, Item *item, int count, int ship)
 {
-	items->addItem(p, item, p->p_ship, -count);
+	if (items->getItemCount(p, item, ship) >= count)
+	{
+		if (item->type1 != NULL)
+		{
+			if (items->getFreeItemTypeSpots(Player *p, item->type1, int ship) + item->typeDelta1 * count < 0)
+			{
+				chat->SendMessage(p, "You do not have enough free %s spots.", item->type1->name);
+				return;
+			}
+		}
 
-	chat->SendMessage(p, "<sell item %s>", item->name);
+		if (item->type2 != NULL)
+		{
+			if (items->getFreeItemTypeSpots(Player *p, item->type2, int ship) + item->typeDelta2 * count < 0)
+			{
+				chat->SendMessage(p, "You do not have enough free %s spots.", item->type2->name);
+				return;
+			}
+		}
+
+		item->addItem(p, item, ship, -count);
+
+		money->giveMoney(p, item->sellPrice * count, MONEY_TYPE_BUYSELL);
+
+		//FIXME: Call event
+
+		chat->SendMessage(p, "You sold %i of item %s for $%i.", count, item->name, item->sellPrice * count);
+	}
+	else
+	{
+		if (count == 1)
+		{
+			chat->SendMessage(p, "You do not have any of item %s to sell", item->name);
+		}
+		else
+		{
+			chat->SendMessage(p, "You do not have that many of item %s to sell", item->name);
+		}
+	}
 }
 
 local void buyShip(Player *p, int ship)
@@ -179,7 +265,8 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 			Item *item = items->getItemByName(params, p->arena);
 			if (item != NULL)
 			{
-				buyItem(p, item, 1);
+				//check - counts
+				buyItem(p, item, 1); //FIXME
 				return;
 			}
 
@@ -218,7 +305,8 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 		Item *item = items->getItemByName(params, p->arena);
 		if (item != NULL)
 		{
-			sellItem(p, item, 1);
+			//check - counts
+			sellItem(p, item, 1); //FIXME
 			return;
 		}
 
