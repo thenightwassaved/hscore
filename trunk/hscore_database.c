@@ -778,6 +778,7 @@ local void UnloadPlayerGlobals(Player *p) //called to free any allocated data
 local void UnloadPlayerShip(ShipHull *ship)
 {
 	LLEnum(&ship->inventoryEntryList, afree);
+	LLEmpty(&ship->inventoryEntryList);
 
 	afree(ship);
 }
@@ -806,7 +807,6 @@ local void UnloadCategoryList(Arena *arena) //called when the arena is about to 
 
 	LLEnum(&arenaData->categoryList, afree); //can simply free all the Category structs
 
-
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "Freed %i categories.", LLCount(&arenaData->categoryList));
 
 	LLEmpty(&arenaData->categoryList);
@@ -828,7 +828,10 @@ local void UnloadItemListEnumCallback(const void *ptr)
 	Item *item = (Item*)ptr;
 
 	LLEnum(&item->propertyList, afree);
+	LLEmpty(&item->propertyList);
+
 	LLEnum(&item->eventList, afree);
+	LLEmpty(&item->eventList);
 
 	afree(item);
 }
@@ -853,12 +856,30 @@ local void UnloadItemTypeList()
 
 local void UnloadAllPerArenaData()
 {
-	//FIXME
+	Arena *arena;
+	Link *link;
+
+	aman->Lock();
+	FOR_EACH_ARENA(arena)
+	{
+		UnloadStoreList(arena);
+		UnloadCategoryList(arena);
+	}
+	aman->Unlock();
 }
 
 local void UnloadAllPerPlayerData()
 {
-	//FIXME
+	Player *p;
+	Link *link;
+	pd->Lock();
+	FOR_EACH_PLAYER(p)
+		if (isLoaded(p))
+		{
+			UnloadPlayerShips(p);
+			UnloadPlayerGlobals(p);
+		}
+	pd->Unlock();
 }
 
 //+------------------+
@@ -869,7 +890,17 @@ local void UnloadAllPerPlayerData()
 
 local void LoadPlayerGlobals(Player *p) //fetch globals from MySQL
 {
-	//FIXME: check if the player is already online
+	Player *p2;
+	Link *link;
+	pd->Lock();
+	FOR_EACH_PLAYER(p2)
+		if (p != p2 && strcasecmp(p->name, p2->name) == 0)
+		{
+			lm->LogP(L_MALICIOUS, "hscore_database", p, "Player %s already logged on. Data loading aborted.", p->name);
+			pd->Unlock();
+			return;
+		}
+	pd->Unlock();
 
 	mysql->Query(loadPlayerGlobalsQueryCallback, p, 1, "SELECT id, money, exp, money_give, money_grant, money_buysell, money_kill, money_flag, money_ball, money_event FROM hs_players WHERE name = ?", p->name);
 }
@@ -1009,13 +1040,25 @@ local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST 
 	}
 	else
 	{
-		lm->LogP(L_ERROR, "hscore_database", p, "asked to store unloaded player");
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to store unloaded ships");
 	}
 }
 
 local void StoreAllPerPlayerData()
 {
-	//FIXME
+	Player *p;
+	Link *link;
+	pd->Lock();
+	FOR_EACH_PLAYER(p)
+		if (isLoaded(p))
+		{
+			if (areShipsLoaded(p))
+			{
+				StorePlayerShips(p, p->arena);
+			}
+			StorePlayerGlobals(p);
+		}
+	pd->Unlock();
 }
 
 //+---------------------+
@@ -1042,7 +1085,8 @@ local helptext_t storeAllHelp =
 
 local void storeAllCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	//FIXME
+	StoreAllPerPlayerData();
+	chat->SendMessage(p, "Executed.");
 }
 
 //+----------------------+
