@@ -1098,10 +1098,72 @@ local LinkedList * getCategoryList(Arena *arena)
 
 local void updateItem(Player *p, int ship, Item *item, int newCount, int newData)
 {
-	//FIXME
+	PerPlayerData *playerData = getPerPlayerData(p);
+
+	if (ship < 0 || 7 < ship)
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to update item on ship %i", ship);
+		return;
+	}
+
+	Link *link;
+	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+
+	int shipID = playerData->hull[ship]->id;
+
+	for (link = LLGetHead(inventoryList); link; link = link->next)
+	{
+		InventoryEntry *entry = link->data;
+
+		if (entry->item == item)
+		{
+			if (newCount != 0)
+			{
+				if (entry->count == newCount && entry->data == newData)
+				{
+					lm->LogP(L_ERROR, "hscore_database", p, "asked to update item %s with no change", item->name);
+				}
+				else
+				{
+					entry->count = newCount;
+					entry->data = newData;
+
+					mysql->Query(NULL, NULL, 0, "REPLACE INTO hs_player_ship_items VALUES (#,#,#,#)", shipID, item->id, newCount, newData);
+				}
+			}
+			else
+			{
+				LLRemove(inventoryList, entry);
+				mysql->Query(NULL, NULL, 0, "DELETE FROM hs_player_ship_items WHERE ship_id = # AND item_id = #", shipID, item->id);
+
+				afree(entry);
+			}
+
+			return;
+		}
+	}
+
+	//if we leave the for loop, we'll have to add it.
+
+	if (newCount != 0)
+	{
+		mysql->Query(NULL, NULL, 0, "REPLACE INTO hs_player_ship_items VALUES (#,#,#,#)", shipID, item->id, newCount, newData);
+
+		InventoryEntry *entry = amalloc(sizeof(*entry));
+
+		entry->count = newCount;
+		entry->data = newData;
+		entry->item = item;
+
+		LLAdd(inventoryList, entry);
+	}
+	else
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to remove item %s not on ship %i", item->name, ship);
+	}
 }
 
-local void addShip(Player *p, int ship, LinkedList *itemList)
+local void addShip(Player *p, int ship, LinkedList *inventoryList)
 {
 	//FIXME
 }
