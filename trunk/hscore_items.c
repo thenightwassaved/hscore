@@ -177,7 +177,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 	ship--;
 
 	//verify ship
-	if (ship == -1 || ship < 0 || 7 < ship)
+	if (ship < -1 || 7 < ship) //-1 is special, means current ship.
 	{
 		chat->SendMessage(p, "Grantitem: Ship out of range. Please choose a ship from 1 to 8.");
 		return;
@@ -208,7 +208,15 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 			{
 				if (ship == -1)
 				{
-					addItem(t, item, t->p_ship, count);
+					if (t->p_ship != SHIP_SPEC)
+					{
+						addItem(t, item, t->p_ship, count);
+					}
+					else
+					{
+						chat->SendMessage(p, "Cannot grant item: player %s is in spec.", t->name);
+						return;
+					}
 				}
 				else
 				{
@@ -251,7 +259,15 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 				{
 					if (ship == -1)
 					{
-						addItem(t, item, t->p_ship, count);
+						if (t->p_ship != SHIP_SPEC)
+						{
+							addItem(t, item, t->p_ship, count);
+						}
+						else
+						{
+							chat->SendMessage(p, "Player %s is in spec.", t->name);
+							return;
+						}
 					}
 					else
 					{
