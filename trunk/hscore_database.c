@@ -1197,18 +1197,6 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 	Link *link;
 	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
-	int shipID = playerData->hull[ship]->id;
-
-	if (shipID == -1)
-	{
-		lm->LogP(L_DRIVEL, "hscore_database", p, "waiting for ship id load");
-
-		while (shipID == -1)
-		{
-			shipID = playerData->hull[ship]->id;
-		}
-	}
-
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
 		InventoryEntry *entry = link->data;
@@ -1228,12 +1216,36 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 
 					if (!item->delayStatusWrite)
 					{
+						int shipID = playerData->hull[ship]->id;
+
+						if (shipID == -1)
+						{
+							lm->LogP(L_DRIVEL, "hscore_database", p, "waiting for ship id load");
+
+							while (shipID == -1)
+							{
+								shipID = playerData->hull[ship]->id;
+							}
+						}
+
 						mysql->Query(NULL, NULL, 0, "REPLACE INTO hs_player_ship_items VALUES (#,#,#,#)", shipID, item->id, newCount, newData);
 					}
 				}
 			}
 			else
 			{
+				int shipID = playerData->hull[ship]->id;
+
+				if (shipID == -1)
+				{
+					lm->LogP(L_DRIVEL, "hscore_database", p, "waiting for ship id load");
+
+					while (shipID == -1)
+					{
+						shipID = playerData->hull[ship]->id;
+					}
+				}
+
 				mysql->Query(NULL, NULL, 0, "DELETE FROM hs_player_ship_items WHERE ship_id = # AND item_id = #", shipID, item->id);
 
 				LLRemove(inventoryList, entry);
@@ -1248,6 +1260,18 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 
 	if (newCount != 0)
 	{
+		int shipID = playerData->hull[ship]->id;
+
+		if (shipID == -1)
+		{
+			lm->LogP(L_DRIVEL, "hscore_database", p, "waiting for ship id load");
+
+			while (shipID == -1)
+			{
+				shipID = playerData->hull[ship]->id;
+			}
+		}
+
 		mysql->Query(NULL, NULL, 0, "REPLACE INTO hs_player_ship_items VALUES (#,#,#,#)", shipID, item->id, newCount, newData);
 
 		InventoryEntry *entry = amalloc(sizeof(*entry));
