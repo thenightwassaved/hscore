@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "asss.h"
 #include "hscore.h"
 #include "hscore_database.h"
@@ -38,8 +40,8 @@ local helptext_t moneyHelp =
 
 local void moneyCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-    if (target->type == T_PLAYER) //private command
-    {
+	if (target->type == T_PLAYER) //private command
+	{
 		Player *t = target->u.p;
 
 		if (database->isLoaded(t))
@@ -48,7 +50,7 @@ local void moneyCommand(const char *command, const char *params, Player *p, cons
 			{
 				int total = 0;
 
-				chat->SendMessage(p, "Player %s: Exp: %i, Money: %i", t->name, getExp(t), getMoney(t));
+				chat->SendMessage(p, "Player %s: money: %i, exp: %i", t->name, getMoney(t), getExp(t));
 
 				for (int i = 0; i < MONEY_TYPE_COUNT; i++)
 				{
@@ -67,35 +69,63 @@ local void moneyCommand(const char *command, const char *params, Player *p, cons
 		{
 			chat->SendMessage(p, "Player %s has no data loaded.", t->name);
 		}
-    }
-    else //not private, assume public
-    {
-        if (database->isLoaded(p))
-        {
-            chat->SendMessage(p, "You have $%i dollars in your account and %i experience.", getMoney(p), getExp(p));
-        }
-        else
-        {
-            chat->SendMessage(p, "You have no data loaded.");
-        }
-    }
+	}
+	else //not private, assume public
+	{
+		if (database->isLoaded(p))
+		{
+			chat->SendMessage(p, "You have $%i dollars in your account and %i experience.", getMoney(p), getExp(p));
+		}
+		else
+		{
+			chat->SendMessage(p, "You have no data loaded.");
+		}
+	}
 }
 
 local helptext_t grantHelp =
 "Targets: player or freq or arena\n"
-"Args: [{-f}] <amount>\n"
+"Args: [{-f}] [{-q}] <amount> [<message>]\n"
 "Adds the specified amount of money to all of the targeted player's account.\n"
+"If the {-q} switch is specified, then the command will not notify the player(s)."
 "For typo safety, the {-f} must be specified when granting to more than one player.\n";
 
 local void grantCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	//FIXME
+    char *next;
+    int amount = strtol(params, &next, 0); //get the amount of money to give
+
+	if (next != params) //good value
+	{
+		if (target->type == T_PLAYER) //private command
+		{
+			Player *t = target->u.p;
+
+			if (database->isLoaded(t))
+			{
+				chat->
+			}
+			else
+			{
+				chat->SendMessage(p, "Player %s has no data loaded.", t->name);
+			}
+		}
+		else //not private
+		{
+			chat->SendMessage(p, "Not implemented yet.");
+		}
+	}
+	else
+	{
+		chat->SendMessage(p, "Error: bad amount.");
+	}
 }
 
 local helptext_t grantExpHelp =
 "Targets: none\n"
-"Args: [{-f}] <amount>\n"
+"Args: [{-f}] [{-q}] <amount> [<message>]\n"
 "Adds the specified amount of exp to all of the targeted player's account.\n"
+"If the {-q} switch is specified, then the command will not notify the player(s)."
 "For typo safety, the {-f} must be specified when granting to more than one player.\n";
 
 local void grantExpCommand(const char *command, const char *params, Player *p, const Target *target)
@@ -105,9 +135,10 @@ local void grantExpCommand(const char *command, const char *params, Player *p, c
 
 local helptext_t setMoneyHelp =
 "Targets: player or freq or arena\n"
-"Args: [{-f}] <amount>\n"
+"Args: [{-f}] [{-q}] <amount> [<message>]\n"
 "Set the player's money to the specified amount.\n"
 "Please be sure this is what you want. You probably want /?grant.\n"
+"If the {-q} switch is specified, then the command will not notify the player(s)."
 "For typo safety, the {-f} must be specified when granting to more than one player.\n";
 
 local void setMoneyCommand(const char *command, const char *params, Player *p, const Target *target)
@@ -117,9 +148,10 @@ local void setMoneyCommand(const char *command, const char *params, Player *p, c
 
 local helptext_t setExpHelp =
 "Targets: player or freq or arena\n"
-"Args: [{-f}] <amount>\n"
+"Args: [{-f}] [{-q}] <amount> [<message>]\n"
 "Set the player's exp to the specified amount.\n"
 "Please be sure this is what you want. You probably want /?grantexp.\n"
+"If the {-q} switch is specified, then the command will not notify the player(s)."
 "For typo safety, the {-f} must be specified when granting to more than one player.\n";
 
 local void setExpCommand(const char *command, const char *params, Player *p, const Target *target)
@@ -129,14 +161,88 @@ local void setExpCommand(const char *command, const char *params, Player *p, con
 
 local helptext_t giveHelp =
 "Targets: player\n"
-"Args: <amount>\n"
+"Args: <amount> [message]\n"
 "Gives the target player the specified amount from your own account.\n"
 "NOTE: You will not be able to give if it would leave you with less than"
 "the minimum required give balance.\n";
 
 local void giveCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	//FIXME
+	char *next;
+	int amount = strtol(params, &next, 0);
+
+	if (next == params)
+	{
+		chat->SendMessage(p, "Give: bad amount.");
+		return;
+	}
+
+	while (*next == ',' || *next == ' ') next++; //remove whitespace before the message
+
+	message = next;
+	if (message[0] = '\0')
+	{
+		message = NULL;
+	}
+
+	if (target->type == T_PLAYER) //private command
+	{
+		Player *t = target->u.p;
+
+		if (database->isLoaded(p))
+		{
+			if (database->isLoaded(t))
+			{
+	            int minMoney = cfg->GetInt(GLOBAL, "hyperspace", "minmoney", 1000);
+	            int minGive = cfg->GetInt(GLOBAL, "hyperspace", "mingive", 1);
+	            int maxGive = cfg->GetInt(GLOBAL, "hyperspace", "maxgive", 100000000);
+
+	            if (getMoney(p) - amount >= minMoney)
+	            {
+					if (amount < maxGive)
+					{
+						if (amount > minGive)
+						{
+							if (message == NULL)
+							{
+								chat->SendMessage(t, "Player %s gave you $%i.", p->name, amount);
+							}
+							else
+							{
+								chat->SendMessage(t, "Player %s gave you $%i. Message:\"%s\"", p->name, amount, message);
+							}
+
+							chat->SendMessage(p, "You gave %s $%i.", t->name, amount);
+						}
+						else
+						{
+							chat->SendMessage(p, "You cannot give that little. The minimum is %i.", minGive);
+						}
+					}
+					else
+					{
+						chat->SendMessage(p, "You cannot give that much. The maximium is %i.", maxGive);
+					}
+				}
+				else
+				{
+					chat->SendMessage(p, "You must leave at least %i in your own account.", minMoney);
+				}
+			}
+			else
+			{
+				chat->SendMessage(p, "Player %s has no data loaded.", t->name);
+			}
+		}
+		else
+		{
+			chat->SendMessage(p, "You have no data loaded.");
+		}
+	}
+	else //not private
+	{
+		chat->SendMessage(p, "You must target a player.");
+	}
 }
 
 local helptext_t showMoneyHelp =
@@ -147,7 +253,32 @@ local helptext_t showMoneyHelp =
 
 local void showMoneyCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	//FIXME
+	if (target->type == T_PLAYER) //private command
+	{
+		Player *t = target->u.p;
+
+		if (database->isLoaded(p))
+		{
+			if (strstr(params, "-e")) //wants exp too
+			{
+				chat->SendMessage(t, "Player %s has $%i dollars in their account, and %i experience.", p->name, getMoney(p), getExp(p));
+				chat->SendMessage(p, "Sent money and exp status to %s", t->name);
+			}
+			else //no exp
+			{
+				chat->SendMessage(t, "Player %s has $%i dollars in their account.", p->name, getMoney(p));
+				chat->SendMessage(p, "Sent money status to %s", t->name);
+			}
+		}
+		else
+		{
+			chat->SendMessage(p, "You have no data loaded.");
+		}
+	}
+	else //not private
+	{
+		chat->SendMessage(p, "You must target a player.");
+	}
 }
 
 local helptext_t showExpHelp =
@@ -157,7 +288,24 @@ local helptext_t showExpHelp =
 
 local void showExpCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	//FIXME
+	if (target->type == T_PLAYER) //private command
+	{
+		Player *t = target->u.p;
+
+		if (database->isLoaded(p))
+		{
+			chat->SendMessage(t, "Player %s has %i experience.", p->name, getExp(p));
+			chat->SendMessage(p, "Sent exp status to %s", t->name);
+		}
+		else
+		{
+			chat->SendMessage(p, "You have no data loaded.");
+		}
+	}
+	else //not private
+	{
+		chat->SendMessage(p, "You must target a player.");
+	}
 }
 
 local void giveMoney(Player *p, int amount, MoneyType type)
