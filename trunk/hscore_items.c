@@ -60,7 +60,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 	int force = 0;
 	int quiet = 0;
 	int count = 1;
-	int ship = -1;
+	int ship = 0;
 	const char *itemName;
 
 	char *next; //for strtol
@@ -159,7 +159,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 		}
 		else if (*params == '\0')
 		{
-			chat->SendMessage(p, "Grantitem: bad syntax.");
+			chat->SendMessage(p, "Grantitem: invalid usage.");
 			return;
 		}
 		else
@@ -169,7 +169,122 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 		}
 	}
 
-	chat->SendMessage(p, "Grantitem: item: %s, force: %i, quiet: %i, count: %i, ship: %i", itemName, force, quiet, count, ship);
+	//finished parsing
+
+	//set ship from 0-7
+	if (ship == 0)
+	{
+		ship = -1;
+	}
+	else
+	{
+		ship--; //warbird is 0, not 1
+	}
+
+	//verify ship
+	if (ship < 0 || 7 < ship)
+	{
+		chat->SendMessage(p, "Grantitem: Ship out of range. Please choose a ship from 1 to 8.");
+		return;
+	}
+
+	//verify count
+	if (count == 0)
+	{
+		chat->SendMessage(p, "Grantitem: Bad count.");
+		return;
+	}
+
+	//verify item
+	Item *item = getItemByName(itemName, p->arena);
+	if (item == NULL)
+	{
+		chat->SendMessage(p, "Grantitem: No item %s in this arena.", itemName);
+		return;
+	}
+
+	if (target->type == T_PLAYER) //private command
+	{
+		Player *t = target->u.p;
+
+		if (!force)
+		{
+			if (database->areShipsLoaded(t))
+			{
+				if (ship == -1)
+				{
+					addItem(t, item, t->p_ship, count);
+				}
+				else
+				{
+					addItem(t, item, ship, count);
+				}
+
+				if (!quiet)
+				{
+					chat->SendMessage(t, "You were granted %i of item %s.", count, item->name);
+					chat->SendMessage(p, "You granted %i of item %s to player %s", count, item->name, t->name);
+				}
+				else
+				{
+					chat->SendMessage(p, "You quietly granted %i of item %s to player %s", count, item->name, t->name);
+				}
+			}
+			else
+			{
+				chat->SendMessage(p, "Player %s has no ships loaded.", t->name);
+			}
+		}
+		else
+		{
+			chat->SendMessage(p, "Whoa there, bud. The -f is only for arena and freq messages.");
+		}
+	}
+	else //not private
+	{
+		if (force)
+		{
+			LinkedList set = LL_INITIALIZER;
+			Link *link;
+			pd->TargetToSet(target, &set);
+
+			for (link = LLGetHead(&set); link; link = link->next)
+			{
+				Player *t = link->data;
+
+				if (database->areShipsLoaded(t))
+				{
+					if (ship == -1)
+					{
+						addItem(t, item, t->p_ship, count);
+					}
+					else
+					{
+						addItem(t, item, ship, count);
+					}
+
+					if (!quiet)
+					{
+						chat->SendMessage(t, "You were granted %i of item %s.", count, item->name);
+					}
+				}
+				else
+				{
+					chat->SendMessage(p, "Player %s has no ships loaded.", t->name);
+				}
+			}
+
+			int playerCount = LLCount(&set);
+
+			LLEmpty(&set);
+
+			chat->SendMessage(p, "You gave %i of item %s to %i players.", count, item->name, playerCount);
+		}
+		else
+		{
+			chat->SendMessage(p, "For typo safety, the -f must be specified for arena and freq targets.");
+		}
+	}
 }
 
 local int getItemCount(Player *p, Item *item, int ship)
