@@ -261,7 +261,7 @@ local void allocatePlayerCallback(Player *p, int allocating)
 {
 	if (allocating) //player is being allocated
 	{
-		InitPlayerData(p);
+		InitPerPlayerData(p);
 	}
 	else //p is being deallocated
 	{
@@ -323,16 +323,16 @@ local void arenaActionCallback(Arena *arena, int action)
 		InitPerArenaData(arena);
 
 		//in no special order...
-		LoadStores(arena);
-		LoadCategories(arena);
+		LoadStoreList(arena);
+		LoadCategoryList(arena);
 	}
 	else if (action == AA_DESTROY)
 	{
 		//arena is being destroyed
 
 		//in no special order...
-		UnloadStores(arena);
-		UnloadCategories(arena);
+		UnloadStoreList(arena);
+		UnloadCategoryList(arena);
 
 		//no need to deallocate the lists, as they weren't allocated
 	}
