@@ -268,7 +268,6 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 						else
 						{
 							chat->SendMessage(p, "Player %s is in spec.", t->name);
-							return;
 						}
 					}
 					else
