@@ -38,7 +38,32 @@ local void printAllCategories(Player *p)
 
 local void printCategoryItems(Player *p, Category *category)
 {
-	chat->SendMessage(p, "<print category items in %s>", category->name);
+	Link link;
+
+	chat->SendMessage(p, "+----------------------------------+");
+	chat->SendMessage(p, "| %-32s |", category->name);
+	chat->SendMessage(p, "+------------------+-----------+---+--------+--------+----------+----------------------------------+");
+	chat->SendMessage(p, "| Item Name        | Buy Price | Sell Price | Exp    | Ships    | Item Description                 |");
+	chat->SendMessage(p, "+------------------+-----------+------------+--------+----------+----------------------------------+");
+
+	for (link = LLGetHead(&category->itemList); link; link = link->next)
+	{
+		Item *item = link->data;
+
+		char shipMask[] = "12345678";
+
+		for (int i = 0; i < 8; i++)
+		{
+			if ((item->shipsAllowed >> i) & 0x1)
+			{
+				shipMask[i] = ' ';
+			}
+		}
+
+		chat->SendMessage(p, "| %-16s | %-9i | %-10i | %-6i | %-8s | %-32s |", item->name, item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->shortDescription);
+	}
+
+	chat->SendMessage(p, "+------------------+-----------+------------+--------+----------+----------------------------------+");
 }
 
 local void printShipList(Player *p)
