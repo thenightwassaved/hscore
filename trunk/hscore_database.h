@@ -19,8 +19,8 @@ typedef struct PlayerData
 
 typedef struct ArenaData
 {
-	LinkedList *arenaList;
-	LinkedList *categoryList;
+	LinkedList arenaList;
+	LinkedList categoryList;
 } PlayerData;
 
 typedef struct Ihscoredatabase
