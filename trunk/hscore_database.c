@@ -160,7 +160,6 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 	if (results == 0)
 	{
 	    lm->Log(L_ERROR, "<hscore_database> No items returned from MySQL query.");
-	    return;
 	}
 
 	while ((row = mysql->GetRow(result)))
@@ -186,12 +185,6 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 		item->typeDelta2 = atoi(mysql->GetField(row, 11));			//type2_delta
 		item->delayStatusWrite = atoi(mysql->GetField(row, 12));	//delay_write
 		item->ammoID = atoi(mysql->GetField(row, 13));				//ammo
-
-
-		if (item->type1 == NULL || item->type2 == NULL)
-		{
-			lm->Log(L_ERROR, "<hscore_database> No item type matched id requested by item id %i.", item->id);
-		}
 
         //add the item type to the list
         LLAdd(&itemList, item);
@@ -223,7 +216,6 @@ local void loadItemTypesQueryCallback(int status, db_res *result, void *passedDa
 	if (results == 0)
 	{
 	    lm->Log(L_ERROR, "<hscore_database> No item types returned from MySQL query.");
-	    return;
 	}
 
 	while ((row = mysql->GetRow(result)))
