@@ -190,9 +190,9 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 			{
 				Player *t = link->data;
 
-				if (db->Loaded(t))
+				if (database->Loaded(t))
 				{
-					GiveMoney(t, amount, MONEY_TYPE_GRANT);
+					giveMoney(t, amount, MONEY_TYPE_GRANT);
 
 					if (!quiet)
 					{
