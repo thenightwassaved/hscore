@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 
 #include "asss.h"
 #include "hscore.h"
@@ -60,7 +61,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 	int quiet = 0;
 	int count = 1;
 	int ship = -1;
-	char *itemName;
+	const char *itemName;
 
 	char *next; //for strtol
 
@@ -86,7 +87,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 			if (*params == 'c')
 			{
 				params++;
-				int count = strtol(params, &next, 0);
+				count = strtol(params, &next, 0);
 
 				if (next == params)
 				{
@@ -99,7 +100,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 			if (*params == 's')
 			{
 				params++;
-				int ship = strtol(params, &next, 0);
+				ship = strtol(params, &next, 0);
 
 				if (next == params)
 				{
