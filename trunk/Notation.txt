@@ -14,6 +14,8 @@
 
     typedef struct Iprefixname
     {
+        INTERFACE_HEAD_DECL
+
         int (*memberFunction)(int parameterOne, int parameterTwo);
     } Iprefixname;
 
