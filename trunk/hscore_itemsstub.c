@@ -64,7 +64,7 @@ local void triggerEvent(Player *p, int ship, const char *event)
 	if (event == NULL)
 	{
 		lm->LogP(L_ERROR, "hscore_itemsstub", p, "asked to trigger event with NULL string.");
-		return 0;
+		return;
 	}
 
 	chat->SendMessage(p, "triggered event %s!", event);
@@ -108,9 +108,6 @@ EXPORT int MM_hscore_itemsstub(int action, Imodman *_mm, Arena *arena)
 		}
 
 		mm->RegInterface(&interface, ALLARENAS);
-
-		cmd->AddCommand("iteminfo", itemInfoCommand, ALLARENAS, itemInfoHelp);
-		cmd->AddCommand("grantitem", grantItemCommand, ALLARENAS, grantItemHelp);
 
 		return MM_OK;
 	}

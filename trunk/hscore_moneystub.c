@@ -34,6 +34,7 @@ local int getMoney(Player *p)
 local int getMoneyType(Player *p, MoneyType type)
 {
 	chat->SendMessage(p, "getMoneyType should not be used.");
+	return 0;
 }
 
 local void giveExp(Player *p, int amount)
