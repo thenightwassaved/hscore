@@ -103,7 +103,7 @@ typedef struct InventoryEntry
 
 typedef struct ShipHull
 {
-	LinkedList *inventoryEntryList
+	LinkedList *inventoryEntryList;
 
 	//NOTE: no need for ship #, as it's defined by the array index (when loaded by hscore_database)
 
