@@ -147,7 +147,7 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 				if (strcasecmp(params, shipNames[i]) == 0)
 				{
 					buyShip(p, i);
-					return
+					return;
 				}
 			}
 
