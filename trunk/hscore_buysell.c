@@ -109,7 +109,7 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 				{
 					if (item->type1 != NULL)
 					{
-						if (items->getFreeItemTypeSpots(Player *p, item->type1, int ship) - (item->typeDelta1 * count) < 0) //have no free spots
+						if (items->getFreeItemTypeSpots(p, item->type1, ship) - (item->typeDelta1 * count) < 0) //have no free spots
 						{
 							chat->SendMessage(p, "You do not have enough free %s spots.", item->type1->name);
 							return;
@@ -118,14 +118,14 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 
 					if (item->type2 != NULL)
 					{
-						if (items->getFreeItemTypeSpots(Player *p, item->type2, int ship) - (item->typeDelta2 * count) < 0) //have no free spots
+						if (items->getFreeItemTypeSpots(p, item->type2, ship) - (item->typeDelta2 * count) < 0) //have no free spots
 						{
 							chat->SendMessage(p, "You do not have enough free %s spots.", item->type2->name);
 							return;
 						}
 					}
 
-					item->addItem(p, item, ship, count);
+					items->addItem(p, item, ship, count);
 
 					money->giveMoney(p, -item->buyPrice * count, MONEY_TYPE_BUYSELL);
 
@@ -160,7 +160,7 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 	{
 		if (item->type1 != NULL)
 		{
-			if (items->getFreeItemTypeSpots(Player *p, item->type1, int ship) + item->typeDelta1 * count < 0)
+			if (items->getFreeItemTypeSpots(p, item->type1, ship) + item->typeDelta1 * count < 0)
 			{
 				chat->SendMessage(p, "You do not have enough free %s spots.", item->type1->name);
 				return;
@@ -169,14 +169,14 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 
 		if (item->type2 != NULL)
 		{
-			if (items->getFreeItemTypeSpots(Player *p, item->type2, int ship) + item->typeDelta2 * count < 0)
+			if (items->getFreeItemTypeSpots(p, item->type2, ship) + item->typeDelta2 * count < 0)
 			{
 				chat->SendMessage(p, "You do not have enough free %s spots.", item->type2->name);
 				return;
 			}
 		}
 
-		item->addItem(p, item, ship, -count);
+		items->addItem(p, item, ship, -count);
 
 		money->giveMoney(p, item->sellPrice * count, MONEY_TYPE_BUYSELL);
 
@@ -265,9 +265,17 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 			Item *item = items->getItemByName(params, p->arena);
 			if (item != NULL)
 			{
-				//check - counts
-				buyItem(p, item, 1); //FIXME
-				return;
+				if (p->p_ship != SHIP_SPEC)
+				{
+					//check - counts
+					buyItem(p, item, 1, p->p_ship);
+					return;
+				}
+				else
+				{
+					chat->SendMessage(p, "You cannot buy or sell items in spec.");
+					return;
+				}
 			}
 
 			//neither an item nor a ship nor a category
@@ -305,9 +313,17 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 		Item *item = items->getItemByName(params, p->arena);
 		if (item != NULL)
 		{
-			//check - counts
-			sellItem(p, item, 1); //FIXME
-			return;
+			if (p->p_ship != SHIP_SPEC)
+			{
+				//check - counts
+				sellItem(p, item, 1); //FIXME
+				return;
+			}
+			else
+			{
+				chat->SendMessage(p, "You cannot buy or sell items in spec.");
+				return;
+			}
 		}
 
 		//not a ship nor an item
