@@ -17,12 +17,30 @@ local Iplayerdata *pd;
 local Imainloop *ml;
 
 //local prototypes
+local PerArenaData * getPerArenaData(Arena *arena);
+local Item * getItemByID(int id);
+local ItemType * getItemTypeByID(int id);
+local const char * getArenaIdentifier(Arena *arena);
+local void LinkAmmo();
+local void loadPropertiesQueryCallback(int status, db_res *result, void *passedData);
+local void loadEventsQueryCallback(int status, db_res *result, void *passedData);
+local void loadItemsQueryCallback(int status, db_res *result, void *passedData);
+local void loadItemTypesQueryCallback(int status, db_res *result, void *passedData);
+local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *passedData);
+local void loadPlayerShipItemsQueryCallback(int status, db_res *result, void *passedData);
+local void loadPlayerShipsQueryCallback(int status, db_res *result, void *passedData);
+local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedData);
+local void loadArenaStoresQueryCallback(int status, db_res *result, void *passedData);
+local void loadCategoryItemsQueryCallback(int status, db_res *result, void *passedData);
+local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *passedData);
 local void InitPerPlayerData(Player *p);
 local void InitPerArenaData(Arena *arena);
 local void UnloadPlayerGlobals(Player *p);
+local void UnloadPlayerShip(ShipHull *ship);
 local void UnloadPlayerShips(Player *p);
 local void UnloadCategoryList(Arena *arena);
 local void UnloadStoreList(Arena *arena);
+local void UnloadItemListEnumCallback(const void *ptr);
 local void UnloadItemList();
 local void UnloadItemTypeList();
 local void UnloadAllPerArenaData();
@@ -40,6 +58,7 @@ local void LoadItemList();
 local void LoadItemTypeList();
 local void StorePlayerGlobals(Player *p);
 local void StorePlayerShips(Player *p, Arena *arena);
+local void StoreAllPerPlayerData();
 
 //interface prototypes
 local int areShipsLoaded(Player *p);
@@ -50,7 +69,7 @@ local LinkedList * getCategoryList(Arena *arena);
 local void updateItem(Player *p, int ship, Item *item, int newCount, int newData);
 local void addShip(Player *p, int ship, LinkedList *itemList);
 local void removeShip(Player *p, int ship);
-local PerPlayerData * getPerPlayerData(Player *p);
+local PerPlayerData *getPerPlayerData(Player *p);
 
 //keys
 local int playerDataKey;
