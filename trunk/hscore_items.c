@@ -10,6 +10,7 @@ local Imodman *mm;
 local Ilogman *lm;
 local Ichat *chat;
 local Icmdman *cmd;
+local Iplayerdata *pd;
 local Ihscoredatabase *database;
 
 //interface prototypes
@@ -362,13 +363,15 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 		lm = mm->GetInterface(I_LOGMAN, ALLARENAS);
 		chat = mm->GetInterface(I_CHAT, ALLARENAS);
 		cmd = mm->GetInterface(I_CMDMAN, ALLARENAS);
+		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
 
-		if (!lm || !chat || !cmd || !database)
+		if (!lm || !chat || !cmd || !pd || !database)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(chat);
 			mm->ReleaseInterface(cmd);
+			mm->ReleaseInterface(pd);
 			mm->ReleaseInterface(database);
 
 			return MM_FAIL;
@@ -394,6 +397,7 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(lm);
 		mm->ReleaseInterface(chat);
 		mm->ReleaseInterface(cmd);
+		mm->ReleaseInterface(pd);
 		mm->ReleaseInterface(database);
 
 		return MM_OK;
