@@ -353,7 +353,7 @@ local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedD
 
 	if (status != 0 || result == NULL)
 	{
-		lm->Log(L_ERROR, "<hscore_database> Unexpected database error during store item load for arena %s.", arena->name);
+		lm->LogA(L_ERROR, "hscore_database", arena, "Unexpected database error during store item load.");
 		return;
 	}
 
@@ -374,7 +374,7 @@ local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedD
 		Item *item = getItemByID(itemID);
 		if (item == NULL)
 		{
-			lm->Log(L_ERROR, "<hscore_database> item id %i not found (linked to store id %i)", itemID, storeID);
+			lm->LogA(L_ERROR, "hscore_database", arena, "item id %i not found (linked to store id %i)", itemID, storeID);
 			continue;
 		}
 
@@ -393,7 +393,7 @@ local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedD
 		//FIXME: Add error on bad storeID
 	}
 
-	lm->Log(L_DRIVEL, "<hscore_database> %i store items were loaded for arena %s from MySQL.", results, arena->name);
+	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i store items were loaded for arena %s from MySQL.", results);
 }
 
 local void loadArenaStoresQueryCallback(int status, db_res *result, void *passedData)
@@ -406,7 +406,7 @@ local void loadArenaStoresQueryCallback(int status, db_res *result, void *passed
 
 	if (status != 0 || result == NULL)
 	{
-		lm->Log(L_ERROR, "<hscore_database> Unexpected database error during store load for arena %s.", arena->name);
+		lm->LogA(L_ERROR, "hscore_database", arena, "Unexpected database error during store load.");
 		return;
 	}
 
@@ -433,7 +433,7 @@ local void loadArenaStoresQueryCallback(int status, db_res *result, void *passed
 		LLAdd(&(arenaData->storeList), store);
 	}
 
-	lm->Log(L_DRIVEL, "<hscore_database> %i stores were loaded for arena %s from MySQL.", results, arena->name);
+	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i stores were loaded from MySQL.", results);
 	LoadStoreItems(arena); //now that all the stores are in, load the items into them.
 }
 
@@ -447,7 +447,7 @@ local void loadCategoryItemsQueryCallback(int status, db_res *result, void *pass
 
 	if (status != 0 || result == NULL)
 	{
-		lm->Log(L_ERROR, "<hscore_database> Unexpected database error during category item load for arena %s.", arena->name);
+		lm->LogA(L_ERROR, "hscore_database", arena, "Unexpected database error during category item load.");
 		return;
 	}
 
@@ -468,7 +468,8 @@ local void loadCategoryItemsQueryCallback(int status, db_res *result, void *pass
 		Item *item = getItemByID(itemID);
 		if (item == NULL)
 		{
-			lm->Log(L_ERROR, "<hscore_database> item id %i not found (linked to category id %i)", itemID, categoryID);
+
+			lm->LogA(L_ERROR, "hscore_database", arena, "item id %i not found (linked to category id %i)", itemID, categoryID);
 			continue;
 		}
 
@@ -487,7 +488,7 @@ local void loadCategoryItemsQueryCallback(int status, db_res *result, void *pass
 		//FIXME: Add error on bad categoryID
 	}
 
-	lm->Log(L_DRIVEL, "<hscore_database> %i cateogry items were loaded for arena %s from MySQL.", results, arena->name);
+	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i cateogry items were loaded from MySQL.", results);
 }
 
 local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *passedData)
@@ -500,7 +501,7 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 
 	if (status != 0 || result == NULL)
 	{
-		lm->Log(L_ERROR, "<hscore_database> Unexpected database error during category load for arena %s.", arena->name);
+		lm->LogA(L_ERROR, "hscore_database", arena, "Unexpected database error during category load.");
 		return;
 	}
 
@@ -526,7 +527,7 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 		LLAdd(&(arenaData->categoryList), category);
 	}
 
-	lm->Log(L_DRIVEL, "<hscore_database> %i categories were loaded for arena %s from MySQL.", results, arena->name);
+	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i categories were loaded from MySQL.", results);
 	LoadCategoryItems(arena); //now that all the stores are in, load the items into them.
 }
 
@@ -565,12 +566,18 @@ local void InitPerArenaData(Arena *arena) //called before data is touched
 
 local void UnloadPlayerGlobals(Player *p) //called to free any allocated data
 {
-	//FIXME
+	PerPlayerData *playerData = getPerPlayerData(p);
+
+	playerData->loaded = 0; //nothing else needed
+
+	lm->LogP(L_DRIVEL, "hscore_database", p, "Freed global data.");
 }
 
 local void UnloadPlayerShips(Player *p) //called to free any allocated data
 {
 	//FIXME
+
+	lm->LogP(L_DRIVEL, "hscore_database", p, "Freed ship data.");
 }
 
 local void UnloadCategoryList(Arena *arena) //called when the arena is about to die
@@ -579,7 +586,8 @@ local void UnloadCategoryList(Arena *arena) //called when the arena is about to 
 
 	LLEnum(&(arenaData->categoryList), afree); //can simply free all the Category structs
 
-	lm->Log(L_DRIVEL, "<hscore_database> Freed %i categories for for arena %s.", LLCount(&(arenaData->categoryList)), arena->name);
+
+	lm->LogA(L_DRIVEL, "hscore_database", arena, "Freed %i categories.", LLCount(&(arenaData->categoryList)));
 
 	LLEmpty(&(arenaData->categoryList));
 }
@@ -590,7 +598,7 @@ local void UnloadStoreList(Arena *arena)
 
 	LLEnum(&(arenaData->storeList), afree); //can simply free all the Store structs
 
-	lm->Log(L_DRIVEL, "<hscore_database> Freed %i stores for for arena %s.", LLCount(&(arenaData->storeList)), arena->name);
+	lm->LogA(L_DRIVEL, "hscore_database", arena, "Freed %i stores.", LLCount(&(arenaData->storeList)));
 
 	LLEmpty(&(arenaData->storeList));
 }
