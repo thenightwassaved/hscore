@@ -520,6 +520,7 @@ EXPORT int MM_hscore_money(int action, Imodman *_mm, Arena *arena)
 		chat = mm->GetInterface(I_CHAT, ALLARENAS);
 		cfg = mm->GetInterface(I_CONFIG, ALLARENAS);
 		cmd = mm->GetInterface(I_CMDMAN, ALLARENAS);
+		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
 
 		if (!lm || !chat || !cfg || !cmd || !pd || !database)
