@@ -24,7 +24,40 @@ local helptext_t storeInfoHelp =
 
 local void storeInfoCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	//FIXME
+	Link *link;
+	if (strcasecmp(params, "") == 0)
+	{
+		//print store list
+
+		chat->SendMessage(p, "+----------------------------------+");
+		chat->SendMessage(p, "| Stores                           |");
+		chat->SendMessage(p, "+----------------------------------+");
+
+		for (link = LLGetHead(database->getStoreList(p->arena)); link; link = link->next)
+		{
+			Store *store = link->data;
+
+			chat->SendMessage(p, "| %-32s |", store->name);
+		}
+
+		chat->SendMessage(p, "+----------------------------------+");
+	}
+	else
+	{
+		for (link = LLGetHead(database->getStoreList(p->arena)); link; link = link->next)
+		{
+			Store *store = link->data;
+
+			if (strcasecmp(params, store->name) == 0)
+			{
+				chat->SendMessage(p, "FIXME: Info on store %s", store->name);
+				return;
+			}
+		}
+
+		//didn't find it
+		chat->SendMessage(p, "No stored named %s in this arena.", params);
+	}
 }
 
 local int canBuyItem(Player *p, Item *item)
