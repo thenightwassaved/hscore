@@ -138,7 +138,7 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 				char *type1, *type2;
 				if (item->type1 == NULL)
 				{
-					type1 = "<None>"
+					type1 = "<None>";
 				}
 				else
 				{
@@ -147,7 +147,7 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 
 				if (item->type2 == NULL)
 				{
-					type2 = "<None>"
+					type2 = "<None>";
 				}
 				else
 				{
