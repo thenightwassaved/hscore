@@ -243,7 +243,7 @@ local void buyShip(Player *p, int ship)
 	}
 	else
 	{
-		chat->SendMessage(p, "Ship %s is not avalible for sale in this arena.", shipNames[ship]);
+		chat->SendMessage(p, "%ss are not avalible for sale in this arena.", shipNames[ship]);
 	}
 }
 
@@ -333,7 +333,6 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 					{
 						//check - counts
 						buyItem(p, item, 1, p->p_ship);
-						return;
 					}
 					else
 					{
@@ -343,8 +342,9 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 				else
 				{
 					chat->SendMessage(p, "You cannot buy or sell items in spec.");
-					return;
 				}
+
+				return;
 			}
 
 			//neither an item nor a ship nor a category
@@ -373,7 +373,15 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 		{
 			if (strcasecmp(params, shipNames[i]) == 0)
 			{
-				sellShip(p, i);
+				if (i != p->p_ship)
+				{
+					sellShip(p, i);
+				}
+				else
+				{
+					chat->SendMessage(p, "You cannot sell the ship you are using. Switch to spec first.");
+				}
+
 				return;
 			}
 		}
@@ -389,7 +397,6 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 				{
 					//check - counts
 					sellItem(p, item, 1, p->p_ship);
-					return;
 				}
 				else
 				{
@@ -399,8 +406,9 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 			else
 			{
 				chat->SendMessage(p, "You cannot buy or sell items in spec.");
-				return;
 			}
+
+			return;
 		}
 
 		//not a ship nor an item
