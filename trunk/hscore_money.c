@@ -239,7 +239,140 @@ local helptext_t grantExpHelp =
 
 local void grantExpCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	//FIXME
+	int force = 0;
+	int quiet = 0;
+	char *next;
+	char *message;
+
+	while (params != NULL) //get the flags
+	{
+		if (strncmp(params, "-f", 2) == 0)
+		{
+			force = 1;
+		}
+		else if (strncmp(params, "-q", 2) == 0)
+		{
+			quiet = 1;
+		}
+		else
+		{
+			break;
+		}
+
+		params = strchr(params, ' ');
+		if (params) //check so that params can still == NULL
+		{
+			params++; //we want *after* the space
+		}
+	}
+
+	if (params == NULL)
+	{
+		chat->SendMessage(p, "Grantexp: invalid usage.");
+		return;
+	}
+
+	int amount = strtol(params, &next, 0);
+
+	if (next == params)
+	{
+		chat->SendMessage(p, "Grantexp: bad amount.");
+		return;
+	}
+
+	while (*next == ' ') next++; //remove whitespace before the message
+
+	message = next;
+	if (message[0] == '\0')
+	{
+		message = NULL;
+	}
+
+	//all the parsing is now complete
+
+	if (target->type == T_PLAYER) //private command
+	{
+		Player *t = target->u.p;
+
+		if (!force)
+		{
+			if (database->isLoaded(t))
+			{
+				giveExp(t, amount);
+
+				if (quiet)
+				{
+					chat->SendMessage(p, "Quietly granted player %s %i exp.", t->name, amount);
+				}
+				else
+				{
+					if (message == NULL)
+					{
+						chat->SendMessage(t, "You were granted %i exp.", amount);
+					}
+					else
+					{
+						chat->SendMessage(t, "You were granted %i exp %s", amount, message);
+					}
+
+					chat->SendMessage(p, "Granted player %s %i exp.", t->name, amount);
+				}
+			}
+			else
+			{
+				chat->SendMessage(p, "Player %s has no data loaded.", t->name);
+			}
+		}
+		else
+		{
+			chat->SendMessage(p, "Whoa there, bud. The -f is only for arena and freq messages.");
+		}
+	}
+	else //not private
+	{
+		if (force)
+		{
+			LinkedList set = LL_INITIALIZER;
+			Link *link;
+			pd->TargetToSet(target, &set);
+
+			for (link = LLGetHead(&set); link; link = link->next)
+			{
+				Player *t = link->data;
+
+				if (database->isLoaded(t))
+				{
+					giveExp(t, amount);
+
+					if (!quiet)
+					{
+						if (message == NULL)
+						{
+							chat->SendMessage(t, "You were granted %i exp.", amount);
+						}
+						else
+						{
+							chat->SendMessage(t, "You were granted %i exp %s", amount, message);
+						}
+					}
+				}
+				else
+				{
+					chat->SendMessage(p, "Player %s has no data loaded.", t->name);
+				}
+			}
+
+			int count = LLCount(&set);
+
+			LLEmpty(&set);
+
+			chat->SendMessage(p, "You granted %i exp to %i players.", amount, count);
+		}
+		else
+		{
+			chat->SendMessage(p, "For typo safety, the -f must be specified for arena and freq targets.");
+		}
+	}
 }
 
 local helptext_t setMoneyHelp =
@@ -252,7 +385,140 @@ local helptext_t setMoneyHelp =
 
 local void setMoneyCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	//FIXME
+	int force = 0;
+	int quiet = 0;
+	char *next;
+	char *message;
+
+	while (params != NULL) //get the flags
+	{
+		if (strncmp(params, "-f", 2) == 0)
+		{
+			force = 1;
+		}
+		else if (strncmp(params, "-q", 2) == 0)
+		{
+			quiet = 1;
+		}
+		else
+		{
+			break;
+		}
+
+		params = strchr(params, ' ');
+		if (params) //check so that params can still == NULL
+		{
+			params++; //we want *after* the space
+		}
+	}
+
+	if (params == NULL)
+	{
+		chat->SendMessage(p, "Grantexp: invalid usage.");
+		return;
+	}
+
+	int amount = strtol(params, &next, 0);
+
+	if (next == params)
+	{
+		chat->SendMessage(p, "Grantexp: bad amount.");
+		return;
+	}
+
+	while (*next == ' ') next++; //remove whitespace before the message
+
+	message = next;
+	if (message[0] == '\0')
+	{
+		message = NULL;
+	}
+
+	//all the parsing is now complete
+
+	if (target->type == T_PLAYER) //private command
+	{
+		Player *t = target->u.p;
+
+		if (!force)
+		{
+			if (database->isLoaded(t))
+			{
+				setMoney(t, amount, MONEY_TYPE_GRANT);
+
+				if (quiet)
+				{
+					chat->SendMessage(p, "Quietly set player %s's money to $%i.", t->name, amount);
+				}
+				else
+				{
+					if (message == NULL)
+					{
+						chat->SendMessage(t, "Your money was set to $%i.", amount);
+					}
+					else
+					{
+						chat->SendMessage(t, "Your money was set to $%i %s", amount, message);
+					}
+
+					chat->SendMessage(p, "Set player %s's money to $%i.", t->name, amount);
+				}
+			}
+			else
+			{
+				chat->SendMessage(p, "Player %s has no data loaded.", t->name);
+			}
+		}
+		else
+		{
+			chat->SendMessage(p, "Whoa there, bud. The -f is only for arena and freq messages.");
+		}
+	}
+	else //not private
+	{
+		if (force)
+		{
+			LinkedList set = LL_INITIALIZER;
+			Link *link;
+			pd->TargetToSet(target, &set);
+
+			for (link = LLGetHead(&set); link; link = link->next)
+			{
+				Player *t = link->data;
+
+				if (database->isLoaded(t))
+				{
+					setMoney(t, amount, MONEY_TYPE_GRANT);
+
+					if (!quiet)
+					{
+						if (message == NULL)
+						{
+							chat->SendMessage(t, "Your money was set to $%i.", amount);
+						}
+						else
+						{
+							chat->SendMessage(t, "Your money was set to $%i %s", amount, message);
+						}
+					}
+				}
+				else
+				{
+					chat->SendMessage(p, "Player %s has no data loaded.", t->name);
+				}
+			}
+
+			int count = LLCount(&set);
+
+			LLEmpty(&set);
+
+			chat->SendMessage(p, "You set %i players money to $%i.", count, amount);
+		}
+		else
+		{
+			chat->SendMessage(p, "For typo safety, the -f must be specified for arena and freq targets.");
+		}
+	}
 }
 
 local helptext_t setExpHelp =
@@ -265,7 +531,140 @@ local helptext_t setExpHelp =
 
 local void setExpCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	//FIXME
+	int force = 0;
+	int quiet = 0;
+	char *next;
+	char *message;
+
+	while (params != NULL) //get the flags
+	{
+		if (strncmp(params, "-f", 2) == 0)
+		{
+			force = 1;
+		}
+		else if (strncmp(params, "-q", 2) == 0)
+		{
+			quiet = 1;
+		}
+		else
+		{
+			break;
+		}
+
+		params = strchr(params, ' ');
+		if (params) //check so that params can still == NULL
+		{
+			params++; //we want *after* the space
+		}
+	}
+
+	if (params == NULL)
+	{
+		chat->SendMessage(p, "Grantexp: invalid usage.");
+		return;
+	}
+
+	int amount = strtol(params, &next, 0);
+
+	if (next == params)
+	{
+		chat->SendMessage(p, "Grantexp: bad amount.");
+		return;
+	}
+
+	while (*next == ' ') next++; //remove whitespace before the message
+
+	message = next;
+	if (message[0] == '\0')
+	{
+		message = NULL;
+	}
+
+	//all the parsing is now complete
+
+	if (target->type == T_PLAYER) //private command
+	{
+		Player *t = target->u.p;
+
+		if (!force)
+		{
+			if (database->isLoaded(t))
+			{
+				setExp(t, amount);
+
+				if (quiet)
+				{
+					chat->SendMessage(p, "Quietly set player %s's exp to %i.", t->name, amount);
+				}
+				else
+				{
+					if (message == NULL)
+					{
+						chat->SendMessage(t, "Your exp was set to %i.", amount);
+					}
+					else
+					{
+						chat->SendMessage(t, "Your exp was set to %i %s", amount, message);
+					}
+
+					chat->SendMessage(p, "Set player %s's exp to %i.", t->name, amount);
+				}
+			}
+			else
+			{
+				chat->SendMessage(p, "Player %s has no data loaded.", t->name);
+			}
+		}
+		else
+		{
+			chat->SendMessage(p, "Whoa there, bud. The -f is only for arena and freq messages.");
+		}
+	}
+	else //not private
+	{
+		if (force)
+		{
+			LinkedList set = LL_INITIALIZER;
+			Link *link;
+			pd->TargetToSet(target, &set);
+
+			for (link = LLGetHead(&set); link; link = link->next)
+			{
+				Player *t = link->data;
+
+				if (database->isLoaded(t))
+				{
+					setExp(t, amount);
+
+					if (!quiet)
+					{
+						if (message == NULL)
+						{
+							chat->SendMessage(t, "Your exp was set to %i.", amount);
+						}
+						else
+						{
+							chat->SendMessage(t, "Your exp was set to %i %s", amount, message);
+						}
+					}
+				}
+				else
+				{
+					chat->SendMessage(p, "Player %s has no data loaded.", t->name);
+				}
+			}
+
+			int count = LLCount(&set);
+
+			LLEmpty(&set);
+
+			chat->SendMessage(p, "You set %i players exp to %i.", count, amount);
+		}
+		else
+		{
+			chat->SendMessage(p, "For typo safety, the -f must be specified for arena and freq targets.");
+		}
+	}
 }
 
 local helptext_t giveHelp =
