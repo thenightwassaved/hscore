@@ -35,8 +35,8 @@ typedef struct Ihscoredatabase
 	LinkedList * (*getStoreList)(Arena *arena);
 	LinkedList * (*getCategoryList)(Arena *arena);
 
-	void lock();
-	void unlock();
+	void (*lock)();
+	void (*unlock)();
 
 	//call whenever you want an item to be written back into SQL
 	//a newCount of 0 will delete the item from the database
