@@ -56,42 +56,42 @@ local PerPlayerData *getPerPlayerData(Player *p)
 
 local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 {
-
+	//FIXME
 }
 
 local void loadPropertiesQueryCallback(int status, db_res *result, void *passedData)
 {
-
+	//FIXME
 }
 
 local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 {
-
+	//FIXME
 }
 
 local void loadItemTypesQueryCallback(int status, db_res *result, void *passedData)
 {
-
+	//FIXME
 }
 
 local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *passedData)
 {
-
+	//FIXME
 }
 
 local void loadPlayerShipsQueryCallback(int status, db_res *result, void *passedData)
 {
-
+	//FIXME
 }
 
 local void loadArenaStoresQueryCallback(int status, db_res *result, void *passedData)
 {
-
+	//FIXME
 }
 
 local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *passedData)
 {
-
+	//FIXME
 }
 
 //+------------------+
@@ -129,37 +129,32 @@ local void InitPerArenaData(Arena *arena) //called before data is touched
 
 local void UnloadPlayerGlobals(Player *p) //called to free any allocated data
 {
-
+	//FIXME
 }
 
 local void UnloadPlayerShips(Player *p) //called to free any allocated data
 {
-
-}
-
-local void UnloadArenaData(Arena *arena) //called when the arena is about to die
-{
-
+	//FIXME
 }
 
 local void UnloadCategoryList(Arena *arena) //called when the arena is about to die
 {
-
+	//FIXME
 }
 
 local void UnloadStoreList(Arena *arena)
 {
-
+	//FIXME
 }
 
 local void UnloadItemList()
 {
-
+	//FIXME
 }
 
 local void UnloadItemTypeList()
 {
-
+	//FIXME
 }
 
 //+------------------+
@@ -170,42 +165,42 @@ local void UnloadItemTypeList()
 
 local void LoadPlayerGlobals(Player *p) //fetch globals from MySQL
 {
-
+	//FIXME
 }
 
 local void LoadPlayerShips(Player *p, Arena *arena) //fetch globals from MySQL
 {
-
+	//FIXME
 }
 
 local void LoadCategoryList(Arena *arena)
 {
-
+	//FIXME
 }
 
 local void LoadStoreList(Arena *arena)
 {
-
+	//FIXME
 }
 
 local void LoadEvents()
 {
-
+	//FIXME
 }
 
 local void LoadProperties()
 {
-
+	//FIXME
 }
 
 local void LoadItemList() //will call LoadProperties() and LoadEvents() when finished
 {
-
+	//FIXME
 }
 
 local void LoadItemTypeList() //will call LoadItemList() when finished loading
 {
-
+	//FIXME
 }
 
 //+-------------------+
@@ -216,12 +211,12 @@ local void LoadItemTypeList() //will call LoadItemList() when finished loading
 
 local void StorePlayerGlobals(Player *p) //store player globals. MUST FINISH IN ONE QUERY
 {
-
+	//FIXME
 }
 
 local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST FINISH IN ONE QUERY
 {
-
+	//FIXME
 }
 
 //+---------------------+
@@ -238,7 +233,7 @@ local helptext_t reloadItemsHelp =
 
 local void reloadItemsCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-
+	//FIXME
 }
 
 local helptext_t storeAllHelp =
@@ -248,7 +243,7 @@ local helptext_t storeAllHelp =
 
 local void storeAllCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-
+	//FIXME
 }
 
 //+----------------------+
@@ -379,12 +374,12 @@ local LinkedList * getCategoryList(Arena *arena)
 
 local void addShip(Player *p, int ship, LinkedList *itemList)
 {
-
+	//FIXME
 }
 
 local void removeShip(Player *p, int ship)
 {
-
+	//FIXME
 }
 
 //getPerPlayerData declared elsewhere
@@ -472,8 +467,8 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 		mm->UnregCallback(CB_PLAYERACTION, playerActionCallback, ALLARENAS);
 		mm->UnregCallback(CB_ARENAACTION, arenaActionCallback, ALLARENAS);
 
+		//FIXME
 		//save and unload all player data
-
 		//unload all arena data (stores and categories)
 
 		UnloadItemList();

@@ -1,6 +1,7 @@
 #include "asss.h"
 #include "hscore.h"
 #include "hscore_database.h"
+#include "hscore_shipnames.h"
 
 //modules
 local Imodman *mm;
@@ -17,7 +18,57 @@ local helptext_t shipsHelp =
 
 local void shipsCommand(const char *command, const char *params, Player *p, const Target *target)
 {
+	Player *t = (target->type == T_PLAYER) ? target->u.p : p;
 
+	if (database->areShipsLoaded(t))
+	{
+		PerPlayerData *playerData = database->getPerPlayerData(t);
+
+		char unowned[] = " ";
+		char unaval[] = "Unaval";
+		char *status[8];
+
+		//+---------+---------+--------+-----------+---------+--------+-----------+--------+
+		//| Warbird | Javelin | Spider | Leviathan | Terrier | Weasel | Lancaster | Shark  |
+		//+---------+---------+--------+-----------+---------+--------+-----------+--------+
+
+
+		for (int i = 0; i < 8; i++)
+		{
+			if (playerData->hull[i] != NULL)
+			{
+				status[i] = shipNames[i];
+			}
+			else
+			{
+				if (cfg->GetInt(p->arena->cfg, shipNames[i], "BuyPrice", 0) == 0)
+				{
+					//not for sale
+					status[i] = unaval;
+				}
+				else
+				{
+					//unowned
+					status[i] = unowned;
+				}
+			}
+		}
+
+		chat->SendMessage(p, "+---------+---------+--------+-----------+---------+--------+-----------+-------+");
+		chat->SendMessage(p, "| %-7s | %-7s | %-6s | %-9s | %-7s | %-6s | %-9s | %-6s |", status[0], status[1], status[2], status[3], status[4], status[5], status[6], status[7]);
+		chat->SendMessage(p, "+---------+---------+--------+-----------+---------+--------+-----------+-------+");
+	}
+	else
+	{
+		else if (p == t)
+		{
+			chat->SendMessage(p, "No ships loaded.");
+		}
+		else
+		{
+			chat->SendMessage(p, "No ships loaded for %s.", t->name);
+		}
+	}
 }
 
 local helptext_t shipStatusHelp =
@@ -29,6 +80,7 @@ local helptext_t shipStatusHelp =
 local void shipStatusCommand(const char *command, const char *params, Player *p, const Target *target)
 {
 	//note, watch out for speccers not passing in a ship number. Could easily cause an array bounds error
+	//FIXME
 }
 
 EXPORT int MM_hscore_commands(int action, Imodman *_mm, Arena *arena)

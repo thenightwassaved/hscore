@@ -27,7 +27,7 @@ local helptext_t moneyHelp =
 
 local void moneyCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-
+	//FIXME
 }
 
 local helptext_t grantHelp =
@@ -38,7 +38,7 @@ local helptext_t grantHelp =
 
 local void grantCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-
+	//FIXME
 }
 
 local helptext_t grantExpHelp =
@@ -49,7 +49,7 @@ local helptext_t grantExpHelp =
 
 local void grantExpCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-
+	//FIXME
 }
 
 local helptext_t setMoneyHelp =
@@ -61,7 +61,7 @@ local helptext_t setMoneyHelp =
 
 local void setMoneyCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-
+	//FIXME
 }
 
 local helptext_t setExpHelp =
@@ -73,7 +73,7 @@ local helptext_t setExpHelp =
 
 local void setExpCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-
+	//FIXME
 }
 
 local helptext_t giveHelp =
@@ -85,7 +85,7 @@ local helptext_t giveHelp =
 
 local void giveCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-
+	//FIXME
 }
 
 local helptext_t showMoneyHelp =
@@ -96,7 +96,7 @@ local helptext_t showMoneyHelp =
 
 local void showMoneyCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-
+	//FIXME
 }
 
 local helptext_t showExpHelp =
@@ -106,12 +106,22 @@ local helptext_t showExpHelp =
 
 local void showExpCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-
+	//FIXME
 }
 
 local void giveMoney(Player *p, int amount, MoneyType type)
 {
+	if (database->isLoaded(p))
+	{
+		PerPlayerData *playerData = database->getPerPlayerData(p);
 
+		playerData->money += amount;
+		playerData->moneyType[type] += amount;
+	}
+	else
+	{
+		lm->LogP(L_WARN, "hscore_money", p, "tried to give money for unloaded player.");
+	}
 }
 
 local void setMoney(Player *p, int amount, MoneyType type)
@@ -121,17 +131,48 @@ local void setMoney(Player *p, int amount, MoneyType type)
 
 local int getMoney(Player *p)
 {
+	if (database->isLoaded(p))
+	{
+		PerPlayerData *playerData = database->getPerPlayerData(p);
 
+		return playerData->money;
+	}
+	else
+	{
+		lm->LogP(L_WARN, "hscore_money", p, "tried to get money for unloaded player; returning 0.");
+
+		return 0;
+	}
 }
 
 local int getMoneyType(Player *p, MoneyType type)
 {
+	if (database->isLoaded(p))
+	{
+		PerPlayerData *playerData = database->getPerPlayerData(p);
 
+		return playerData->moneyType[type];
+	}
+	else
+	{
+		lm->LogP(L_WARN, "hscore_money", p, "tried to get money type for unloaded player; returning 0.");
+
+		return 0;
+	}
 }
 
 local void giveExp(Player *p, int amount)
 {
+	if (database->isLoaded(p))
+	{
+		PerPlayerData *playerData = database->getPerPlayerData(p);
 
+		playerData->exp += amount;
+	}
+	else
+	{
+		lm->LogP(L_WARN, "hscore_money", p, "tried to give exp for unloaded player.");
+	}
 }
 
 local void setExp(Player *p, int amount)
@@ -141,7 +182,18 @@ local void setExp(Player *p, int amount)
 
 local int getExp(Player *p)
 {
+	if (database->isLoaded(p))
+	{
+		PerPlayerData *playerData = database->getPerPlayerData(p);
 
+		return playerData->exp;
+	}
+	else
+	{
+		lm->LogP(L_WARN, "hscore_money", p, "tried to get exp for unloaded player; returning 0.");
+
+		return 0;
+	}
 }
 
 local Ihscoremoney interface =
