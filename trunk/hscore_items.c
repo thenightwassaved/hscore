@@ -20,6 +20,7 @@ local void addItem(Player *p, Item *item, int ship, int amount);
 local Item * getItemByName(const char *name, Arena *arena);
 local int getPropertySum(Player *p, int ship, const char *prop);
 local void triggerEvent(Player *p, int ship, const char *event);
+local void triggerEventOnItem(Player *p, Item *item, int ship, const char *event);
 local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship);
 
 
@@ -492,6 +493,11 @@ local void triggerEvent(Player *p, int ship, const char *event)
 	//FIXME
 }
 
+local void triggerEventOnItem(Player *p, Item *item, int ship, const char *event)
+{
+	//FIXME
+}
+
 local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship)
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
@@ -547,7 +553,7 @@ local Ihscoreitems interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_ITEMS, "hscore_items")
 	getItemCount, addItem, getItemByName, getPropertySum,
-	triggerEvent, getFreeItemTypeSpots,
+	triggerEvent, triggerEventOnItem, getFreeItemTypeSpots,
 };
 
 EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)

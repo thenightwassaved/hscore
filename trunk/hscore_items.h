@@ -15,6 +15,7 @@ typedef struct Ihscoreitems
 	int (*getPropertySum)(Player *p, int ship, const char *prop); //properties ARE case sensitive
 
 	void (*triggerEvent)(Player *p, int ship, const char *event);
+	void (*triggerEventOnItem)(Player *p, Item *item, int ship, const char *event);
 
 	int (*getFreeItemTypeSpots)(Player *p, ItemType *type, int ship);
 
