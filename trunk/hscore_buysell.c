@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "asss.h"
 #include "hscore.h"
 #include "hscore_storeman.h"
@@ -73,7 +75,7 @@ local helptext_t buyHelp =
 
 local void buyCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	LinkedList *categoryList = database->getCategoryList(player->arena);
+	LinkedList *categoryList = database->getCategoryList(p->arena);
 	Link link;
 
 	if (strcasecmp(params, "") == 0) //no params
