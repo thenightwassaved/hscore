@@ -38,7 +38,7 @@ local void printAllCategories(Player *p)
 
 local void printCategoryItems(Player *p, Category *category)
 {
-	Link link;
+	Link *link;
 
 	chat->SendMessage(p, "+----------------------------------+");
 	chat->SendMessage(p, "| %-32s |", category->name);
