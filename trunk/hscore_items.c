@@ -4,6 +4,7 @@
 #include "asss.h"
 #include "hscore.h"
 #include "hscore_database.h"
+#include "hscore_shipnames.h"
 
 //modules
 local Imodman *mm;
@@ -173,17 +174,10 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 	//finished parsing
 
 	//set ship from 0-7
-	if (ship == 0)
-	{
-		ship = -1;
-	}
-	else
-	{
-		ship--; //warbird is 0, not 1
-	}
+	ship--;
 
 	//verify ship
-	if (ship < 0 || 7 < ship)
+	if (ship == -1 || ship < 0 || 7 < ship)
 	{
 		chat->SendMessage(p, "Grantitem: Ship out of range. Please choose a ship from 1 to 8.");
 		return;
@@ -223,7 +217,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 
 				if (!quiet)
 				{
-					chat->SendMessage(t, "You were granted %i of item %s.", count, item->name);
+					chat->SendMessage(t, "You were granted %i of item %s on your %s.", count, item->name, shipNames[ship]);
 					chat->SendMessage(p, "You granted %i of item %s to player %s", count, item->name, t->name);
 				}
 				else
@@ -266,7 +260,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 
 					if (!quiet)
 					{
-						chat->SendMessage(t, "You were granted %i of item %s.", count, item->name);
+						chat->SendMessage(t, "You were granted %i of item %s on your %s.", count, item->name, shipNames[ship]);
 					}
 				}
 				else
