@@ -93,32 +93,61 @@ local helptext_t grantHelp =
 
 local void grantCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-    char *next;
-    int amount = strtol(params, &next, 0); //get the amount of money to give
+	int force = 0;
+	int quiet = 0;
+	char *next;
+	char *message;
 
-	if (next != params) //good value
+	while (1) //get the flags
 	{
-		if (target->type == T_PLAYER) //private command
+		if (strncmp(params, "-f", 2) == 0)
 		{
-			Player *t = target->u.p;
-
-			if (database->isLoaded(t))
-			{
-				//FIXME
-			}
-			else
-			{
-				chat->SendMessage(p, "Player %s has no data loaded.", t->name);
-			}
+			force = 1;
 		}
-		else //not private
+		else if (strncmp(params, "-q", 2) == 0)
 		{
-			chat->SendMessage(p, "Not implemented yet.");
+			quiet = 1;
+		}
+		else
+		{
+			break;
+		}
+
+		params = strchr(params, ' ') + 1;
+	}
+
+	int amount = strtol(params, &next, 0);
+
+	if (next == params)
+	{
+		chat->SendMessage(p, "Grant: bad amount.");
+		return;
+	}
+
+	while (*next == ',' || *next == ' ') next++; //remove whitespace before the message
+
+	message = next;
+	if (message[0] == '\0')
+	{
+		message = NULL;
+	}
+
+	if (target->type == T_PLAYER) //private command
+	{
+		Player *t = target->u.p;
+
+		if (database->isLoaded(t))
+		{
+			chat->SendMessage(p, "Force: %i, Quiet: %i, Player: %s, Amount %i, Message: %s", force, quiet, t->name, amount, message);
+		}
+		else
+		{
+			chat->SendMessage(p, "Player %s has no data loaded.", t->name);
 		}
 	}
-	else
+	else //not private
 	{
-		chat->SendMessage(p, "Error: bad amount.");
+		chat->SendMessage(p, "Not implemented yet.");
 	}
 }
 
@@ -201,9 +230,9 @@ local void giveCommand(const char *command, const char *params, Player *p, const
 
 	            if (getMoney(p) - amount >= minMoney)
 	            {
-					if (amount < maxGive)
+					if (amount <= maxGive)
 					{
-						if (amount > minGive)
+						if (amount >= minGive)
 						{
 							giveMoney(t, amount, MONEY_TYPE_GIVE);
 							giveMoney(p, -amount, MONEY_TYPE_GIVE);
@@ -214,7 +243,7 @@ local void giveCommand(const char *command, const char *params, Player *p, const
 							}
 							else
 							{
-								chat->SendMessage(t, "Player %s gave you $%i. Message:\"%s\"", p->name, amount, message);
+								chat->SendMessage(t, "Player %s gave you $%i. Message: \"%s\"", p->name, amount, message);
 							}
 
 							chat->SendMessage(p, "You gave %s $%i.", t->name, amount);
