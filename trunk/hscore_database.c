@@ -218,6 +218,7 @@ local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 	}
 
 	lm->Log(L_DRIVEL, "<hscore_database> %i events were loaded from MySQL.", results);
+}
 
 local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 {
