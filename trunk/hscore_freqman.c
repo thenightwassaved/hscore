@@ -75,12 +75,12 @@ local int count_freq(Arena *arena, int freq, Player *excl, int inclspec)
 }
 
 
-local int FindLegalShip(Arena *arena, int freq, int ship)
+local int FindLegalShip(Player *p, int freq, int ship)
 {
 	/* cfghelp: Team:FrequencyShipTypes, arena, bool, def: 0
 	 * If this is set, freq 0 will only be allowed to use warbirds, freq
 	 * 1 can only use javelins, etc. */
-	int clockwork = cfg->GetInt(arena->cfg,
+	int clockwork = cfg->GetInt(p->arena->cfg,
 			"Misc", "FrequencyShipTypes", 0);
 
 	if (clockwork)
@@ -99,7 +99,7 @@ local int FindLegalShip(Arena *arena, int freq, int ship)
 
 		//------------------------------HYPERSPACE MODIFIED STUFF------------------------------
 
-		if (cfg->GetInt(arena->cfg, shipNames[ship], "BuyPrice", 0) != 0) //ship is for sale
+		if (cfg->GetInt(p->arena->cfg, shipNames[ship], "BuyPrice", 0) != 0) //ship is for sale
 		{
 
 			if (database->areShipsLoaded(p))
@@ -212,7 +212,7 @@ local void Initial(Player *p, int *ship, int *freq)
 		int inclspec = INCLSPEC(ch);
 		f = BalanceFreqs(arena, p, inclspec);
 		/* and make sure the ship is still legal */
-		s = FindLegalShip(arena, f, s);
+		s = FindLegalShip(p, f, s);
 	}
 
 	*ship = s; *freq = f;
@@ -266,12 +266,12 @@ local void Ship(Player *p, int *ship, int *freq)
 			int inclspec = INCLSPEC(ch);
 			f = BalanceFreqs(arena, p, inclspec);
 			/* and make sure the ship is still legal */
-			s = FindLegalShip(arena, f, s);
+			s = FindLegalShip(p, f, s);
 		}
 		else
 		{
 			/* don't touch freq, but make sure ship is ok */
-			s = FindLegalShip(arena, f, s);
+			s = FindLegalShip(p, f, s);
 		}
 	}
 
@@ -345,7 +345,7 @@ local void Freq(Player *p, int *ship, int *freq)
 	}
 
 	/* make sure he has an appropriate ship for this freq */
-	s = FindLegalShip(arena, f, s);
+	s = FindLegalShip(p, f, s);
 
 	/* check if this change brought him out of spec and there are too
 	 * many people playing. */
