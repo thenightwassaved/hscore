@@ -577,7 +577,7 @@ local void UnloadCategoryList(Arena *arena) //called when the arena is about to 
 
 	LLEnum(&(arenaData->categoryList), afree); //can simply free all the Category structs
 
-	lm->Log(L_DEBUG, "<hscore_database> Freed %i categories for for arena %s.", LLCount(&(arenaData->categoryList)), arena->name);
+	lm->Log(L_DRIVEL, "<hscore_database> Freed %i categories for for arena %s.", LLCount(&(arenaData->categoryList)), arena->name);
 
 	LLEmpty(&(arenaData->categoryList));
 }
@@ -588,14 +588,14 @@ local void UnloadStoreList(Arena *arena)
 
 	LLEnum(&(arenaData->storeList), afree); //can simply free all the Store structs
 
-	lm->Log(L_DEBUG, "<hscore_database> Freed %i stores for for arena %s.", LLCount(&(arenaData->storeList)), arena->name);
+	lm->Log(L_DRIVEL, "<hscore_database> Freed %i stores for for arena %s.", LLCount(&(arenaData->storeList)), arena->name);
 
 	LLEmpty(&(arenaData->storeList));
 }
 
 local void UnloadItemListEnumCallback(const void *ptr)
 {
-	const Item *item = ptr;
+	Item *item = ptr;
 
 	LLEnum(&(item->propertyList), afree);
 	LLEnum(&(item->eventList), afree);
@@ -607,7 +607,7 @@ local void UnloadItemList()
 {
 	LLEnum(&itemList, UnloadItemListEnumCallback);
 
-	lm->Log(L_DEBUG, "<hscore_database> Freed %i items.", LLCount(&itemList));
+	lm->Log(L_DRIVEL, "<hscore_database> Freed %i items.", LLCount(&itemList));
 
 	LLEmpty(&itemList);
 }
@@ -616,7 +616,7 @@ local void UnloadItemTypeList()
 {
 	LLEnum(&itemTypeList, afree); //can simply free all the ItemType structs
 
-	lm->Log(L_DEBUG, "<hscore_database> Freed %i item types.", LLCount(&itemTypeList));
+	lm->Log(L_DRIVEL, "<hscore_database> Freed %i item types.", LLCount(&itemTypeList));
 
 	LLEmpty(&itemTypeList);
 }
