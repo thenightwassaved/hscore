@@ -88,7 +88,7 @@ typedef struct Item
 	//time a gun is fired.
 	int delayStatusWrite;
 
-	Item *ammo; //can be NULL, only for use by events.
+	struct Item *ammo; //can be NULL, only for use by events.
 
 	int id; //MySQL use only
 } Item;
