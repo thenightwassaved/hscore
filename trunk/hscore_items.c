@@ -79,14 +79,46 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 			if (*params == 'f')
 			{
 				force = 1;
+
+				params = strchr(params, ' ');
+				if (params) //check so that params can still == NULL
+				{
+					params++; //we want *after* the space
+				}
+				else
+				{
+					chat->SendMessage(p, "Grantitem: invalid usage.");
+					return;
+				}
 			}
 			if (*params == 'q')
 			{
 				quiet = 1;
+
+				params = strchr(params, ' ');
+				if (params) //check so that params can still == NULL
+				{
+					params++; //we want *after* the space
+				}
+				else
+				{
+					chat->SendMessage(p, "Grantitem: invalid usage.");
+					return;
+				}
 			}
 			if (*params == 'c')
 			{
-				params++;
+				params = strchr(params, ' ');
+				if (params) //check so that params can still == NULL
+				{
+					params++; //we want *after* the space
+				}
+				else
+				{
+					chat->SendMessage(p, "Grantitem: invalid usage.");
+					return;
+				}
+
 				count = strtol(params, &next, 0);
 
 				if (next == params)
@@ -99,7 +131,17 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 			}
 			if (*params == 's')
 			{
-				params++;
+				params = strchr(params, ' ');
+				if (params) //check so that params can still == NULL
+				{
+					params++; //we want *after* the space
+				}
+				else
+				{
+					chat->SendMessage(p, "Grantitem: invalid usage.");
+					return;
+				}
+
 				ship = strtol(params, &next, 0);
 
 				if (next == params)
