@@ -60,7 +60,7 @@ local void shipsCommand(const char *command, const char *params, Player *p, cons
 	}
 	else
 	{
-		else if (p == t)
+		if (p == t)
 		{
 			chat->SendMessage(p, "No ships loaded.");
 		}
