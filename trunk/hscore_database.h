@@ -10,9 +10,10 @@ typedef struct PerPlayerData
 
 	int exp;
 
-	ShipHull hull[8];
+	ShipHull * hull[8];
 
 	int loaded; //internal use only
+	int shipsLoaded; //internal use only
 
 	int id; //MySQL use
 } PerPlayerData;

@@ -94,6 +94,33 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 
 }
 
+//+------------------+
+//|                  |
+//|  Init Functions  |
+//|                  |
+//+------------------+
+
+local void InitPerPlayerData(Player *p) //called before data is touched
+{
+	PerPlayerData *playerData = getPerPlayerData(p);
+
+	playerData->loaded = 0;
+	playerData->shipsLoaded = 0;
+
+	for (int i = 0; i < 8; i++)
+	{
+		playerData->hull[i] = NULL;
+	}
+}
+
+local void InitPerArenaData(Arena *arena) //called before data is touched
+{
+	PerArenaData *arenaData = getPerArenaData(arena);
+
+	LLInit(&(arenaData->arenaList));
+	LLInit(&(arenaData->arenaList));
+}
+
 //+--------------------+
 //|                    |
 //|  Unload Functions  |
@@ -115,7 +142,7 @@ local void UnloadArenaData(Arena *arena) //called when the arena is about to die
 
 }
 
-local void UnloadCategoryList(Arena *arena)
+local void UnloadCategoryList(Arena *arena) //called when the arena is about to die
 {
 
 }
@@ -141,7 +168,7 @@ local void UnloadItemTypeList()
 //|                  |
 //+------------------+
 
-local void LoadPlayerGlobals(Player *p, Arena *arena) //fetch globals from MySQL
+local void LoadPlayerGlobals(Player *p) //fetch globals from MySQL
 {
 
 }
@@ -187,12 +214,12 @@ local void LoadItemTypeList() //will call LoadItemList() when finished loading
 //|                   |
 //+-------------------+
 
-local void StorePlayerGlobals(Player *p) //store player globals
+local void StorePlayerGlobals(Player *p) //store player globals. MUST FINISH IN ONE QUERY
 {
 
 }
 
-local void StorePlayerShips(Player *p) //store player ships
+local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST FINISH IN ONE QUERY
 {
 
 }
@@ -234,7 +261,7 @@ local void allocatePlayerCallback(Player *p, int allocating)
 {
 	if (allocating) //player is being allocated
 	{
-
+		InitPlayerData(p);
 	}
 	else //p is being deallocated
 	{
@@ -247,10 +274,15 @@ local void playerActionCallback(Player *p, int action, Arena *arena)
 	if (action == PA_CONNECT)
 	{
 		//the player is connecting to the server. not arena-specific.
+
+		LoadPlayerGlobals(p);
 	}
 	else if (action == PA_DISCONNECT)
 	{
 		//the player is disconnecting from the server. not arena-specific.
+
+		StorePlayerGlobals(p);
+		UnloadPlayerGlobals(p);
 	}
 	else if (action == PA_PREENTERARENA)
 	{
@@ -264,11 +296,15 @@ local void playerActionCallback(Player *p, int action, Arena *arena)
 	else if (action == PA_ENTERARENA)
 	{
 		//the player is entering an arena.
-	}
 
+		LoadPlayerShips(p, arena);
+	}
 	else if (action == PA_LEAVEARENA)
 	{
 		//the player is leaving an arena.
+
+		StorePlayerShips(p, arena);
+		UnloadPlayerShips(p, arena);
 	}
 	else if (action == PA_ENTERGAME)
 	{
@@ -283,10 +319,22 @@ local void arenaActionCallback(Arena *arena, int action)
 	if (action == AA_CREATE)
 	{
 		//arena is being created
+
+		InitPerArenaData(arena);
+
+		//in no special order...
+		LoadStores(arena);
+		LoadCategories(arena);
 	}
 	else if (action == AA_DESTROY)
 	{
 		//arena is being destroyed
+
+		//in no special order...
+		UnloadStores(arena);
+		UnloadCategories(arena);
+
+		//no need to deallocate the lists, as they weren't allocated
 	}
 	else if (action == AA_CONFCHANGED)
 	{
@@ -302,27 +350,31 @@ local void arenaActionCallback(Arena *arena, int action)
 
 local int areShipsLoaded(Player *p)
 {
-
+	PerPlayerData *playerData = getPerPlayerData();
+	return playerData->shipsLoaded;
 }
 
 local int isLoaded(Player *p)
 {
-
+	PerPlayerData *playerData = getPerPlayerData();
+	return playerData->loaded;
 }
 
 local LinkedList * getItemList()
 {
-
+	return &itemList;
 }
 
 local LinkedList * getStoreList(Arena *arena)
 {
-
+	PerArenaData *arenaData = getPerArenaData();
+	return &(arenaData->storeList);
 }
 
 local LinkedList * getCategoryList(Arena *arena)
 {
-
+	PerArenaData *arenaData = getPerArenaData();
+	return &(arenaData->categoryList);
 }
 
 local void addShip(Player *p, int ship, LinkedList *itemList)
@@ -380,7 +432,7 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 		LLInit(&itemList);
 		LLInit(&itemTypeList);
 
-		//load itemTypes (which leads to loading items, properties and events)
+		LoadItemTypeList();
 
 		mm->RegCallback(CB_NEWPLAYER, allocatePlayerCallback, ALLARENAS);
 		mm->RegCallback(CB_PLAYERACTION, playerActionCallback, ALLARENAS);
@@ -424,9 +476,9 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 
 		//unload all arena data (stores and categories)
 
-		//unload itemList
+		UnloadItemList();
 
-		//unload itemTypeList
+		UnloadItemTypeList();
 
 		pd->FreePlayerData(playerDataKey);
 		aman->FreeArenaData(arenaDataKey);
