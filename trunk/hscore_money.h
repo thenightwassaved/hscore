@@ -6,7 +6,7 @@
 typedef enum MoneyType
 {
 	//for /?give
-	MONEY_TYPE_GIVE,
+	MONEY_TYPE_GIVE = 0,
 
 	//for /?grant
 	MONEY_TYPE_GRANT,

@@ -752,6 +752,8 @@ local void StorePlayerGlobals(Player *p) //store player globals. MUST FINISH IN 
 	PerPlayerData *playerData = getPerPlayerData(p);
 
 	mysql->Query(NULL, NULL, 0, "UPDATE hs_players SET money = #, exp = #, money_give = #, money_grant = #, money_buysell = #, money_kill = #, money_flag = #, money_ball = #, money_event = # WHERE id = #",
+		playerData->money,
+		playerData->exp,
 		playerData->moneyType[MONEY_TYPE_GIVE],
 		playerData->moneyType[MONEY_TYPE_GRANT],
 		playerData->moneyType[MONEY_TYPE_BUYSELL],
