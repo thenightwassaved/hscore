@@ -223,12 +223,12 @@ local void buyShip(Player *p, int ship)
 					}
 					else
 					{
-						chat->SendMessage(p, "You need %i more experience to buy item %s.", item->expRequired - money->getExp(p), item->name);
+						chat->SendMessage(p, "You need %i more experience to buy a %s.", expRequired - money->getExp(p), shipNames[ship]);
 					}
 				}
 				else
 				{
-					chat->SendMessage(p, "You do not have enough money to buy item %s. You need $%i more.", item->name, item->buyPrice * count - money->getMoney(p));
+					chat->SendMessage(p, "You do not have enough money to buy a %s. You need $%i more.", shipNames[ship], buyPrice - money->getMoney(p));
 				}
 			}
 			else
@@ -337,16 +337,7 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 					}
 					else
 					{
-						int buyPrice = cfg->GetInt(p->arena->cfg, shipNames[ship], "BuyPrice", 0);
-
-						if (buyPrice == 0)
-						{
-							chat->SendMessage(p, "No items can be loaded onto a %s in this arena.", shipNames[ship]);
-						}
-						else
-						{
-							chat->SendMessage(p, "You do not own a %s.", shipNames[ship]);
-						}
+						chat->SendMessage(p, "No items can be loaded onto a %s in this arena.", shipNames[p->p_ship]);
 					}
 				}
 				else
@@ -402,16 +393,7 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 				}
 				else
 				{
-					int buyPrice = cfg->GetInt(p->arena->cfg, shipNames[ship], "BuyPrice", 0);
-
-					if (buyPrice == 0)
-					{
-						chat->SendMessage(p, "No items can be loaded onto a %s in this arena.", shipNames[ship]);
-					}
-					else
-					{
-						chat->SendMessage(p, "You do not own a %s.", shipNames[ship]);
-					}
+					chat->SendMessage(p, "No items can be loaded onto a %s in this arena.", shipNames[p->p_ship]);
 				}
 			}
 			else
