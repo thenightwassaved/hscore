@@ -205,8 +205,8 @@ local void giveCommand(const char *command, const char *params, Player *p, const
 					{
 						if (amount > minGive)
 						{
-							giveMoney(t, amount, MONEY_GIVE);
-							giveMoney(p, -amount, MONEY_GIVE);
+							giveMoney(t, amount, MONEY_TYPE_GIVE);
+							giveMoney(p, -amount, MONEY_TYPE_GIVE);
 
 							if (message == NULL)
 							{
