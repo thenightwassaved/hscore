@@ -1,3 +1,5 @@
+#include <std.h>
+
 #include "asss.h"
 #include "hscore.h"
 #include "hscore_mysql.h"
@@ -361,7 +363,7 @@ local void LoadProperties()
 
 local void LoadItemList() //will call LoadProperties() and LoadEvents() when finished
 {
-	mysql->Query(loadItemQueryCallback, NULL, 1, "SELECT id, name, short_description, long_description, buy_price, sell_price, exp_required, ships_allowed, type1, type2, type1_delta, type2_delta, delay_write, ammo FROM hs_items");
+	mysql->Query(loadItemsQueryCallback, NULL, 1, "SELECT id, name, short_description, long_description, buy_price, sell_price, exp_required, ships_allowed, type1, type2, type1_delta, type2_delta, delay_write, ammo FROM hs_items");
 }
 
 local void LoadItemTypeList() //will call LoadItemList() when finished loading
