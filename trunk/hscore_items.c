@@ -15,6 +15,7 @@ local Ihscoredatabase *database;
 local int hasItem(Player *p, Item *item, int ship);
 local void addItem(Player *p, Item *item, int ship, int amount);
 local void removeItem(Player *p, Item *item, int ship, int amount);
+local Item * getItemByName(const char *name, Arena *arena);
 local int getPropertySum(Player *p, int ship, const char *prop);
 local void triggerEvent(Player *p, int ship, const char *event);
 local int getFreeItemTypeSpots(Player *p, int ship, ItemType *type);
