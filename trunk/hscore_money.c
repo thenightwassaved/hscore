@@ -103,7 +103,7 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 
 			if (database->isLoaded(t))
 			{
-				chat->
+				//FIXME
 			}
 			else
 			{
@@ -169,6 +169,7 @@ local helptext_t giveHelp =
 local void giveCommand(const char *command, const char *params, Player *p, const Target *target)
 {
 	char *next;
+	char *message;
 	int amount = strtol(params, &next, 0);
 
 	if (next == params)
