@@ -27,7 +27,7 @@ local helptext_t itemInfoHelp =
 
 local void itemInfoCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	if (params == NULL)
+	if (*params == '\0')
 	{
 		chat->SendMessage(p, "Please use the ?buy menu to look up items.");
 		return;
@@ -41,6 +41,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 		return;
 	}
 
+	//FIXME: Write a better item info
 	chat->SendMessage(p, "Item %s: %s", item->name, item->longDesc);
 }
 
