@@ -136,13 +136,88 @@ local void LinkAmmo()
 
 local void loadPropertiesQueryCallback(int status, db_res *result, void *passedData)
 {
-	//FIXME
-}
+	int results;
+	db_row *row;
+
+	if (status != 0 || result == NULL)
+	{
+		lm->Log(L_ERROR, "<hscore_database> Unexpected database error during property load.");
+		return;
+	}
+
+	results = mysql->GetRowCount(result);
+
+	if (results == 0)
+	{
+	    lm->Log(L_WARN, "<hscore_database> No properties returned from MySQL query.");
+	}
+
+	while ((row = mysql->GetRow(result)))
+	{
+		int itemID = atoi(mysql->GetField(row, 0));					//item_id
+		Item *item = getItemByID(itemID);
+
+		if (item != NULL)
+		{
+	    	Property *property = amalloc(sizeof(*property));
+
+	    	astrncpy(property->name, mysql->GetField(row, 1), 16);	//name
+	    	property->value = atoi(mysql->GetField(row, 2));		//value
+
+        	//add the item type to the list
+        	LLAdd(&(item->propertyList), property);
+		}
+		else
+		{
+			lm->Log(L_ERROR, "<hscore_database> property looking for item ID %i.", itemID);
+		}
+	}
+
+	lm->Log(L_DRIVEL, "<hscore_database> %i properties were loaded from MySQL.", results);}
 
 local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 {
-	//FIXME
-}
+	int results;
+	db_row *row;
+
+	if (status != 0 || result == NULL)
+	{
+		lm->Log(L_ERROR, "<hscore_database> Unexpected database error during event load.");
+		return;
+	}
+
+	results = mysql->GetRowCount(result);
+
+	if (results == 0)
+	{
+	    lm->Log(L_WARN, "<hscore_database> No events returned from MySQL query.");
+	}
+
+	while ((row = mysql->GetRow(result)))
+	{
+		int itemID = atoi(mysql->GetField(row, 0));					//item_id
+		Item *item = getItemByID(itemID);
+
+		if (item != NULL)
+		{
+	    	Event *event = amalloc(sizeof(*event));
+
+	    	astrncpy(event->event, mysql->GetField(row, 1), 16);	//event
+	    	event->action = atoi(mysql->GetField(row, 2));			//action
+        	event->data = atoi(mysql->GetField(row, 3));			//data
+        	astrncpy(event->message, mysql->GetField(row, 4), 200);	//message
+
+
+        	//add the item type to the list
+        	LLAdd(&(item->eventList), event);
+		}
+		else
+		{
+			lm->Log(L_ERROR, "<hscore_database> event looking for item ID %i.", itemID);
+		}
+	}
+
+	lm->Log(L_DRIVEL, "<hscore_database> %i events were loaded from MySQL.", results);
 
 local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 {
@@ -159,7 +234,7 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 
 	if (results == 0)
 	{
-	    lm->Log(L_ERROR, "<hscore_database> No items returned from MySQL query.");
+	    lm->Log(L_WARN, "<hscore_database> No items returned from MySQL query.");
 	}
 
 	while ((row = mysql->GetRow(result)))
@@ -215,7 +290,7 @@ local void loadItemTypesQueryCallback(int status, db_res *result, void *passedDa
 
 	if (results == 0)
 	{
-	    lm->Log(L_ERROR, "<hscore_database> No item types returned from MySQL query.");
+	    lm->Log(L_WARN, "<hscore_database> No item types returned from MySQL query.");
 	}
 
 	while ((row = mysql->GetRow(result)))
@@ -345,12 +420,12 @@ local void LoadStoreList(Arena *arena)
 
 local void LoadEvents()
 {
-	//FIXME
+	mysql->Query(loadEventsQueryCallback, NULL, 1, "SELECT item_id, event, action, data, message FROM hs_item_events");
 }
 
 local void LoadProperties()
 {
-	//FIXME
+	mysql->Query(loadPropertiesQueryCallback, NULL, 1, "SELECT item_id, name, value FROM hs_item_properties");
 }
 
 local void LoadItemList() //will call LoadProperties() and LoadEvents() when finished

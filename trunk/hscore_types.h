@@ -4,7 +4,7 @@
 typedef enum EventAction
 {
 	//removes event->data amount of the items from the ship's inventory
-	ACTION_REMOVE_ITEM,
+	ACTION_REMOVE_ITEM = 0,
 
 	//removes event->data amount of the item's ammo type from inventory
 	ACTION_REMOVE_ITEM_AMMO,
