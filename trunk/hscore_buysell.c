@@ -207,7 +207,7 @@ local void buyShip(Player *p, int ship)
 		if (database->areShipsLoaded(p))
 		{
 			PerPlayerData *playerData = database->getPerPlayerData(p);
-			if (playerData->hulls[ship] == NULL)
+			if (playerData->hull[ship] == NULL)
 			{
 				if (money->getMoney(p) >= buyPrice)
 				{
@@ -254,7 +254,7 @@ local void sellShip(Player *p, int ship)
 	if (database->areShipsLoaded(p))
 	{
 		PerPlayerData *playerData = database->getPerPlayerData(p);
-		if (playerData->hulls[ship] != NULL)
+		if (playerData->hull[ship] != NULL)
 		{
 			//FIXME: add checking for non-empty ships
 			database->removeShip(p, ship);
@@ -329,7 +329,7 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 				if (p->p_ship != SHIP_SPEC)
 				{
 					PerPlayerData *playerData = database->getPerPlayerData(p);
-					if (playerData->hulls[p->p_ship] != NULL)
+					if (playerData->hull[p->p_ship] != NULL)
 					{
 						//check - counts
 						buyItem(p, item, 1, p->p_ship);
@@ -385,7 +385,7 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 			if (p->p_ship != SHIP_SPEC)
 			{
 				PerPlayerData *playerData = database->getPerPlayerData(p);
-				if (playerData->hulls[p->p_ship] != NULL)
+				if (playerData->hull[p->p_ship] != NULL)
 				{
 					//check - counts
 					sellItem(p, item, 1, p->p_ship);
