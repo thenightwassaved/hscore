@@ -1,3 +1,5 @@
+ALL_STUFF += hscore.$(SO)
+
 hscore.$(SO): modules/hscore/trunk/hscore_buysell.o \
 	modules/hscore/trunk/hscore_commands.o \
 	modules/hscore/trunk/hscore_database.o \
