@@ -335,7 +335,51 @@ local void loadItemTypesQueryCallback(int status, db_res *result, void *passedDa
 
 local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *passedData)
 {
-	//FIXME
+	int results;
+	db_row *row;
+
+	Player *p = passedData;
+	PerPlayerData *playerData = getPerPlayerData(p);
+
+	if (status != 0 || result == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "Unexpected database error during player globals load.");
+		return;
+	}
+
+	results = mysql->GetRowCount(result);
+
+	if (results == 0)
+	{
+		//insert a new player into MySQL and then get it
+	    int initialMoney = cfg->GetInt(GLOBAL, "hyperspace", "initialmoney", 1000);
+	    int initialExp = cfg->GetInt(GLOBAL, "hyperspace", "initialexp", 0);
+	    mysql->Query(NULL, NULL, 0, "INSERT INTO hs_players VALUES (NULL, ?, #, #, 0, 0, 0, 0, 0, 0, 0)", p->name, initialMoney, initialExp);
+		LoadPlayerGlobals(p);
+		return;
+	}
+
+	if (results > 1)
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "Multiple rows returned from MySQL: using first.");
+	}
+
+	row = mysql->GetRow(result)
+
+	playerData->id = atoi(mysql->GetField(row, 0)); 							//id
+	playerData->money = atoi(mysql->GetField(row, 1)); 							//money
+	playerData->exp = atoi(mysql->GetField(row, 2)); 							//exp
+	playerData->moneyType[MONEY_TYPE_GIVE] = atoi(mysql->GetField(row, 3)); 	//money_give
+	playerData->moneyType[MONEY_TYPE_GRANT] = atoi(mysql->GetField(row, 4)); 	//money_grant
+	playerData->moneyType[MONEY_TYPE_BUYSELL] = atoi(mysql->GetField(row, 5)); 	//money_buysell
+	playerData->moneyType[MONEY_TYPE_KILL] = atoi(mysql->GetField(row, 6)); 	//money_kill
+	playerData->moneyType[MONEY_TYPE_FLAG] = atoi(mysql->GetField(row, 7)); 	//money_flag
+	playerData->moneyType[MONEY_TYPE_BALL] = atoi(mysql->GetField(row, 8)); 	//money_ball
+	playerData->moneyType[MONEY_TYPE_EVENT] = atoi(mysql->GetField(row, 9)); 	//money_event
+
+	playerData->loaded = 1;
+
+	lm->LogP(L_DRIVEL, "hscore_database", p, "loaded globals from MySQL.");
 }
 
 local void loadPlayerShipsQueryCallback(int status, db_res *result, void *passedData)
@@ -393,7 +437,7 @@ local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedD
 		//FIXME: Add error on bad storeID
 	}
 
-	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i store items were loaded for arena %s from MySQL.", results);
+	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i store items were loaded from MySQL.", results);
 }
 
 local void loadArenaStoresQueryCallback(int status, db_res *result, void *passedData)
@@ -649,7 +693,7 @@ local void UnloadAllPerPlayerData()
 
 local void LoadPlayerGlobals(Player *p) //fetch globals from MySQL
 {
-	//FIXME
+	mysql->Query(loadPlayerGlobalsQueryCallback, p, 1, "SELECT id, money, exp, money_give, money_grant, money_buysell, money_kill, money_flag, money_ball, money_event FROM hs_players WHERE name = ?", p->name);
 }
 
 local void LoadPlayerShips(Player *p, Arena *arena) //fetch ships from MySQL
@@ -703,12 +747,22 @@ local void LoadItemTypeList() //will call LoadItemList() when finished loading
 //|                   |
 //+-------------------+
 
-local void StorePlayerGlobals(Player *p) //store player globals. MUST FINISH IN ONE QUERY
+local void StorePlayerGlobals(Player *p) //store player globals. MUST FINISH IN ONE QUERY LEVEL
 {
-	//FIXME
+	PerPlayerData *playerData = getPerPlayerData(p);
+
+	mysql->Query(NULL, NULL, 0, "UPDATE hs_players SET money = #, exp = #, money_give = #, money_grant = #, money_buysell = #, money_kill = #, money_flag = #, money_ball = #, money_event = # WHERE id = #",
+		playerData->moneyType[MONEY_TYPE_GIVE],
+		playerData->moneyType[MONEY_TYPE_GRANT],
+		playerData->moneyType[MONEY_TYPE_BUYSELL],
+		playerData->moneyType[MONEY_TYPE_KILL],
+		playerData->moneyType[MONEY_TYPE_FLAG],
+		playerData->moneyType[MONEY_TYPE_BALL],
+		playerData->moneyType[MONEY_TYPE_EVENT],
+		playerData->id);
 }
 
-local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST FINISH IN ONE QUERY
+local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST FINISH IN ONE QUERY LEVEL
 {
 	//FIXME
 }
