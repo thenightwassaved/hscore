@@ -534,7 +534,7 @@ local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship)
 		{
 			count -= entry->count * item->typeDelta1;
 		}
-		if (item->type1 == type)
+		if (item->type2 == type)
 		{
 			count -= entry->count * item->typeDelta2;
 		}
