@@ -188,7 +188,7 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 			property->value = atoi(mysql->GetField(row, 2));		//value
 
 			//add the item type to the list
-			LLAdd(&(item->propertyList), property);
+			LLAdd(&item->propertyList, property);
 		}
 		else
 		{
@@ -233,7 +233,7 @@ local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 
 
 			//add the item type to the list
-			LLAdd(&(item->eventList), event);
+			LLAdd(&item->eventList, event);
 		}
 		else
 		{
@@ -266,8 +266,8 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 	{
 		Item *item = amalloc(sizeof(*item));
 
-		LLInit(&(item->propertyList));
-		LLInit(&(item->eventList));
+		LLInit(&item->propertyList);
+		LLInit(&item->eventList);
 
 		item->id = atoi(mysql->GetField(row, 0)); 					//id
 		astrncpy(item->name, mysql->GetField(row, 1), 16);			//name
@@ -388,7 +388,44 @@ local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *pass
 
 local void loadPlayerShipsQueryCallback(int status, db_res *result, void *passedData)
 {
-	//FIXME
+	int results;
+	db_row *row;
+
+	Player *p = passedData;
+	PerPlayerData *playerData = getPerPlayerData(p);
+
+	if (status != 0 || result == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "Unexpected database error during player ship load.");
+		return;
+	}
+
+	results = mysql->GetRowCount(result);
+
+	while ((row = mysql->GetRow(result)))
+	{
+		int id = atoi(mysql->GetField(row, 0));		//id
+		int ship = atoi(mysql->GetField(row, 1));	//ship
+
+		if (0 <= ship && ship < 8)
+		{
+			ShipHull *hull = amalloc(sizeof(*hull));
+
+			LLInit(&hull->inventoryEntryList);
+
+			hull->id = id;
+
+			playerData->hull[ship] = hull;
+		}
+		else
+		{
+			lm->LogP(L_ERROR, "hscore_database", p, "ship id %i had bad ship number (%i)", id, ship);
+		}
+	}
+
+	playerData->shipsLoaded = 1;
+
+	lm->LogP(L_DRIVEL, "hscore_database", p, "%i ships were loaded from MySQL.", results);
 }
 
 local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedData)
@@ -426,14 +463,14 @@ local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedD
 			continue;
 		}
 
-		for (link = LLGetHead(&(arenaData->storeList)); link; link = link->next)
+		for (link = LLGetHead(&arenaData->storeList); link; link = link->next)
 		{
 			Store *store = link->data;
 
 			if (store->id == storeID)
 			{
 				//add the item to the store's list
-				LLAdd(&(store->itemList), item);
+				LLAdd(&store->itemList, item);
 				break;
 			}
 		}
@@ -470,7 +507,7 @@ local void loadArenaStoresQueryCallback(int status, db_res *result, void *passed
 	{
 		Store *store = amalloc(sizeof(*store));
 
-		LLInit(&(store->itemList));
+		LLInit(&store->itemList);
 
 		store->id = atoi(mysql->GetField(row, 0));					//id
 		astrncpy(store->name, mysql->GetField(row, 1), 32);			//name
@@ -478,7 +515,7 @@ local void loadArenaStoresQueryCallback(int status, db_res *result, void *passed
 		astrncpy(store->region, mysql->GetField(row, 3), 16);		//region
 
 		//add the item type to the list
-		LLAdd(&(arenaData->storeList), store);
+		LLAdd(&arenaData->storeList, store);
 	}
 
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i stores were loaded from MySQL.", results);
@@ -521,14 +558,14 @@ local void loadCategoryItemsQueryCallback(int status, db_res *result, void *pass
 			continue;
 		}
 
-		for (link = LLGetHead(&(arenaData->categoryList)); link; link = link->next)
+		for (link = LLGetHead(&arenaData->categoryList); link; link = link->next)
 		{
 			Category *category = link->data;
 
 			if (category->id == categoryID)
 			{
 				//add the item to the category's list
-				LLAdd(&(category->itemList), item);
+				LLAdd(&category->itemList, item);
 				break;
 			}
 		}
@@ -565,14 +602,14 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 	{
 		Category *category = amalloc(sizeof(*category));
 
-		LLInit(&(category->itemList));
+		LLInit(&category->itemList);
 
 		category->id = atoi(mysql->GetField(row, 0));					//id
 		astrncpy(category->name, mysql->GetField(row, 1), 32);			//name
 		astrncpy(category->description, mysql->GetField(row, 2), 64);	//description
 
 		//add the item type to the list
-		LLAdd(&(arenaData->categoryList), category);
+		LLAdd(&arenaData->categoryList, category);
 	}
 
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i categories were loaded from MySQL.", results);
@@ -602,8 +639,8 @@ local void InitPerArenaData(Arena *arena) //called before data is touched
 {
 	PerArenaData *arenaData = getPerArenaData(arena);
 
-	LLInit(&(arenaData->categoryList));
-	LLInit(&(arenaData->storeList));
+	LLInit(&arenaData->categoryList);
+	LLInit(&arenaData->storeList);
 }
 
 //+--------------------+
@@ -621,9 +658,27 @@ local void UnloadPlayerGlobals(Player *p) //called to free any allocated data
 	lm->LogP(L_DRIVEL, "hscore_database", p, "Freed global data.");
 }
 
+local void UnloadPlayerShip(ShipHull *ship)
+{
+	LLEnum(&ship->inventoryEntryList, afree);
+
+	afree(ship);
+}
+
 local void UnloadPlayerShips(Player *p) //called to free any allocated data
 {
-	//FIXME
+	PerPlayerData *playerData = getPerPlayerData(p);
+
+	playerData->shipsLoaded = 0;
+
+	for (int i = 0; i < 8; i++)
+	{
+		if (playerData->hull[i] != NULL)
+		{
+			UnloadPlayerShip(playerData->hull[i]);
+			playerData->hull[i] = NULL;
+		}
+	}
 
 	lm->LogP(L_DRIVEL, "hscore_database", p, "Freed ship data.");
 }
@@ -632,31 +687,31 @@ local void UnloadCategoryList(Arena *arena) //called when the arena is about to 
 {
 	PerArenaData *arenaData = getPerArenaData(arena);
 
-	LLEnum(&(arenaData->categoryList), afree); //can simply free all the Category structs
+	LLEnum(&arenaData->categoryList, afree); //can simply free all the Category structs
 
 
-	lm->LogA(L_DRIVEL, "hscore_database", arena, "Freed %i categories.", LLCount(&(arenaData->categoryList)));
+	lm->LogA(L_DRIVEL, "hscore_database", arena, "Freed %i categories.", LLCount(&arenaData->categoryList));
 
-	LLEmpty(&(arenaData->categoryList));
+	LLEmpty(&arenaData->categoryList);
 }
 
 local void UnloadStoreList(Arena *arena)
 {
 	PerArenaData *arenaData = getPerArenaData(arena);
 
-	LLEnum(&(arenaData->storeList), afree); //can simply free all the Store structs
+	LLEnum(&arenaData->storeList, afree); //can simply free all the Store structs
 
-	lm->LogA(L_DRIVEL, "hscore_database", arena, "Freed %i stores.", LLCount(&(arenaData->storeList)));
+	lm->LogA(L_DRIVEL, "hscore_database", arena, "Freed %i stores.", LLCount(&arenaData->storeList));
 
-	LLEmpty(&(arenaData->storeList));
+	LLEmpty(&arenaData->storeList);
 }
 
 local void UnloadItemListEnumCallback(const void *ptr)
 {
 	Item *item = (Item*)ptr;
 
-	LLEnum(&(item->propertyList), afree);
-	LLEnum(&(item->eventList), afree);
+	LLEnum(&item->propertyList, afree);
+	LLEnum(&item->eventList, afree);
 
 	afree(item);
 }
@@ -704,9 +759,15 @@ local void LoadPlayerGlobals(Player *p) //fetch globals from MySQL
 
 local void LoadPlayerShips(Player *p, Arena *arena) //fetch ships from MySQL
 {
-	//FIXME: check if data is valid
-
-	//FIXME
+	if (isLoaded(p))
+	{
+		PerPlayerData *playerData = getPerPlayerData(p);
+		mysql->Query(loadPlayerShipsQueryCallback, player, 1, "SELECT id, ship WHERE player_id = # AND arena = ?", playerData->id, getArenaIdentifier(arena));
+	}
+	else
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "Asked to load ships for unloaded player.");
+	}
 }
 
 local void LoadCategoryItems(Arena *arena)
@@ -929,13 +990,13 @@ local LinkedList * getItemList()
 local LinkedList * getStoreList(Arena *arena)
 {
 	PerArenaData *arenaData = getPerArenaData(arena);
-	return &(arenaData->storeList);
+	return &arenaData->storeList;
 }
 
 local LinkedList * getCategoryList(Arena *arena)
 {
 	PerArenaData *arenaData = getPerArenaData(arena);
-	return &(arenaData->categoryList);
+	return &arenaData->categoryList;
 }
 
 local void updateItem(Player *p, int ship, Item *item, int newCount, int newData)
