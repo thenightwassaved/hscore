@@ -29,7 +29,7 @@ typedef enum EventAction
 	ACTION_SET_INVENTORY_DATA,
 
 	//does a ++ on inventory data.
-	ACTION_DECREMENT_INVENTORY_DATA,
+	ACTION_INCREMENT_INVENTORY_DATA,
 
 	//does a -- on inventory data. A "datazero" event may be generated as a result.
 	ACTION_DECREMENT_INVENTORY_DATA,
@@ -38,7 +38,7 @@ typedef enum EventAction
 	ACTION_SPEC,
 
 	//we need a lot more
-} EventAction
+} EventAction;
 
 typedef struct Event
 {

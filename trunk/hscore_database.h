@@ -3,7 +3,7 @@
 
 #define I_HSCORE_DATABASE "hscore_database-1"
 
-typedef struct PlayerData
+typedef struct PerPlayerData
 {
 	int money;
 	int moneyType[MONEY_TYPE_COUNT];
@@ -17,7 +17,7 @@ typedef struct PlayerData
 	int id; //MySQL use
 } PlayerData;
 
-typedef struct ArenaData
+typedef struct PerArenaData
 {
 	LinkedList arenaList;
 	LinkedList categoryList;
@@ -37,7 +37,7 @@ typedef struct Ihscoredatabase
 	void (*addShip)(Player *p, int ship, linkedList *itemList);
 	void (*removeShip)(Player *p, int ship); //NOTE: will destroy all items on the ship
 
-	PlayerData * (*getPlayerData)(Player *p); //should only be used by hscore modules
+	PerPlayerData * (*getPlayerData)(Player *p); //should only be used by hscore modules
 } Ihscoredatabase;
 
 #endif //HSCORE_DATABASE_H

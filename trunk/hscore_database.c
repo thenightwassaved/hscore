@@ -38,12 +38,12 @@ local LinkedList itemTypeList;
 //|                         |
 //+-------------------------+
 
-local ArenaData * getArenaData(Arena *arena)
+local PerArenaData * getPerArenaData(Arena *arena)
 {
 
 }
 
-local PlayerData *getPlayerData(Player *p)
+local PerPlayerData *getPerPlayerData(Player *p)
 {
 
 }
@@ -367,13 +367,13 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 			goto fail;
 		}
 
-		playerDataKey = pd->AllocatePlayerData(sizeof(PlayerData));
+		playerDataKey = pd->AllocatePlayerData(sizeof(PerPlayerData));
 		if (playerDataKey == -1)
 		{
 			goto fail;
 		}
 
-		arenaDataKey = aman->AllocateArenaData(sizeof(ArenaData));
+		arenaDataKey = aman->AllocateArenaData(sizeof(PerArenaData));
 		if (arenaDataKey == -1)
 		{
 			pd->FreePlayerData(playerDataKey);
