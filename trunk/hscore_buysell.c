@@ -74,18 +74,18 @@ local void printShipList(Player *p)
 
 	for (int i = 0; i < 8; i++)
 	{
-		int buyPrice = cfg->GetInt(p->arena->conf, shipNames[i], "BuyPrice", 0);
-		int sellPrice = cfg->GetInt(p->arena->conf, shipNames[i], "SellPrice", 0);
-		int expRequired = cfg->GetInt(p->arena->conf, shipNames[i], "ExpRequired", 0);
+		int buyPrice = cfg->GetInt(p->arena->cfg, shipNames[i], "BuyPrice", 0);
+		int sellPrice = cfg->GetInt(p->arena->cfg, shipNames[i], "SellPrice", 0);
+		int expRequired = cfg->GetInt(p->arena->cfg, shipNames[i], "ExpRequired", 0);
 
-		const char *description = cfg->GetStr(p->arena->conf, shipNames[i], "Description");
+		const char *description = cfg->GetStr(p->arena->cfg, shipNames[i], "Description");
 
 		if (description == NULL)
 		{
 			description = "<No description avalible>";
 		}
 
-		if (buy_price == 0)
+		if (buyPrice == 0)
 		{
 			continue; //dont list the ship unless it can be bought.
 		}
