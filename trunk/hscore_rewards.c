@@ -8,10 +8,10 @@ local Ichat *chat;
 local Iconfig *cfg;
 local Ihscoremoney *money;
 
-local void flagWinCallback(Arena *arena, int freq)
+/*local void flagWinCallback(Arena *arena, int freq)
 {
 	//FIXME
-}
+}*/
 
 local void goalCallback(Arena *arena, Player *p, int bid, int x, int y)
 {
@@ -70,7 +70,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 	{
 		mm->RegInterface(&periodicInterface, arena);
 
-		mm->RegCallback(CB_FLAGWIN, flagWinCallback, arena);
+		//mm->RegCallback(CB_FLAGWIN, flagWinCallback, arena);
 		mm->RegCallback(CB_GOAL, goalCallback, arena);
 		mm->RegCallback(CB_KILL, killCallback, arena);
 
@@ -80,7 +80,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 	{
 		mm->UnregInterface(&periodicInterface, arena);
 
-		mm->UnregCallback(CB_FLAGWIN, flagWinCallback, arena);
+		//mm->UnregCallback(CB_FLAGWIN, flagWinCallback, arena);
 		mm->UnregCallback(CB_GOAL, goalCallback, arena);
 		mm->UnregCallback(CB_KILL, killCallback, arena);
 
