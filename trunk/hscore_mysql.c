@@ -307,4 +307,3 @@ EXPORT int MM_hscore_mysql(int action, Imodman *mm, Arena *arena)
 	}
 	return MM_FAIL;
 }
-

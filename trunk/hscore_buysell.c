@@ -125,4 +125,3 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 	}
 	return MM_FAIL;
 }
-

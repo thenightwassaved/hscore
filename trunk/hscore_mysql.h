@@ -34,4 +34,3 @@ typedef struct Ihscoremysql
 
 
 #endif
-

@@ -447,4 +447,3 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 	}
 	return MM_FAIL;
 }
-

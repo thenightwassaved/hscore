@@ -82,4 +82,3 @@ EXPORT int MM_hscore_commands(int action, Imodman *_mm, Arena *arena)
 	}
 	return MM_FAIL;
 }
-

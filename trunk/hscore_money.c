@@ -213,4 +213,3 @@ EXPORT int MM_hscore_money(int action, Imodman *_mm, Arena *arena)
 	}
 	return MM_FAIL;
 }
-
