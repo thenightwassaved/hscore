@@ -1184,7 +1184,7 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 
 	if (!areShipsLoaded(p))
 	{
-		lm->LogP(L_ERROR, "hscore_database", p, "asked to update item on unloaded ships", ship);
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to update item on unloaded ships");
 		return;
 	}
 
@@ -1276,7 +1276,7 @@ local void addShip(Player *p, int ship) //the ships id may not be valid until la
 
 	if (!isLoaded(p))
 	{
-		lm->LogP(L_ERROR, "hscore_database", p, "asked to add ship to unloaded player", ship);
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to add ship to unloaded player");
 		return;
 	}
 
@@ -1309,7 +1309,7 @@ local void removeShip(Player *p, int ship)
 
 	if (!isLoaded(p))
 	{
-		lm->LogP(L_ERROR, "hscore_database", p, "asked to remove ship from unloaded player", ship);
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to remove ship from unloaded player");
 		return;
 	}
 
