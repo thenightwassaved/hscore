@@ -54,7 +54,7 @@ local void printCategoryItems(Player *p, Category *category)
 
 		for (int i = 0; i < 8; i++)
 		{
-			if ((item->shipsAllowed >> i) & 0x1)
+			if (!((item->shipsAllowed >> i) & 0x1))
 			{
 				shipMask[i] = ' ';
 			}
@@ -68,7 +68,33 @@ local void printCategoryItems(Player *p, Category *category)
 
 local void printShipList(Player *p)
 {
-	chat->SendMessage(p, "<print ship list>");
+	chat->SendMessage(p, "+-----------+-----------+------------+--------+----------------------------------------------------+");
+	chat->SendMessage(p, "| Ship Name | Buy Price | Sell Price | Exp    | Ship Description                                   |");
+	chat->SendMessage(p, "+-----------+-----------+------------+--------+----------------------------------------------------+");
+
+	for (i = 0; i < 8; i++)
+	{
+		int buyPrice = cfg->GetInt(conf, shipNames[i], "BuyPrice", 0);
+		int sellPrice = cfg->GetInt(conf, shipNames[i], "SellPrice", 0);
+		int expRequired = cfg->GetInt(conf, shipNames[i], "ExpRequired", 0);
+
+		const char *description = cfg->GetStr(conf, shipNames[i], "Description");
+
+		if (description == NULL)
+		{
+			description = "<No description avalible>";
+		}
+
+		if (buy_price == 0)
+		{
+			continue; //dont list the ship unless it can be bought.
+		}
+
+		chat->SendAnyMessage(&lst, type, 0, NULL, "| %-9s | $%-8i | $%-9i | %-6i | %-50s |", shipNames[i], buyPrice, sellPrice, expRequired, description);
+	}
+
+
+	chat->SendMessage(p, "+-----------+-----------+------------+--------+----------------------------------------------------+");
 }
 
 local void buyItem(Player *p, Item *item)
@@ -121,6 +147,7 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 				if (strcasecmp(params, shipNames[i]) == 0)
 				{
 					buyShip(p, i);
+					return
 				}
 			}
 
@@ -141,6 +168,7 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 			if (item != NULL)
 			{
 				buyItem(p, item);
+				return;
 			}
 
 			//neither an item nor a ship nor a category
@@ -170,6 +198,7 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 			if (strcasecmp(params, shipNames[i]) == 0)
 			{
 				sellShip(p, i);
+				return;
 			}
 		}
 
@@ -178,6 +207,7 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 		if (item != NULL)
 		{
 			sellItem(p, item);
+			return;
 		}
 
 		//not a ship nor an item
