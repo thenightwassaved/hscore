@@ -366,11 +366,11 @@ local void Freq(Player *p, int *ship, int *freq)
 
 local Ifreqman fm_int =
 {
-	INTERFACE_HEAD_INIT(I_FREQMAN, "fm-normal")
+	INTERFACE_HEAD_INIT(I_FREQMAN, "hscore-freqman")
 	Initial, Ship, Freq
 };
 
-EXPORT int MM_fm_normal(int action, Imodman *mm_, Arena *arena)
+EXPORT int MM_hscore_freqman(int action, Imodman *mm_, Arena *arena)
 {
 	if (action == MM_LOAD)
 	{
