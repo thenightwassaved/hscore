@@ -37,7 +37,7 @@ typedef struct Ihscoredatabase
 	void (*addShip)(Player *p, int ship, linkedList *itemList);
 	void (*removeShip)(Player *p, int ship); //NOTE: will destroy all items on the ship
 
-	PerPlayerData * (*getPlayerData)(Player *p); //should only be used by hscore modules
+	PerPlayerData * (*getPerPlayerData)(Player *p); //should only be used by hscore modules
 } Ihscoredatabase;
 
 #endif //HSCORE_DATABASE_H

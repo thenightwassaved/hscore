@@ -22,7 +22,7 @@ local LinkedList * getStoreList(Arena *arena);
 local LinkedList * getCategoryList(Arena *arena);
 local void addShip(Player *p, int ship, linkedList *itemList);
 local void removeShip(Player *p, int ship);
-local PlayerData * getPlayerData(Player *p);
+local PerPlayerData * getPerPlayerData(Player *p);
 
 //keys
 local int playerDataKey;
@@ -335,16 +335,13 @@ local void removeShip(Player *p, int ship)
 
 }
 
-local PlayerData * getPlayerData(Player *p)
-{
-
-}
+//getPerPlayerData declared elsewhere
 
 local Ihscoredatabase interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_DATABASE, "hscore_database")
 	areShipsLoaded, isLoaded, getItemList, getStoreList,
-	getCategoryList, addShip, removeShip, getPlayerData,
+	getCategoryList, addShip, removeShip, getPerPlayerData,
 };
 
 EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
