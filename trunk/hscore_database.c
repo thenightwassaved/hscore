@@ -959,7 +959,7 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 		mm->UnregCallback(CB_PLAYERACTION, playerActionCallback, ALLARENAS);
 		mm->UnregCallback(CB_ARENAACTION, arenaActionCallback, ALLARENAS);
 
-		SaveAllPerPlayerData();
+		StoreAllPerPlayerData();
 
 		UnloadAllPerPlayerData();
 		UnloadAllPerArenaData();
