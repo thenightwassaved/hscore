@@ -20,7 +20,7 @@ local int isLoaded(Player *p);
 local LinkedList * getItemList();
 local LinkedList * getStoreList(Arena *arena);
 local LinkedList * getCategoryList(Arena *arena);
-local void addShip(Player *p, int ship, linkedList *itemList);
+local void addShip(Player *p, int ship, LinkedList *itemList);
 local void removeShip(Player *p, int ship);
 local PerPlayerData * getPerPlayerData(Player *p);
 
@@ -325,7 +325,7 @@ local LinkedList * getCategoryList(Arena *arena)
 
 }
 
-local void addShip(Player *p, int ship, linkedList *itemList)
+local void addShip(Player *p, int ship, LinkedList *itemList)
 {
 
 }

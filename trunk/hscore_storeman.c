@@ -1,6 +1,7 @@
 #include "asss.h"
 #include "hscore.h"
 #include "hscore_database.h"
+#include "hscore_storeman.h"
 
 //modules
 local Imodman *mm;

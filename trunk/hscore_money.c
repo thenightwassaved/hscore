@@ -178,7 +178,7 @@ EXPORT int MM_hscore_money(int action, Imodman *_mm, Arena *arena)
 
 		cmd->AddCommand("money", moneyCommand, ALLARENAS, moneyHelp);
 		cmd->AddCommand("grant", grantCommand, ALLARENAS, grantHelp);
-		cmd->AddCommand("grantexp", grantExpCommand, ALLARENAS, grantExp);
+		cmd->AddCommand("grantexp", grantExpCommand, ALLARENAS, grantExpHelp);
 		cmd->AddCommand("setmoney", setMoneyCommand, ALLARENAS, setMoneyHelp);
 		cmd->AddCommand("setexp", setExpCommand, ALLARENAS, setExpHelp);
 		cmd->AddCommand("give", giveCommand, ALLARENAS, giveHelp);
