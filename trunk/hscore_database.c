@@ -187,7 +187,7 @@ local void LinkAmmo()
 			}
 		}
 	}
-	lock();
+	unlock();
 }
 
 //+-------------------------+
