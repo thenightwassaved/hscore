@@ -364,7 +364,7 @@ local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *pass
 		lm->LogP(L_ERROR, "hscore_database", p, "Multiple rows returned from MySQL: using first.");
 	}
 
-	row = mysql->GetRow(result)
+	row = mysql->GetRow(result);
 
 	playerData->id = atoi(mysql->GetField(row, 0)); 							//id
 	playerData->money = atoi(mysql->GetField(row, 1)); 							//money
