@@ -304,7 +304,7 @@ local void playerActionCallback(Player *p, int action, Arena *arena)
 		//the player is leaving an arena.
 
 		StorePlayerShips(p, arena);
-		UnloadPlayerShips(p, arena);
+		UnloadPlayerShips(p);
 	}
 	else if (action == PA_ENTERGAME)
 	{
@@ -350,13 +350,13 @@ local void arenaActionCallback(Arena *arena, int action)
 
 local int areShipsLoaded(Player *p)
 {
-	PerPlayerData *playerData = getPerPlayerData();
+	PerPlayerData *playerData = getPerPlayerData(p);
 	return playerData->shipsLoaded;
 }
 
 local int isLoaded(Player *p)
 {
-	PerPlayerData *playerData = getPerPlayerData();
+	PerPlayerData *playerData = getPerPlayerData(p);
 	return playerData->loaded;
 }
 
@@ -367,13 +367,13 @@ local LinkedList * getItemList()
 
 local LinkedList * getStoreList(Arena *arena)
 {
-	PerArenaData *arenaData = getPerArenaData();
+	PerArenaData *arenaData = getPerArenaData(arena);
 	return &(arenaData->storeList);
 }
 
 local LinkedList * getCategoryList(Arena *arena)
 {
-	PerArenaData *arenaData = getPerArenaData();
+	PerArenaData *arenaData = getPerArenaData(arena);
 	return &(arenaData->categoryList);
 }
 

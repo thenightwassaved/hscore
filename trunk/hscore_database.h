@@ -20,7 +20,7 @@ typedef struct PerPlayerData
 
 typedef struct PerArenaData
 {
-	LinkedList arenaList;
+	LinkedList storeList;
 	LinkedList categoryList;
 } PerArenaData;
 
