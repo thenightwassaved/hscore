@@ -24,27 +24,27 @@ local helptext_t storeInfoHelp =
 
 local void storeInfoCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-
+	//FIXME
 }
 
 local int canBuyItem(Player *p, Item *item)
 {
-
+	//FIXME
 }
 
 local int canSellItem(Player *p, Item *item)
 {
-
+	//FIXME
 }
 
 local void buyingItem(Player *p, Item *item)
 {
-
+	//nothing to do for the standard module
 }
 
 local void sellingItem(Player *p, Item *item)
 {
-
+	//nothing to do for the standard module
 }
 
 local Ihscorestoreman interface =

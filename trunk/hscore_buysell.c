@@ -2,6 +2,7 @@
 #include "hscore.h"
 #include "hscore_storeman.h"
 #include "hscore_database.h"
+#include "hscore_shipnames.h"
 
 //modules
 local Imodman *mm;
@@ -14,37 +15,37 @@ local Ihscoredatabase *database;
 
 local void printAllCategories(Player *p, LinkedList *categoryList)
 {
-
+	//FIXME
 }
 
 local void printCategoryItems(Player *p, Category *category)
 {
-
+	//FIXME
 }
 
 local void printShipList(Player *p)
 {
-
+	//FIXME
 }
 
 local void buyItem(Player *p, Item *item)
 {
-
+	//FIXME
 }
 
 local void sellItem(Player *p, Item *item)
 {
-
+	//FIXME
 }
 
 local void buyShip(Player *p, int ship)
 {
-
+	//FIXME
 }
 
 local void sellShip(Player *p, int ship)
 {
-
+	//FIXME
 }
 
 local helptext_t buyHelp =
@@ -56,7 +57,7 @@ local helptext_t buyHelp =
 
 local void buyCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-
+	//FIXME
 }
 
 local helptext_t sellHelp =
@@ -68,7 +69,7 @@ local helptext_t sellHelp =
 
 local void sellCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-
+	//FIXME
 }
 
 EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)

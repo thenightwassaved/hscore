@@ -10,22 +10,22 @@ local Ihscoremoney *money;
 
 local void flagWinCallback(Arena *arena, int freq)
 {
-
+	//FIXME
 }
 
 local void goalCallback(Arena *arena, Player *p, int bid, int x, int y)
 {
-
+	//FIXME
 }
 
 local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty, int flags, int *pts, int *green)
 {
-
+	//FIXME
 }
 
 local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalplayers, int flagsowned)
 {
-
+	//FIXME
 }
 
 local Iperiodicpoints periodicInterface =

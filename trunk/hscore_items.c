@@ -24,7 +24,7 @@ local helptext_t itemInfoHelp =
 
 local void itemInfoCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-
+	//FIXME
 }
 
 local helptext_t grantItemHelp =
@@ -37,7 +37,7 @@ local helptext_t grantItemHelp =
 
 local void grantItemCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-
+	//FIXME
 }
 
 local helptext_t removeItemHelp =
@@ -50,37 +50,37 @@ local helptext_t removeItemHelp =
 
 local void removeItemCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-
+	//FIXME
 }
 
 local int hasItem(Player *p, Item *item, int ship)
 {
-
+	//FIXME
 }
 
 local void addItem(Player *p, Item *item, int ship, int amount)
 {
-
+	//FIXME
 }
 
 local void removeItem(Player *p, Item *item, int ship, int amount)
 {
-
+	//FIXME
 }
 
 local int getPropertySum(Player *p, int ship, const char *prop)
 {
-
+	//FIXME
 }
 
 local void triggerEvent(Player *p, int ship, const char *event)
 {
-
+	//FIXME
 }
 
 local int getFreeItemTypeSpots(Player *p, int ship, ItemType *type)
 {
-
+	//FIXME
 }
 
 local Ihscoreitems interface =
