@@ -16,7 +16,7 @@ local Ihscoredatabase *database;
 
 local void printAllCategories(Player *p)
 {
-	PerArenaData *arenaData = database->getPerArenaData(player->arena);
+	LinkedList *categoryList = database->getCategoryList(p->arena);
 	Link *link;
 
 	chat->SendMessage(p, "+----------------------------------+------------------------------------------------------------------+");
@@ -24,7 +24,7 @@ local void printAllCategories(Player *p)
 	chat->SendMessage(p, "+----------------------------------+------------------------------------------------------------------+");
 	chat->SendMessage(p, "| Ships                            | All the ship hulls can you buy in this arena.                    |");
 
-	for (link = LLGetHead(&(arenaData->categoryList)); link; link = link->next)
+	for (link = LLGetHead(categoryList); link; link = link->next)
 	{
 		Category *category = link->data;
 
@@ -73,7 +73,8 @@ local helptext_t buyHelp =
 
 local void buyCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	PerArenaData *arenaData = database->getPerArenaData(player->arena);
+	LinkedList *categoryList = database->getCategoryList(player->arena);
+	Link link;
 
 	if (strcasecmp(params, "") == 0) //no params
 	{
@@ -97,7 +98,7 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 			}
 
 			//check if they're asking for a category
-			for (link = LLGetHead(&(arenaData->categoryList)); link; link = link->next)
+			for (link = LLGetHead(categoryList); link; link = link->next)
 			{
 				Category *category = link->data;
 
@@ -130,8 +131,6 @@ local helptext_t sellHelp =
 
 local void sellCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	PerArenaData *arenaData = database->getPerArenaData(player->arena);
-
 	if (strcasecmp(params, "") == 0) //no params
 	{
 		chat->SendMessage(p, "Please use ?buy to find the item you wish to sell");
