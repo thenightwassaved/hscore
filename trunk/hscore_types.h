@@ -68,7 +68,7 @@ typedef struct Item
 
 	LinkedList eventList;
 
-	ItemType *type1, type2;
+	ItemType *type1, *type2;
 	int typeDelta1, typeDelta2;
 
 	//if changes to this item should be delayed until a complete save (like on exit).

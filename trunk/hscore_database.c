@@ -68,7 +68,7 @@ local PerPlayerData *getPerPlayerData(Player *p)
 	return PPDATA(p, playerDataKey);
 }
 
-local ItemType * getItemByID(int id)
+local Item * getItemByID(int id)
 {
 	Link *link;
 	for (link = LLGetHead(&itemList); link; link = link->next)
@@ -186,17 +186,13 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 		item->ammoID = atoi(mysql->GetField(row, 13));				//ammo
 
 
-		if (item->type1 == NULL)
+		if (item->type1 == NULL || item->type2 == NULL)
 		{
-			lm->Log(L_ERROR, "<hscore_database> No item type matched id %i requested by item id %i.", item->type1, item->id);
-		}
-		if (item->type2 == NULL)
-		{
-			lm->Log(L_ERROR, "<hscore_database> No item type matched id %i requested by item id %i.", item->type2, item->id);
+			lm->Log(L_ERROR, "<hscore_database> No item type matched id requested by item id %i.", item->id);
 		}
 
         //add the item type to the list
-        LLAdd(itemTypeList, itemType);
+        LLAdd(&itemList, item);
 	}
 
 	lm->Log(L_DRIVEL, "<hscore_database> %i items were loaded from MySQL.", results);
@@ -237,7 +233,7 @@ local void loadItemTypesQueryCallback(int status, db_res *result, void *passedDa
         itemType->max = atoi(mysql->GetField(row, 2));			//max
 
         //add the item type to the list
-        LLAdd(itemTypeList, itemType);
+        LLAdd(&itemTypeList, itemType);
 	}
 
 	lm->Log(L_DRIVEL, "<hscore_database> %i item types were loaded from MySQL.", results);
