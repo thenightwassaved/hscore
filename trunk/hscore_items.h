@@ -1,7 +1,7 @@
 #ifndef HSCORE_ITEMS_H
 #define HSCORE_ITEMS_H
 
-#define I_HSCORE_ITEMS "hscore_items-2"
+#define I_HSCORE_ITEMS "hscore_items-3"
 
 typedef struct Ihscoreitems
 {
@@ -9,7 +9,6 @@ typedef struct Ihscoreitems
 
 	int (*getItemCount)(Player *p, Item *item, int ship);
 	void (*addItem)(Player *p, Item *item, int ship, int amount);
-	void (*removeItem)(Player *p, Item *item, int ship, int amount);
 
 	Item * (*getItemByName)(const char *name, Arena *arena);
 

@@ -17,7 +17,6 @@ local Ihscoredatabase *database;
 //interface prototypes
 local int getItemCount(Player *p, Item *item, int ship);
 local void addItem(Player *p, Item *item, int ship, int amount);
-local void removeItem(Player *p, Item *item, int ship, int amount);
 local Item * getItemByName(const char *name, Arena *arena);
 local int getPropertySum(Player *p, int ship, const char *prop);
 local void triggerEvent(Player *p, int ship, const char *event);
@@ -309,11 +308,6 @@ local void addItem(Player *p, Item *item, int ship, int amount)
 	//FIXME
 }
 
-local void removeItem(Player *p, Item *item, int ship, int amount)
-{
-	//FIXME
-}
-
 local Item * getItemByName(const char *name, Arena *arena)
 {
 	LinkedList *categoryList = database->getCategoryList(arena);
@@ -360,7 +354,7 @@ local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship)
 local Ihscoreitems interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_ITEMS, "hscore_items")
-	getItemCount, addItem, removeItem, getItemByName, getPropertySum,
+	getItemCount, addItem, getItemByName, getPropertySum,
 	triggerEvent, getFreeItemTypeSpots,
 };
 
