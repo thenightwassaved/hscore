@@ -45,6 +45,4 @@ typedef struct Ihscoremoney
 	int (*getExp)(Player *p);
 } Ihscoremoney;
 
-
-
 #endif //HSCORE_MONEY_H
