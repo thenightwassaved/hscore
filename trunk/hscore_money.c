@@ -124,6 +124,7 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 	if (params == NULL)
 	{
 		chat->SendMessage(p, "Grant: invalid usage.");
+		return;
 	}
 
 	int amount = strtol(params, &next, 0);
