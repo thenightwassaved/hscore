@@ -26,31 +26,32 @@ local helptext_t itemInfoHelp =
 
 local void itemInfoCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	//FIXME
+	if (params == NULL)
+	{
+		chat->SendMessage(p, "Please use the ?buy menu to look up items.");
+		return;
+	}
+
+	Item *item = getItemByName(params, p->arena);
+
+	if (item == NULL)
+	{
+		chat->SendMessage(p, "No item named %s in this arena", params);
+		return;
+	}
+
+	chat->SendMessage(p, "Item %s: %s", item->name, item->longDesc);
 }
 
 local helptext_t grantItemHelp =
 "Targets: player or freq or arena\n"
-"Args: [-f] [-c <amount>] [-s <ship #>] <item>\n"
+"Args: [-f] [-q] [-c <amount>] [-s <ship #>] <item>\n"
 "Adds the specified item to the inventory of the targeted players.\n"
 "If {-s} is not specified, the item is added to the player's current ship.\n"
 "Will only effect speccers if {-s} is used. The added amount defaults to 1.\n"
 "For typo safety, the {-f} must be specified when granting to more than one player.\n";
 
 local void grantItemCommand(const char *command, const char *params, Player *p, const Target *target)
-{
-	//FIXME
-}
-
-local helptext_t removeItemHelp =
-"Targets: none\n"
-"Args: [-f] [-c <amount>] [-s <ship #>] <item>\n"
-"Removes the specified item from the inventory of the targeted players.\n"
-"If {-s} is not specified, the item is removed from the player's current ship.\n"
-"Will only effect speccers if {-s} is used. The removed amount defaults to 1.\n"
-"For typo safety, the {-f} must be specified when removing from more than one player.\n";
-
-local void removeItemCommand(const char *command, const char *params, Player *p, const Target *target)
 {
 	//FIXME
 }
@@ -83,7 +84,7 @@ local Item * getItemByName(const char *name, Arena *arena)
 		Category *category = catLink->data;
 		Link *itemLink;
 
-		for (itemLink = LLGetHead(&(category->itemList)); itemLink; itemLink = itemLink->next)
+		for (itemLink = LLGetHead(&category->itemList); itemLink; itemLink = itemLink->next)
 		{
 			Item *item = itemLink->data;
 
@@ -146,7 +147,6 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 
 		cmd->AddCommand("iteminfo", itemInfoCommand, ALLARENAS, itemInfoHelp);
 		cmd->AddCommand("grantitem", grantItemCommand, ALLARENAS, grantItemHelp);
-		cmd->AddCommand("removeitem", removeItemCommand, ALLARENAS, removeItemHelp);
 
 		return MM_OK;
 	}
@@ -159,7 +159,6 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 
 		cmd->RemoveCommand("iteminfo", itemInfoCommand, ALLARENAS);
 		cmd->RemoveCommand("grantitem", grantItemCommand, ALLARENAS);
-		cmd->RemoveCommand("removeitem", removeItemCommand, ALLARENAS);
 
 		mm->ReleaseInterface(lm);
 		mm->ReleaseInterface(chat);
