@@ -23,7 +23,7 @@ local void shipsCommand(const char *command, const char *params, Player *p, cons
 {
 	Player *t = (target->type == T_PLAYER) ? target->u.p : p;
 
-	if (database->areShipsLoaded(t)) //MUTEX
+	if (database->areShipsLoaded(t))
 	{
 		PerPlayerData *playerData = database->getPerPlayerData(t);
 
@@ -120,6 +120,7 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 
 			Link *link;
 
+			database->lock();
 			for (link = LLGetHead(&playerData->hull[ship]->inventoryEntryList); link; link = link->next) //MUTEX
 			{
 				InventoryEntry *entry = link->data;
@@ -128,7 +129,9 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 				int ammoCount;
 				if (item->ammo != NULL)
 				{
-					ammoCount = items->getItemCount(p, item->ammo, ship);
+					database->unlock(); //so we can call without deadlocking
+					ammoCount = items->getItemCount(p, item->ammo, ship); //POSSIBLE FIXME?
+					database->lock();
 				}
 				else
 				{
@@ -156,6 +159,7 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 
 				chat->SendMessage(p, "| %-16s | %5i | %10i | %-16s | %5i | %-16s | %5i |", item->name, entry->count, ammoCount, type1, item->typeDelta1 * entry->count, type2, item->typeDelta2 * entry->count);
 			}
+			database->unlock();
 
 			chat->SendMessage(p, "+------------------+-------+------------+------------------+-------+------------------+-------+");
 		}

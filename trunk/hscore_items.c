@@ -329,15 +329,18 @@ local int getItemCount(Player *p, Item *item, int ship)
 	Link *link;
 	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
+	database->lock();
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
 		InventoryEntry *entry = link->data;
 
 		if (entry->item == item)
 		{
+			database->unlock();
 			return entry->count;
 		}
 	}
+	database->unlock();
 
 	return 0; //don't have it
 }
@@ -376,6 +379,7 @@ local void addItem(Player *p, Item *item, int ship, int amount)
 	int data = 0;
 	int count = 0;
 
+	database->lock();
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
 		InventoryEntry *entry = link->data;
@@ -387,6 +391,7 @@ local void addItem(Player *p, Item *item, int ship, int amount)
 			break;
 		}
 	}
+	database->unlock();
 
 	count += amount;
 
@@ -406,6 +411,7 @@ local Item * getItemByName(const char *name, Arena *arena)
 
 	//to deal with the fact that an item name is only unique per arena,
 	//we scan the items in the categories rather than the item list
+	database->lock();
 	for (catLink = LLGetHead(categoryList); catLink; catLink = catLink->next)
 	{
 		Category *category = catLink->data;
@@ -417,10 +423,12 @@ local Item * getItemByName(const char *name, Arena *arena)
 
 			if (strcasecmp(item->name, name) == 0)
 			{
+				database->unlock();
 				return item;
 			}
 		}
 	}
+	database->unlock();
 
 	return NULL;
 }
@@ -459,6 +467,7 @@ local int getPropertySum(Player *p, int ship, const char *propString)
 
 	int count = 0;
 
+	database->lock();
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
 		InventoryEntry *entry = link->data;
@@ -466,7 +475,11 @@ local int getPropertySum(Player *p, int ship, const char *propString)
 
 		if (item->ammo != NULL)
 		{
-			if (getItemCount(p, item->ammo, ship) <= 0)
+			database->unlock(); //so we can call getItemCount
+			int itemCount = getItemCount(p, item->ammo, ship); //POSSIBLE FIXME?
+			database->lock(); //relock
+
+			if (itemCount <= 0)
 			{
 				continue; //out of ammo, ignore the item.
 			}
@@ -484,6 +497,7 @@ local int getPropertySum(Player *p, int ship, const char *propString)
 			}
 		}
 	}
+	database->unlock();
 
 	return count;
 }
@@ -531,6 +545,7 @@ local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship)
 
 	int count = type->max;
 
+	database->lock();
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
 		InventoryEntry *entry = link->data;
@@ -545,6 +560,7 @@ local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship)
 			count -= entry->count * item->typeDelta2;
 		}
 	}
+	database->unlock();
 
 	return count;
 }

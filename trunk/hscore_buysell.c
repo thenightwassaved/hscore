@@ -26,17 +26,19 @@ local void printAllCategories(Player *p)
 	chat->SendMessage(p, "+----------------------------------+------------------------------------------------------------------+");
 	chat->SendMessage(p, "| Ships                            | All the ship hulls can you buy in this arena.                    |");
 
-	for (link = LLGetHead(categoryList); link; link = link->next) //MUTEX
+	database->lock();
+	for (link = LLGetHead(categoryList); link; link = link->next)
 	{
 		Category *category = link->data;
 
 		chat->SendMessage(p, "| %-32s | %-64s |", category->name, category->description);
 	}
+	database->unlock();
 
 	chat->SendMessage(p, "+----------------------------------+------------------------------------------------------------------+");
 }
 
-local void printCategoryItems(Player *p, Category *category)
+local void printCategoryItems(Player *p, Category *category) //call with lock held
 {
 	Link *link;
 
@@ -46,7 +48,7 @@ local void printCategoryItems(Player *p, Category *category)
 	chat->SendMessage(p, "| Item Name        | Buy Price | Sell Price | Exp    | Ships    | Item Description                 |");
 	chat->SendMessage(p, "+------------------+-----------+------------+--------+----------+----------------------------------+");
 
-	for (link = LLGetHead(&category->itemList); link; link = link->next) //MUTEX
+	for (link = LLGetHead(&category->itemList); link; link = link->next)
 	{
 		Item *item = link->data;
 
@@ -311,6 +313,7 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 			}
 
 			//check if they're asking for a category
+			database->lock();
 			for (link = LLGetHead(categoryList); link; link = link->next)
 			{
 				Category *category = link->data;
@@ -321,6 +324,7 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 					return;
 				}
 			}
+			database->unlock();
 
 			//not a category. check for an item
 			Item *item = items->getItemByName(params, p->arena);

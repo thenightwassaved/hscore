@@ -33,17 +33,20 @@ local void storeInfoCommand(const char *command, const char *params, Player *p, 
 		chat->SendMessage(p, "| Stores                           |");
 		chat->SendMessage(p, "+----------------------------------+");
 
+		database->lock();
 		for (link = LLGetHead(database->getStoreList(p->arena)); link; link = link->next)
 		{
 			Store *store = link->data;
 
 			chat->SendMessage(p, "| %-32s |", store->name);
 		}
+		database->unlock();
 
 		chat->SendMessage(p, "+----------------------------------+");
 	}
 	else
 	{
+		database->lock();
 		for (link = LLGetHead(database->getStoreList(p->arena)); link; link = link->next)
 		{
 			Store *store = link->data;
@@ -54,6 +57,7 @@ local void storeInfoCommand(const char *command, const char *params, Player *p, 
 				return;
 			}
 		}
+		database->unlock();
 
 		//didn't find it
 		chat->SendMessage(p, "No stored named %s in this arena.", params);

@@ -67,6 +67,8 @@ local int isLoaded(Player *p);
 local LinkedList * getItemList();
 local LinkedList * getStoreList(Arena *arena);
 local LinkedList * getCategoryList(Arena *arena);
+local void lock();
+local void unlock();
 local void updateItem(Player *p, int ship, Item *item, int newCount, int newData);
 local void addShip(Player *p, int ship);
 local void removeShip(Player *p, int ship);
@@ -79,6 +81,9 @@ local int arenaDataKey;
 //lists
 local LinkedList itemList;
 local LinkedList itemTypeList;
+
+//mutex
+local pthread_mutex_t itemMutex = PTHREAD_MUTEX_INITIALIZER;
 
 //+-------------------------+
 //|                         |
@@ -99,33 +104,43 @@ local PerPlayerData *getPerPlayerData(Player *p)
 local Item * getItemByID(int id)
 {
 	Link *link;
-	for (link = LLGetHead(&itemList); link; link = link->next) //MUTEX
+	Item *returnValue = NULL;
+
+	lock();
+	for (link = LLGetHead(&itemList); link; link = link->next)
 	{
 		Item *item = link->data;
 
 		if (item->id == id)
 		{
-			return item;
+			returnValue = item;
+			break;
 		}
 	}
+	unlock();
 
-	return NULL;
+	return returnValue;
 }
 
 local ItemType * getItemTypeByID(int id)
 {
 	Link *link;
-	for (link = LLGetHead(&itemTypeList); link; link = link->next) //MUTEX
+	Item *returnValue = NULL;
+
+	lock();
+	for (link = LLGetHead(&itemTypeList); link; link = link->next)
 	{
 		ItemType *itemType = link->data;
 
 		if (itemType->id == id)
 		{
-			return itemType;
+			returnValue = itemType;
+			break;
 		}
 	}
+	unlock();
 
-	return NULL;
+	return returnValue;
 }
 
 //+--------------------------+
@@ -155,7 +170,9 @@ local const char * getArenaIdentifier(Arena *arena)
 local void LinkAmmo()
 {
 	Link *link;
-	for (link = LLGetHead(&itemList); link; link = link->next) //MUTEX
+
+	lock();
+	for (link = LLGetHead(&itemList); link; link = link->next)
 	{
 		Item *item = link->data;
 
@@ -170,6 +187,7 @@ local void LinkAmmo()
 			}
 		}
 	}
+	lock();
 }
 
 //+-------------------------+
@@ -178,7 +196,7 @@ local void LinkAmmo()
 //|                         |
 //+-------------------------+
 
-local void loadPropertiesQueryCallback(int status, db_res *result, void *passedData) //MUTEX
+local void loadPropertiesQueryCallback(int status, db_res *result, void *passedData)
 {
 	int results;
 	db_row *row;
@@ -209,7 +227,9 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 			property->value = atoi(mysql->GetField(row, 2));		//value
 
 			//add the item type to the list
+			lock();
 			LLAdd(&item->propertyList, property);
+			unlock();
 		}
 		else
 		{
@@ -220,7 +240,7 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 	lm->Log(L_DRIVEL, "<hscore_database> %i properties were loaded from MySQL.", results);
 }
 
-local void loadEventsQueryCallback(int status, db_res *result, void *passedData) //MUTEX
+local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 {
 	int results;
 	db_row *row;
@@ -254,7 +274,9 @@ local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 
 
 			//add the item type to the list
+			lock();
 			LLAdd(&item->eventList, event);
+			unlock();
 		}
 		else
 		{
@@ -265,7 +287,7 @@ local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 	lm->Log(L_DRIVEL, "<hscore_database> %i events were loaded from MySQL.", results);
 }
 
-local void loadItemsQueryCallback(int status, db_res *result, void *passedData) //MUTEX
+local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 {
 	int results;
 	db_row *row;
@@ -310,8 +332,10 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData) 
 		item->delayStatusWrite = atoi(mysql->GetField(row, 13));	//delay_write
 		item->ammoID = atoi(mysql->GetField(row, 14));				//ammo
 
-		//add the item type to the list
+		//add the item to the list
+		lock();
 		LLAdd(&itemList, item);
+		unlock();
 	}
 
 	lm->Log(L_DRIVEL, "<hscore_database> %i items were loaded from MySQL.", results);
@@ -324,7 +348,7 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData) 
 	LinkAmmo();
 }
 
-local void loadItemTypesQueryCallback(int status, db_res *result, void *passedData) //MUTEX
+local void loadItemTypesQueryCallback(int status, db_res *result, void *passedData)
 {
 	int results;
 	db_row *row;
@@ -351,14 +375,16 @@ local void loadItemTypesQueryCallback(int status, db_res *result, void *passedDa
 		itemType->max = atoi(mysql->GetField(row, 2));			//max
 
 		//add the item type to the list
+		lock();
 		LLAdd(&itemTypeList, itemType);
+		unlock();
 	}
 
 	lm->Log(L_DRIVEL, "<hscore_database> %i item types were loaded from MySQL.", results);
 	LoadItemList(); //now that all the item types are in, load the items.
 }
 
-local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *passedData) //MUTEX
+local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *passedData)
 {
 	int results;
 	db_row *row;
@@ -407,7 +433,7 @@ local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *pass
 	lm->LogP(L_DRIVEL, "hscore_database", p, "loaded globals from MySQL.");
 }
 
-local void loadShipIDQueryCallback(int status, db_res *result, void *passedData) //MUTEX
+local void loadShipIDQueryCallback(int status, db_res *result, void *passedData)
 {
 	int results;
 	db_row *row;
@@ -440,7 +466,7 @@ local void loadShipIDQueryCallback(int status, db_res *result, void *passedData)
 	hull->id = id;
 }
 
-local void loadPlayerShipItemsQueryCallback(int status, db_res *result, void *passedData) //MUTEX
+local void loadPlayerShipItemsQueryCallback(int status, db_res *result, void *passedData)
 {
 	int results;
 	db_row *row;
@@ -479,7 +505,9 @@ local void loadPlayerShipItemsQueryCallback(int status, db_res *result, void *pa
 					inventoryEntry->count = count;
 					inventoryEntry->data = data;
 
+					lock();
 					LLAdd(&hull->inventoryEntryList, inventoryEntry);
+					unlock();
 				}
 				else
 				{
@@ -502,7 +530,7 @@ local void loadPlayerShipItemsQueryCallback(int status, db_res *result, void *pa
 	lm->LogP(L_DRIVEL, "hscore_database", p, "%i ship items were loaded from MySQL.", results);
 }
 
-local void loadPlayerShipsQueryCallback(int status, db_res *result, void *passedData) //MUTEX
+local void loadPlayerShipsQueryCallback(int status, db_res *result, void *passedData)
 {
 	int results;
 	db_row *row;
@@ -546,7 +574,7 @@ local void loadPlayerShipsQueryCallback(int status, db_res *result, void *passed
 	LoadPlayerShipItems(p, p->arena); //load the inventory for the ship
 }
 
-local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedData) //MUTEX
+local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedData)
 {
 	int results;
 	db_row *row;
@@ -588,7 +616,9 @@ local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedD
 			if (store->id == storeID)
 			{
 				//add the item to the store's list
+				lock();
 				LLAdd(&store->itemList, item);
+				unlock();
 				break;
 			}
 		}
@@ -599,7 +629,7 @@ local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedD
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i store items were loaded from MySQL.", results);
 }
 
-local void loadArenaStoresQueryCallback(int status, db_res *result, void *passedData) //MUTEX
+local void loadArenaStoresQueryCallback(int status, db_res *result, void *passedData)
 {
 	int results;
 	db_row *row;
@@ -633,14 +663,16 @@ local void loadArenaStoresQueryCallback(int status, db_res *result, void *passed
 		astrncpy(store->region, mysql->GetField(row, 3), 16);		//region
 
 		//add the item type to the list
+		lock();
 		LLAdd(&arenaData->storeList, store);
+		unlock();
 	}
 
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i stores were loaded from MySQL.", results);
 	LoadStoreItems(arena); //now that all the stores are in, load the items into them.
 }
 
-local void loadCategoryItemsQueryCallback(int status, db_res *result, void *passedData) //MUTEX
+local void loadCategoryItemsQueryCallback(int status, db_res *result, void *passedData)
 {
 	int results;
 	db_row *row;
@@ -683,7 +715,9 @@ local void loadCategoryItemsQueryCallback(int status, db_res *result, void *pass
 			if (category->id == categoryID)
 			{
 				//add the item to the category's list
+				lock();
 				LLAdd(&category->itemList, item);
+				unlock();
 				break;
 			}
 		}
@@ -694,7 +728,7 @@ local void loadCategoryItemsQueryCallback(int status, db_res *result, void *pass
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i cateogry items were loaded from MySQL.", results);
 }
 
-local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *passedData) //MUTEX
+local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *passedData)
 {
 	int results;
 	db_row *row;
@@ -727,7 +761,9 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 		astrncpy(category->description, mysql->GetField(row, 2), 64);	//description
 
 		//add the item type to the list
+		lock();
 		LLAdd(&arenaData->categoryList, category);
+		unlock();
 	}
 
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i categories were loaded from MySQL.", results);
@@ -769,14 +805,14 @@ local void InitPerArenaData(Arena *arena) //called before data is touched
 
 local void UnloadPlayerGlobals(Player *p) //called to free any allocated data
 {
-	PerPlayerData *playerData = getPerPlayerData(p); //MUTEX
+	PerPlayerData *playerData = getPerPlayerData(p);
 
 	playerData->loaded = 0; //nothing else needed
 
 	lm->LogP(L_DRIVEL, "hscore_database", p, "Freed global data.");
 }
 
-local void UnloadPlayerShip(ShipHull *ship)
+local void UnloadPlayerShip(ShipHull *ship) //call with lock() held
 {
 	LLEnum(&ship->inventoryEntryList, afree);
 	LLEmpty(&ship->inventoryEntryList);
@@ -786,7 +822,9 @@ local void UnloadPlayerShip(ShipHull *ship)
 
 local void UnloadPlayerShips(Player *p) //called to free any allocated data
 {
-	PerPlayerData *playerData = getPerPlayerData(p); //MUTEX
+	PerPlayerData *playerData = getPerPlayerData(p);
+
+	lock();
 
 	playerData->shipsLoaded = 0;
 
@@ -799,32 +837,38 @@ local void UnloadPlayerShips(Player *p) //called to free any allocated data
 		}
 	}
 
+	unlock();
+
 	lm->LogP(L_DRIVEL, "hscore_database", p, "Freed ship data.");
 }
 
 local void UnloadCategoryList(Arena *arena) //called when the arena is about to die
 {
-	PerArenaData *arenaData = getPerArenaData(arena); //MUTEX
+	PerArenaData *arenaData = getPerArenaData(arena);
 
+	lock();
 	LLEnum(&arenaData->categoryList, afree); //can simply free all the Category structs
 
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "Freed %i categories.", LLCount(&arenaData->categoryList));
 
 	LLEmpty(&arenaData->categoryList);
+	unlock();
 }
 
 local void UnloadStoreList(Arena *arena)
 {
-	PerArenaData *arenaData = getPerArenaData(arena); //MUTEX
+	PerArenaData *arenaData = getPerArenaData(arena);
 
+	lock();
 	LLEnum(&arenaData->storeList, afree); //can simply free all the Store structs
 
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "Freed %i stores.", LLCount(&arenaData->storeList));
 
 	LLEmpty(&arenaData->storeList);
+	unlock();
 }
 
-local void UnloadItemListEnumCallback(const void *ptr)
+local void UnloadItemListEnumCallback(const void *ptr) //called with lock held
 {
 	Item *item = (Item*)ptr;
 
@@ -837,22 +881,26 @@ local void UnloadItemListEnumCallback(const void *ptr)
 	afree(item);
 }
 
-local void UnloadItemList() //MUTEX
+local void UnloadItemList()
 {
+	lock();
 	LLEnum(&itemList, UnloadItemListEnumCallback);
 
 	lm->Log(L_DRIVEL, "<hscore_database> Freed %i items.", LLCount(&itemList));
 
 	LLEmpty(&itemList);
+	unlock();
 }
 
-local void UnloadItemTypeList() //MUTEX
+local void UnloadItemTypeList()
 {
+	lock();
 	LLEnum(&itemTypeList, afree); //can simply free all the ItemType structs
 
 	lm->Log(L_DRIVEL, "<hscore_database> Freed %i item types.", LLCount(&itemTypeList));
 
 	LLEmpty(&itemTypeList);
+	unlock();
 }
 
 local void UnloadAllPerArenaData()
@@ -893,6 +941,7 @@ local void LoadPlayerGlobals(Player *p) //fetch globals from MySQL
 {
 	Player *p2;
 	Link *link;
+
 	pd->Lock();
 	FOR_EACH_PLAYER(p2)
 		if (p != p2 && strcasecmp(p->name, p2->name) == 0)
@@ -980,10 +1029,12 @@ local void LoadItemTypeList() //will call LoadItemList() when finished loading
 
 local void StorePlayerGlobals(Player *p) //store player globals. MUST FINISH IN ONE QUERY LEVEL
 {
-	PerPlayerData *playerData = getPerPlayerData(p);  //MUTEX
+	PerPlayerData *playerData = getPerPlayerData(p);
 
 	if (isLoaded(p))
 	{
+		lock();
+
 		mysql->Query(NULL, NULL, 0, "UPDATE hs_players SET money = #, exp = #, money_give = #, money_grant = #, money_buysell = #, money_kill = #, money_flag = #, money_ball = #, money_event = # WHERE id = #",
 			playerData->money,
 			playerData->exp,
@@ -995,6 +1046,8 @@ local void StorePlayerGlobals(Player *p) //store player globals. MUST FINISH IN 
 			playerData->moneyType[MONEY_TYPE_BALL],
 			playerData->moneyType[MONEY_TYPE_EVENT],
 			playerData->id);
+
+		unlock();
 	}
 	else
 	{
@@ -1004,10 +1057,12 @@ local void StorePlayerGlobals(Player *p) //store player globals. MUST FINISH IN 
 
 local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST FINISH IN ONE QUERY LEVEL
 {
-	PerPlayerData *playerData = getPerPlayerData(p); //MUTEX
+	PerPlayerData *playerData = getPerPlayerData(p);
 
 	if (areShipsLoaded(p))
 	{
+		lock();
+
 		for (int i = 0; i < 8; i++)
 		{
 			if (playerData->hull[i] != NULL)
@@ -1038,6 +1093,8 @@ local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST 
 				}
 			}
 		}
+
+		unlock();
 	}
 	else
 	{
@@ -1217,9 +1274,19 @@ local LinkedList * getCategoryList(Arena *arena)
 	return &arenaData->categoryList;
 }
 
+local void lock()
+{
+	pthread_mutex_lock(&itemMutex);
+}
+
+local void unlock()
+{
+	pthread_mutex_unlock(&itemMutex);
+}
+
 local void updateItem(Player *p, int ship, Item *item, int newCount, int newData)
 {
-	PerPlayerData *playerData = getPerPlayerData(p); //MUTEX
+	PerPlayerData *playerData = getPerPlayerData(p);
 
 	if (ship < 0 || 7 < ship)
 	{
@@ -1242,6 +1309,7 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 	Link *link;
 	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
+	lock();
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
 		InventoryEntry *entry = link->data;
@@ -1297,7 +1365,8 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 				afree(entry);
 			}
 
-			return;
+			unlock();
+			return; //premature return
 		}
 	}
 
@@ -1331,11 +1400,13 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 	{
 		lm->LogP(L_ERROR, "hscore_database", p, "asked to remove item %s not on ship %i", item->name, ship);
 	}
+
+	unlock();
 }
 
 local void addShip(Player *p, int ship) //the ships id may not be valid until later
 {
-	PerPlayerData *playerData = getPerPlayerData(p); //MUTEX
+	PerPlayerData *playerData = getPerPlayerData(p);
 
 	if (ship < 0 || 7 < ship)
 	{
@@ -1355,6 +1426,8 @@ local void addShip(Player *p, int ship) //the ships id may not be valid until la
 		return;
 	}
 
+	lock();
+
 	ShipHull *hull = amalloc(sizeof(*hull));
 
 	LLInit(&hull->inventoryEntryList);
@@ -1364,11 +1437,13 @@ local void addShip(Player *p, int ship) //the ships id may not be valid until la
 
 	mysql->Query(NULL, NULL, 0, "INSERT INTO hs_player_ships VALUES (NULL, #, #, ?)", playerData->id, ship, getArenaIdentifier(p->arena));
 	mysql->Query(loadShipIDQueryCallback, hull, 1, "SELECT id FROM hs_player_ships WHERE player_id = # AND ship = #", playerData->id, ship);
+
+	unlock();
 }
 
 local void removeShip(Player *p, int ship)
 {
-	PerPlayerData *playerData = getPerPlayerData(p); //MUTEX
+	PerPlayerData *playerData = getPerPlayerData(p);
 
 	if (ship < 0 || 7 < ship)
 	{
@@ -1403,7 +1478,9 @@ local void removeShip(Player *p, int ship)
 	mysql->Query(NULL, NULL, 0, "DELETE FROM hs_player_ship_items WHERE ship_id = #", shipID); //empty the ship
 	mysql->Query(NULL, NULL, 0, "DELETE FROM hs_player_ships WHERE id = #", shipID);
 
+	lock();
 	UnloadPlayerShip(playerData->hull[ship]);
+	unlock();
 
 	playerData->hull[ship] = NULL;
 }
@@ -1414,7 +1491,7 @@ local Ihscoredatabase interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_DATABASE, "hscore_database")
 	areShipsLoaded, isLoaded, getItemList, getStoreList,
-	getCategoryList, updateItem, addShip, removeShip, getPerPlayerData,
+	getCategoryList, lock, unlock, updateItem, addShip, removeShip, getPerPlayerData,
 };
 
 EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)

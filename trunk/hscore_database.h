@@ -1,7 +1,7 @@
 #ifndef HSCORE_DATABASE_H
 #define HSCORE_DATABASE_H
 
-#define I_HSCORE_DATABASE "hscore_database-2"
+#define I_HSCORE_DATABASE "hscore_database-3"
 
 typedef struct PerPlayerData
 {
@@ -34,6 +34,9 @@ typedef struct Ihscoredatabase
 	LinkedList * (*getItemList)();
 	LinkedList * (*getStoreList)(Arena *arena);
 	LinkedList * (*getCategoryList)(Arena *arena);
+
+	void lock();
+	void unlock();
 
 	//call whenever you want an item to be written back into SQL
 	//a newCount of 0 will delete the item from the database
