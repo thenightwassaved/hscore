@@ -12,7 +12,7 @@ typedef struct Ihscoreitems
 
 	Item * (*getItemByName)(const char *name, Arena *arena);
 
-	int (*getPropertySum)(Player *p, int ship, const char *prop);
+	int (*getPropertySum)(Player *p, int ship, const char *prop); //properties ARE case sensitive
 
 	void (*triggerEvent)(Player *p, int ship, const char *event);
 

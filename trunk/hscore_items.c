@@ -424,10 +424,67 @@ local Item * getItemByName(const char *name, Arena *arena)
 	return NULL;
 }
 
-local int getPropertySum(Player *p, int ship, const char *prop)
+local int getPropertySum(Player *p, int ship, const char *propString)
 {
-	//FIXME
-	return 0;
+	PerPlayerData *playerData = database->getPerPlayerData(p);
+
+	if (event == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to get props for NULL string.");
+		return 0;
+	}
+
+	if (!database->areShipsLoaded(p))
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to get props from a player with unloaded ships");
+		return 0;
+	}
+
+	if (ship < 0 || 7 < ship)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to get props on ship %i", ship);
+		return 0;
+	}
+
+	if (playerData->hull[ship] == NULL)
+	{
+		//not unusual or dangerous
+		//lm->LogP(L_ERROR, "hscore_items", p, "asked to get props from unowned ship %i", ship);
+		return 0;
+	}
+
+	Link *link;
+	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+
+	int count = 0;
+
+	for (link = LLGetHead(inventoryList); link; link = link->next)
+	{
+		InventoryEntry *entry = link->data;
+		Item *item = entry->item;
+
+		if (item->ammo != NULL)
+		{
+			if (getItemCount(p, ship, item->ammo) <= 0)
+			{
+				continue; //out of ammo, ignore the item.
+			}
+		}
+
+		Link *propLink;
+		for (propLink = LLGetHead(&item->propertyList); propLink; propLink = propLink->next)
+		{
+			Property *prop = propLink->data;
+
+			if (strcmp(prop->name, propString) == 0)
+			{
+				count += prop->value * entry->count;
+				break;
+			}
+		}
+	}
+
+	return count;
 }
 
 local void triggerEvent(Player *p, int ship, const char *event)
@@ -437,8 +494,53 @@ local void triggerEvent(Player *p, int ship, const char *event)
 
 local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship)
 {
-	//FIXME
-	return 0;
+	PerPlayerData *playerData = database->getPerPlayerData(p);
+
+	if (type == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to get slots for NULL item type.");
+		return 0;
+	}
+
+	if (!database->areShipsLoaded(p))
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to get slots from a player with unloaded ships");
+		return 0;
+	}
+
+	if (ship < 0 || 7 < ship)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to get item type on ship %i", ship);
+		return 0;
+	}
+
+	if (playerData->hull[ship] == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to get item type from unowned ship %i", ship);
+		return 0;
+	}
+
+	Link *link;
+	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+
+	int count = type->max;
+
+	for (link = LLGetHead(inventoryList); link; link = link->next)
+	{
+		InventoryEntry *entry = link->data;
+		Item *item = entry->item;
+
+		if (item->type1 == type)
+		{
+			count -= entry->count * item->typeDelta1;
+		}
+		if (item->type1 == type)
+		{
+			count -= entry->count * item->typeDelta2;
+		}
+	}
+
+	return count;
 }
 
 local Ihscoreitems interface =
