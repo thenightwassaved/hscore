@@ -24,3 +24,19 @@
     --- prefix_name.h ---
 
 
+    --- Bad Idea Pile To Be Never Ever Repeated Again ---
+
+    typedef struct Info
+    {
+        char name[32];
+        char description[256];
+    } Info;
+
+    To replace the various names and descriptions in all other structures.
+
+        > Dr Brain: It makes us add extra bytes to some stucts that don't need
+          it and doesn't make anything easier.
+
+    --- Bad Idea Pile To Be Never Ever Repeated Again ---
+
+
