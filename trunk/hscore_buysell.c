@@ -76,7 +76,7 @@ local helptext_t buyHelp =
 local void buyCommand(const char *command, const char *params, Player *p, const Target *target)
 {
 	LinkedList *categoryList = database->getCategoryList(p->arena);
-	Link link;
+	Link *link;
 
 	if (strcasecmp(params, "") == 0) //no params
 	{
@@ -144,7 +144,7 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 		{
 			if (strcasecmp(params, shipNames[i]) == 0)
 			{
-				buyShip(p, i);
+				sellShip(p, i);
 			}
 		}
 
