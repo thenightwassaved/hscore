@@ -54,9 +54,9 @@ local void shipsCommand(const char *command, const char *params, Player *p, cons
 			}
 		}
 
-		chat->SendMessage(p, "+---------+---------+--------+-----------+---------+--------+-----------+-------+");
+		chat->SendMessage(p, "+---------+---------+--------+-----------+---------+--------+-----------+--------+");
 		chat->SendMessage(p, "| %-7s | %-7s | %-6s | %-9s | %-7s | %-6s | %-9s | %-6s |", status[0], status[1], status[2], status[3], status[4], status[5], status[6], status[7]);
-		chat->SendMessage(p, "+---------+---------+--------+-----------+---------+--------+-----------+-------+");
+		chat->SendMessage(p, "+---------+---------+--------+-----------+---------+--------+-----------+--------+");
 	}
 	else
 	{
