@@ -99,14 +99,14 @@ local void printShipList(Player *p)
 
 local void buyItem(Player *p, Item *item, int count)
 {
-	database->addItem(p, item, p->p_ship, count);
+	items->addItem(p, item, p->p_ship, count);
 
 	chat->SendMessage(p, "<buy item %s>", item->name);
 }
 
 local void sellItem(Player *p, Item *item, int count)
 {
-	database->addItem(p, item, p->p_ship, -count);
+	items->addItem(p, item, p->p_ship, -count);
 
 	chat->SendMessage(p, "<sell item %s>", item->name);
 }
