@@ -64,9 +64,9 @@ typedef struct Item
 
 	int shipsAllowed; //bit positions represent each ship. bit 0 = warbird.
 
-	LinkedList *propertyList;
+	LinkedList propertyList;
 
-	LinkedList *eventList;
+	LinkedList eventList;
 
 	ItemType *type1, type2;
 	int typeDelta1, typeDelta2;
@@ -77,6 +77,7 @@ typedef struct Item
 	int delayStatusWrite;
 
 	struct Item *ammo; //can be NULL, only for use by events.
+	int ammoID; //used for post processing ONLY
 
 	int id; //MySQL use only
 } Item;

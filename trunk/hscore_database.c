@@ -14,6 +14,26 @@ local Iarenaman *aman;
 local Iplayerdata *pd;
 local Imainloop *ml;
 
+//local prototypes
+local void InitPerPlayerData(Player *p);
+local void InitPerArenaData(Arena *arena);
+local void UnloadPlayerGlobals(Player *p);
+local void UnloadPlayerShips(Player *p);
+local void UnloadCategoryList(Arena *arena);
+local void UnloadStoreList(Arena *arena);
+local void UnloadItemList();
+local void UnloadItemTypeList();
+local void LoadPlayerGlobals(Player *p);
+local void LoadPlayerShips(Player *p, Arena *arena);
+local void LoadCategoryList(Arena *arena);
+local void LoadStoreList(Arena *arena);
+local void LoadEvents();
+local void LoadProperties();
+local void LoadItemList();
+local void LoadItemTypeList();
+local void StorePlayerGlobals(Player *p);
+local void StorePlayerShips(Player *p, Arena *arena);
+
 //interface prototypes
 local int areShipsLoaded(Player *p);
 local int isLoaded(Player *p);
@@ -48,16 +68,69 @@ local PerPlayerData *getPerPlayerData(Player *p)
 	return PPDATA(p, playerDataKey);
 }
 
+local ItemType * getItemByID(int id)
+{
+	Link *link;
+	for (link = LLGetHead(&itemList); link; link = link->next)
+	{
+		Item *item = link->data;
+
+		if (item->id == id)
+		{
+			return item;
+		}
+	}
+
+	return NULL;
+}
+
+local ItemType * getItemTypeByID(int id)
+{
+	Link *link;
+	for (link = LLGetHead(&itemTypeList); link; link = link->next)
+	{
+		ItemType *itemType = link->data;
+
+		if (itemType->id == id)
+		{
+			return itemType;
+		}
+	}
+
+	return NULL;
+}
+
+//+------------------------+
+//|                        |
+//|  Post-Query Functions  |
+//|                        |
+//+------------------------+
+
+local void LinkAmmo()
+{
+	Link *link;
+	for (link = LLGetHead(&itemList); link; link = link->next)
+	{
+		Item *item = link->data;
+
+		if (item->ammoID != 0)
+		{
+			Item *ammo = getItemByID(item->ammoID);
+			item->ammo = ammo;
+
+			if (item->ammo == NULL)
+			{
+				lm->Log(L_ERROR, "<hscore_database> No ammo matched id %i requested by item id %i.", item->ammoID, item->id);
+			}
+		}
+	}
+}
+
 //+-------------------------+
 //|                         |
 //|  MySQL Query Callbacks  |
 //|                         |
 //+-------------------------+
-
-local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
-{
-	//FIXME
-}
 
 local void loadPropertiesQueryCallback(int status, db_res *result, void *passedData)
 {
@@ -69,9 +142,106 @@ local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 	//FIXME
 }
 
+local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
+{
+	int results;
+	db_row *row;
+
+	if (status != 0 || result == NULL)
+	{
+		lm->Log(L_ERROR, "<hscore_database> Unexpected database error during items load.");
+		return;
+	}
+
+	results = mysql->GetRowCount(result);
+
+	if (results == 0)
+	{
+	    lm->Log(L_ERROR, "<hscore_database> No items returned from MySQL query.");
+	    return;
+	}
+
+	while ((row = mysql->GetRow(result)))
+	{
+	    Item *item = amalloc(sizeof(*item));
+
+		LLInit(&(item->propertyList));
+		LLInit(&(item->eventList));
+
+		item->id = atoi(mysql->GetField(row, 0)); 					//id
+		astrncpy(item->name, mysql->GetField(row, 1), 16);			//name
+		astrncpy(item->shortDesc, mysql->GetField(row, 2), 32);		//short_description
+		astrncpy(item->longDesc, mysql->GetField(row, 3), 200);		//long_description
+		item->buyPrice = atoi(mysql->GetField(row, 4));				//buy_price
+		item->sellPrice = atoi(mysql->GetField(row, 5));			//sell_price
+		item->expRequired = atoi(mysql->GetField(row, 6));			//exp_required
+		item->shipsAllowed = atoi(mysql->GetField(row, 7));			//ships_allowed
+
+		item->type1 = getItemTypeByID(atoi(mysql->GetField(row, 8)));	//type1
+		item->type2 = getItemTypeByID(atoi(mysql->GetField(row, 9)));	//type2
+
+		item->typeDelta1 = atoi(mysql->GetField(row, 10));			//type1_delta
+		item->typeDelta2 = atoi(mysql->GetField(row, 11));			//type2_delta
+		item->delayStatusWrite = atoi(mysql->GetField(row, 12));	//delay_write
+		item->ammoID = atoi(mysql->GetField(row, 13));				//ammo
+
+
+		if (item->type1 == NULL)
+		{
+			lm->Log(L_ERROR, "<hscore_database> No item type matched id %i requested by item id %i.", item->type1, item->id);
+		}
+		if (item->type2 == NULL)
+		{
+			lm->Log(L_ERROR, "<hscore_database> No item type matched id %i requested by item id %i.", item->type2, item->id);
+		}
+
+        //add the item type to the list
+        LLAdd(itemTypeList, itemType);
+	}
+
+	lm->Log(L_DRIVEL, "<hscore_database> %i items were loaded from MySQL.", results);
+
+	//now that all the items are in, load the properties & events.
+	LoadProperties();
+	LoadEvents();
+
+	//process the ammo ids
+	LinkAmmo();
+}
+
 local void loadItemTypesQueryCallback(int status, db_res *result, void *passedData)
 {
-	//FIXME
+	int results;
+	db_row *row;
+
+	if (status != 0 || result == NULL)
+	{
+		lm->Log(L_ERROR, "<hscore_database> Unexpected database error during item types load.");
+		return;
+	}
+
+	results = mysql->GetRowCount(result);
+
+	if (results == 0)
+	{
+	    lm->Log(L_ERROR, "<hscore_database> No item types returned from MySQL query.");
+	    return;
+	}
+
+	while ((row = mysql->GetRow(result)))
+	{
+	    ItemType *itemType = amalloc(sizeof(*itemType));
+
+	    itemType->id = atoi(mysql->GetField(row, 0));			//id
+        astrncpy(itemType->name, mysql->GetField(row, 1), 32);	//name
+        itemType->max = atoi(mysql->GetField(row, 2));			//max
+
+        //add the item type to the list
+        LLAdd(itemTypeList, itemType);
+	}
+
+	lm->Log(L_DRIVEL, "<hscore_database> %i item types were loaded from MySQL.", results);
+	LoadItemList(); //now that all the item types are in, load the items.
 }
 
 local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *passedData)
@@ -195,12 +365,12 @@ local void LoadProperties()
 
 local void LoadItemList() //will call LoadProperties() and LoadEvents() when finished
 {
-	//FIXME
+	mysql->Query(loadItemQueryCallback, NULL, 1, "SELECT id, name, short_description, long_description, buy_price, sell_price, exp_required, ships_allowed, type1, type2, type1_delta, type2_delta, delay_write, ammo FROM hs_items");
 }
 
 local void LoadItemTypeList() //will call LoadItemList() when finished loading
 {
-	//FIXME
+	mysql->Query(loadItemTypesQueryCallback, NULL, 1, "SELECT id, name, max FROM hs_item_types");
 }
 
 //+-------------------+
