@@ -13,13 +13,13 @@ typedef struct PlayerData
 	ShipHull hull[8];
 
 	int id; //MySQL use
-} HSPlayerData;
+} PlayerData;
 
 typedef struct ArenaData
 {
 	LinkedList *arenaList;
 	LinkedList *categoryList;
-} HSPlayerData;
+} PlayerData;
 
 typedef struct Ihscore_database
 {
