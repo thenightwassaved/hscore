@@ -105,17 +105,70 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 		return;
 	}
 
-	if (database->isLoaded(t))
+	if (database->areShipsLoaded(t))
 	{
-		//FIXME
-		chat->SendMessage(p, "<FIXME: Ship status for player %s's %s>.", t->name, shipNames[ship]);
+		PerPlayerData *playerData = database->getPerPlayerData(t);
+
+		if (playerData->hull[ship] != NULL)
+		{
+			chat->SendMessage(p, "+------------------+");
+			chat->SendMessage(p, "| %-16s |", shipName[ship]);
+			chat->SendMessage(p, "+------------------+-------+------------+------------------+-------+------------------+-------+");
+			chat->SendMessage(p, "| Item Name        | Count | Ammo Count | Item Type 1      | Usage | Item Type 2      | Usage |");
+			chat->SendMessage(p, "+------------------+-------+------------+------------------+-------+------------------+-------+");
+
+			Link *link;
+
+			for (link = LLGetHead(&playerData->hull[ship]->inventoryEntryList); link; link = link->next)
+			{
+				InventoryEntry *entry = link->data;
+				Item *item = entry->item;
+
+				int ammoCount;
+				if (item->ammo != NULL)
+				{
+					ammoCount = items->getItemCount)(p, item->ammo, ship);
+				}
+				else
+				{
+					ammoCount = 0;
+				}
+
+				char *type1, *type2;
+				if (item->type1 == NULL)
+				{
+					type1 = "<None>"
+				}
+				else
+				{
+					type1 = item->type1->name;
+				}
+
+				if (item->type2 == NULL)
+				{
+					type2 = "<None>"
+				}
+				else
+				{
+					type2 = item->type2->name;
+				}
+
+				chat->SendMessage(p, "| %-16s | %5i | %10i | %-16s | %5i | %-16s | %5i |", item->name, entry->count, ammoCount, type1, item->typeDelta1 * entry->count, type2, item->typeDelta2 * entry->count);
+			}
+
+			chat->SendMessage(p, "+------------------+-------+------------+------------------+-------+------------------+-------+");
+		}
+		else
+		{
+
+		}
 	}
 	else
 	{
 		if (p == t)
-			chat->SendMessage(p, "Unexpected error: Your zone data is not loaded.");
+			chat->SendMessage(p, "Unexpected error: Your ships are not loaded.");
 		else
-			chat->SendMessage(p, "Unexpected error: %s's zone data is not loaded.", t->name);
+			chat->SendMessage(p, "Unexpected error: %s's ships are not loaded.", t->name);
 	}
 }
 
