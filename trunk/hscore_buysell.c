@@ -97,27 +97,35 @@ local void printShipList(Player *p)
 	chat->SendMessage(p, "+-----------+-----------+------------+--------+----------------------------------------------------+");
 }
 
-local void buyItem(Player *p, Item *item)
+local void buyItem(Player *p, Item *item, int count)
 {
 	//FIXME
+
 	chat->SendMessage(p, "<buy item %s>", item->name);
 }
 
-local void sellItem(Player *p, Item *item)
+local void sellItem(Player *p, Item *item, int count)
 {
 	//FIXME
+
 	chat->SendMessage(p, "<sell item %s>", item->name);
 }
 
 local void buyShip(Player *p, int ship)
 {
 	//FIXME
+
+	database->addShip(p, ship);
+
 	chat->SendMessage(p, "<buy ship #%i>", ship);
 }
 
 local void sellShip(Player *p, int ship)
 {
 	//FIXME
+
+	database->removeShip(p, ship);
+
 	chat->SendMessage(p, "<sell ship #%i>", ship);
 }
 
@@ -171,7 +179,7 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 			Item *item = items->getItemByName(params, p->arena);
 			if (item != NULL)
 			{
-				buyItem(p, item);
+				buyItem(p, item, 1);
 				return;
 			}
 
@@ -210,7 +218,7 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 		Item *item = items->getItemByName(params, p->arena);
 		if (item != NULL)
 		{
-			sellItem(p, item);
+			sellItem(p, item, 1);
 			return;
 		}
 
