@@ -23,7 +23,7 @@ local void shipsCommand(const char *command, const char *params, Player *p, cons
 {
 	Player *t = (target->type == T_PLAYER) ? target->u.p : p;
 
-	if (database->areShipsLoaded(t))
+	if (database->areShipsLoaded(t)) //MUTEX
 	{
 		PerPlayerData *playerData = database->getPerPlayerData(t);
 
@@ -120,7 +120,7 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 
 			Link *link;
 
-			for (link = LLGetHead(&playerData->hull[ship]->inventoryEntryList); link; link = link->next)
+			for (link = LLGetHead(&playerData->hull[ship]->inventoryEntryList); link; link = link->next) //MUTEX
 			{
 				InventoryEntry *entry = link->data;
 				Item *item = entry->item;

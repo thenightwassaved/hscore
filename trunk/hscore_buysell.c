@@ -26,7 +26,7 @@ local void printAllCategories(Player *p)
 	chat->SendMessage(p, "+----------------------------------+------------------------------------------------------------------+");
 	chat->SendMessage(p, "| Ships                            | All the ship hulls can you buy in this arena.                    |");
 
-	for (link = LLGetHead(categoryList); link; link = link->next)
+	for (link = LLGetHead(categoryList); link; link = link->next) //MUTEX
 	{
 		Category *category = link->data;
 
@@ -46,7 +46,7 @@ local void printCategoryItems(Player *p, Category *category)
 	chat->SendMessage(p, "| Item Name        | Buy Price | Sell Price | Exp    | Ships    | Item Description                 |");
 	chat->SendMessage(p, "+------------------+-----------+------------+--------+----------+----------------------------------+");
 
-	for (link = LLGetHead(&category->itemList); link; link = link->next)
+	for (link = LLGetHead(&category->itemList); link; link = link->next) //MUTEX
 	{
 		Item *item = link->data;
 

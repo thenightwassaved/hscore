@@ -99,7 +99,7 @@ local PerPlayerData *getPerPlayerData(Player *p)
 local Item * getItemByID(int id)
 {
 	Link *link;
-	for (link = LLGetHead(&itemList); link; link = link->next)
+	for (link = LLGetHead(&itemList); link; link = link->next) //MUTEX
 	{
 		Item *item = link->data;
 
@@ -115,7 +115,7 @@ local Item * getItemByID(int id)
 local ItemType * getItemTypeByID(int id)
 {
 	Link *link;
-	for (link = LLGetHead(&itemTypeList); link; link = link->next)
+	for (link = LLGetHead(&itemTypeList); link; link = link->next) //MUTEX
 	{
 		ItemType *itemType = link->data;
 
@@ -155,7 +155,7 @@ local const char * getArenaIdentifier(Arena *arena)
 local void LinkAmmo()
 {
 	Link *link;
-	for (link = LLGetHead(&itemList); link; link = link->next)
+	for (link = LLGetHead(&itemList); link; link = link->next) //MUTEX
 	{
 		Item *item = link->data;
 
@@ -178,7 +178,7 @@ local void LinkAmmo()
 //|                         |
 //+-------------------------+
 
-local void loadPropertiesQueryCallback(int status, db_res *result, void *passedData)
+local void loadPropertiesQueryCallback(int status, db_res *result, void *passedData) //MUTEX
 {
 	int results;
 	db_row *row;
@@ -220,7 +220,7 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 	lm->Log(L_DRIVEL, "<hscore_database> %i properties were loaded from MySQL.", results);
 }
 
-local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
+local void loadEventsQueryCallback(int status, db_res *result, void *passedData) //MUTEX
 {
 	int results;
 	db_row *row;
@@ -265,7 +265,7 @@ local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 	lm->Log(L_DRIVEL, "<hscore_database> %i events were loaded from MySQL.", results);
 }
 
-local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
+local void loadItemsQueryCallback(int status, db_res *result, void *passedData) //MUTEX
 {
 	int results;
 	db_row *row;
@@ -324,7 +324,7 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 	LinkAmmo();
 }
 
-local void loadItemTypesQueryCallback(int status, db_res *result, void *passedData)
+local void loadItemTypesQueryCallback(int status, db_res *result, void *passedData) //MUTEX
 {
 	int results;
 	db_row *row;
@@ -358,7 +358,7 @@ local void loadItemTypesQueryCallback(int status, db_res *result, void *passedDa
 	LoadItemList(); //now that all the item types are in, load the items.
 }
 
-local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *passedData)
+local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *passedData) //MUTEX
 {
 	int results;
 	db_row *row;
@@ -407,7 +407,7 @@ local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *pass
 	lm->LogP(L_DRIVEL, "hscore_database", p, "loaded globals from MySQL.");
 }
 
-local void loadShipIDQueryCallback(int status, db_res *result, void *passedData)
+local void loadShipIDQueryCallback(int status, db_res *result, void *passedData) //MUTEX
 {
 	int results;
 	db_row *row;
@@ -440,7 +440,7 @@ local void loadShipIDQueryCallback(int status, db_res *result, void *passedData)
 	hull->id = id;
 }
 
-local void loadPlayerShipItemsQueryCallback(int status, db_res *result, void *passedData)
+local void loadPlayerShipItemsQueryCallback(int status, db_res *result, void *passedData) //MUTEX
 {
 	int results;
 	db_row *row;
@@ -502,7 +502,7 @@ local void loadPlayerShipItemsQueryCallback(int status, db_res *result, void *pa
 	lm->LogP(L_DRIVEL, "hscore_database", p, "%i ship items were loaded from MySQL.", results);
 }
 
-local void loadPlayerShipsQueryCallback(int status, db_res *result, void *passedData)
+local void loadPlayerShipsQueryCallback(int status, db_res *result, void *passedData) //MUTEX
 {
 	int results;
 	db_row *row;
@@ -546,7 +546,7 @@ local void loadPlayerShipsQueryCallback(int status, db_res *result, void *passed
 	LoadPlayerShipItems(p, p->arena); //load the inventory for the ship
 }
 
-local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedData)
+local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedData) //MUTEX
 {
 	int results;
 	db_row *row;
@@ -599,7 +599,7 @@ local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedD
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i store items were loaded from MySQL.", results);
 }
 
-local void loadArenaStoresQueryCallback(int status, db_res *result, void *passedData)
+local void loadArenaStoresQueryCallback(int status, db_res *result, void *passedData) //MUTEX
 {
 	int results;
 	db_row *row;
@@ -640,7 +640,7 @@ local void loadArenaStoresQueryCallback(int status, db_res *result, void *passed
 	LoadStoreItems(arena); //now that all the stores are in, load the items into them.
 }
 
-local void loadCategoryItemsQueryCallback(int status, db_res *result, void *passedData)
+local void loadCategoryItemsQueryCallback(int status, db_res *result, void *passedData) //MUTEX
 {
 	int results;
 	db_row *row;
@@ -694,7 +694,7 @@ local void loadCategoryItemsQueryCallback(int status, db_res *result, void *pass
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i cateogry items were loaded from MySQL.", results);
 }
 
-local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *passedData)
+local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *passedData) //MUTEX
 {
 	int results;
 	db_row *row;
@@ -769,7 +769,7 @@ local void InitPerArenaData(Arena *arena) //called before data is touched
 
 local void UnloadPlayerGlobals(Player *p) //called to free any allocated data
 {
-	PerPlayerData *playerData = getPerPlayerData(p);
+	PerPlayerData *playerData = getPerPlayerData(p); //MUTEX
 
 	playerData->loaded = 0; //nothing else needed
 
@@ -786,7 +786,7 @@ local void UnloadPlayerShip(ShipHull *ship)
 
 local void UnloadPlayerShips(Player *p) //called to free any allocated data
 {
-	PerPlayerData *playerData = getPerPlayerData(p);
+	PerPlayerData *playerData = getPerPlayerData(p); //MUTEX
 
 	playerData->shipsLoaded = 0;
 
@@ -804,7 +804,7 @@ local void UnloadPlayerShips(Player *p) //called to free any allocated data
 
 local void UnloadCategoryList(Arena *arena) //called when the arena is about to die
 {
-	PerArenaData *arenaData = getPerArenaData(arena);
+	PerArenaData *arenaData = getPerArenaData(arena); //MUTEX
 
 	LLEnum(&arenaData->categoryList, afree); //can simply free all the Category structs
 
@@ -815,7 +815,7 @@ local void UnloadCategoryList(Arena *arena) //called when the arena is about to 
 
 local void UnloadStoreList(Arena *arena)
 {
-	PerArenaData *arenaData = getPerArenaData(arena);
+	PerArenaData *arenaData = getPerArenaData(arena); //MUTEX
 
 	LLEnum(&arenaData->storeList, afree); //can simply free all the Store structs
 
@@ -837,7 +837,7 @@ local void UnloadItemListEnumCallback(const void *ptr)
 	afree(item);
 }
 
-local void UnloadItemList()
+local void UnloadItemList() //MUTEX
 {
 	LLEnum(&itemList, UnloadItemListEnumCallback);
 
@@ -846,7 +846,7 @@ local void UnloadItemList()
 	LLEmpty(&itemList);
 }
 
-local void UnloadItemTypeList()
+local void UnloadItemTypeList() //MUTEX
 {
 	LLEnum(&itemTypeList, afree); //can simply free all the ItemType structs
 
@@ -980,7 +980,7 @@ local void LoadItemTypeList() //will call LoadItemList() when finished loading
 
 local void StorePlayerGlobals(Player *p) //store player globals. MUST FINISH IN ONE QUERY LEVEL
 {
-	PerPlayerData *playerData = getPerPlayerData(p);
+	PerPlayerData *playerData = getPerPlayerData(p);  //MUTEX
 
 	if (isLoaded(p))
 	{
@@ -1004,7 +1004,7 @@ local void StorePlayerGlobals(Player *p) //store player globals. MUST FINISH IN 
 
 local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST FINISH IN ONE QUERY LEVEL
 {
-	PerPlayerData *playerData = getPerPlayerData(p);
+	PerPlayerData *playerData = getPerPlayerData(p); //MUTEX
 
 	if (areShipsLoaded(p))
 	{
@@ -1219,7 +1219,7 @@ local LinkedList * getCategoryList(Arena *arena)
 
 local void updateItem(Player *p, int ship, Item *item, int newCount, int newData)
 {
-	PerPlayerData *playerData = getPerPlayerData(p);
+	PerPlayerData *playerData = getPerPlayerData(p); //MUTEX
 
 	if (ship < 0 || 7 < ship)
 	{
@@ -1335,7 +1335,7 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 
 local void addShip(Player *p, int ship) //the ships id may not be valid until later
 {
-	PerPlayerData *playerData = getPerPlayerData(p);
+	PerPlayerData *playerData = getPerPlayerData(p); //MUTEX
 
 	if (ship < 0 || 7 < ship)
 	{
@@ -1368,7 +1368,7 @@ local void addShip(Player *p, int ship) //the ships id may not be valid until la
 
 local void removeShip(Player *p, int ship)
 {
-	PerPlayerData *playerData = getPerPlayerData(p);
+	PerPlayerData *playerData = getPerPlayerData(p); //MUTEX
 
 	if (ship < 0 || 7 < ship)
 	{
@@ -1470,7 +1470,7 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 
 	fail:
 		mm->ReleaseInterface(lm);
-			mm->ReleaseInterface(chat);
+		mm->ReleaseInterface(chat);
 		mm->ReleaseInterface(cfg);
 		mm->ReleaseInterface(cmd);
 		mm->ReleaseInterface(mysql);
