@@ -161,7 +161,7 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 		}
 		else
 		{
-			int buyPrice = cfg->GetInt(p->arena->cfg, shipNames[i], "BuyPrice", 0);
+			int buyPrice = cfg->GetInt(p->arena->cfg, shipNames[ship], "BuyPrice", 0);
 
 			if (buyPrice == 0)
 			{
