@@ -56,7 +56,77 @@ local helptext_t grantItemHelp =
 
 local void grantItemCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	//FIXME
+	int force = 0;
+	int quiet = 0;
+	int count = 1;
+	int ship = -1;
+	char *itemName;
+
+	char *next; //for strtol
+
+	while (params != NULL) //get the flags
+	{
+		if (*params == '-')
+		{
+			params++;
+			if (*params == '\0')
+			{
+				chat->SendMessage(p, "Grantitem: invalid usage.");
+				return;
+			}
+
+			if (*params == 'f')
+			{
+				force = 1;
+			}
+			if (*params == 'q')
+			{
+				quiet = 1;
+			}
+			if (*params == 'c')
+			{
+				params++;
+				int count = strtol(params, &next, 0);
+
+				if (next == params)
+				{
+					chat->SendMessage(p, "Grantitem: bad count.");
+					return;
+				}
+
+				params = next;
+			}
+			if (*params == 's')
+			{
+				params++;
+				int ship = strtol(params, &next, 0);
+
+				if (next == params)
+				{
+					chat->SendMessage(p, "Grantitem: bad ship.");
+					return;
+				}
+
+				params = next;
+			}
+		}
+		else if (*params == ' ')
+		{
+			params++;
+		}
+		else if (*params == '\0')
+		{
+			chat->SendMessage(p, "Grantitem: bad syntax.");
+			return;
+		}
+		else
+		{
+			itemName = params;
+			break;
+		}
+	}
+
+	chat->SendMessage(p, "Grantitem: item: %s, force: %i, quiet: %i, count: %i, ship: %i", itemName, force, quiet, count, ship);
 }
 
 local int getItemCount(Player *p, Item *item, int ship)
