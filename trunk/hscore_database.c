@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "asss.h"
 #include "hscore.h"
@@ -1462,6 +1463,8 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 
 		cmd->AddCommand("reloaditems", reloadItemsCommand, ALLARENAS, reloadItemsHelp);
 		cmd->AddCommand("storeall", storeAllCommand, ALLARENAS, storeAllHelp);
+
+		//FIXME: add periodic saving
 
 		return MM_OK;
 
