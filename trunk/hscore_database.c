@@ -40,12 +40,12 @@ local LinkedList itemTypeList;
 
 local PerArenaData * getPerArenaData(Arena *arena)
 {
-
+	return P_ARENA_DATA(arena, arenaDataKey);
 }
 
 local PerPlayerData *getPerPlayerData(Player *p)
 {
-
+	return PPDATA(p, playerDataKey);
 }
 
 //+-------------------------+
@@ -117,8 +117,8 @@ local void InitPerArenaData(Arena *arena) //called before data is touched
 {
 	PerArenaData *arenaData = getPerArenaData(arena);
 
-	LLInit(&(arenaData->arenaList));
-	LLInit(&(arenaData->arenaList));
+	LLInit(&(arenaData->categoryList));
+	LLInit(&(arenaData->storeList));
 }
 
 //+--------------------+
