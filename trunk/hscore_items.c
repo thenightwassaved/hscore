@@ -210,7 +210,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 				{
 					if (t->p_ship != SHIP_SPEC)
 					{
-						addItem(t, item, t->p_ship, count);
+						ship = t->p_ship;
 					}
 					else
 					{
@@ -218,10 +218,8 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 						return;
 					}
 				}
-				else
-				{
-					addItem(t, item, ship, count);
-				}
+
+				addItem(t, item, ship, count);
 
 				if (!quiet)
 				{
@@ -262,6 +260,10 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 						if (t->p_ship != SHIP_SPEC)
 						{
 							addItem(t, item, t->p_ship, count);
+							if (!quiet)
+							{
+								chat->SendMessage(t, "You were granted %i of item %s on your %s.", count, item->name, shipNames[t->p_ship]);
+							}
 						}
 						else
 						{
@@ -272,11 +274,10 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					else
 					{
 						addItem(t, item, ship, count);
-					}
-
-					if (!quiet)
-					{
-						chat->SendMessage(t, "You were granted %i of item %s on your %s.", count, item->name, shipNames[ship]);
+						if (!quiet)
+						{
+							chat->SendMessage(t, "You were granted %i of item %s on your %s.", count, item->name, shipNames[ship]);
+						}
 					}
 				}
 				else
