@@ -114,7 +114,11 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 			break;
 		}
 
-		params = strchr(params, ' ') + 1;
+		params = strchr(params, ' ');
+		if (params) //check so that params can still == NULL
+		{
+			params++; //we want *after* the space
+		}
 	}
 
 	if (params == NULL)
