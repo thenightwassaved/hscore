@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 
 #include "asss.h"
 #include "hscore.h"
@@ -181,7 +182,7 @@ local void giveCommand(const char *command, const char *params, Player *p, const
 	while (*next == ',' || *next == ' ') next++; //remove whitespace before the message
 
 	message = next;
-	if (message[0] = '\0')
+	if (message[0] == '\0')
 	{
 		message = NULL;
 	}
@@ -204,6 +205,9 @@ local void giveCommand(const char *command, const char *params, Player *p, const
 					{
 						if (amount > minGive)
 						{
+							giveMoney(t, amount, MONEY_GIVE);
+							giveMoney(p, -amount, MONEY_GIVE);
+
 							if (message == NULL)
 							{
 								chat->SendMessage(t, "Player %s gave you $%i.", p->name, amount);
@@ -262,7 +266,7 @@ local void showMoneyCommand(const char *command, const char *params, Player *p, 
 		{
 			if (strstr(params, "-e")) //wants exp too
 			{
-				chat->SendMessage(t, "Player %s has $%i dollars in their account, and %i experience.", p->name, getMoney(p), getExp(p));
+				chat->SendMessage(t, "Player %s has $%i dollars in their account and %i experience.", p->name, getMoney(p), getExp(p));
 				chat->SendMessage(p, "Sent money and exp status to %s", t->name);
 			}
 			else //no exp
