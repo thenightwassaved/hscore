@@ -387,7 +387,15 @@ local void addItem(Player *p, Item *item, int ship, int amount)
 		}
 	}
 
-	database->updateItem(p, ship, item, count + amount, data);
+	count += amount;
+
+	if (count < 0)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to set item %s count to %i", item->name, count);
+		count = 0; //no negative counts make sense
+	}
+
+	database->updateItem(p, ship, item, count, data);
 }
 
 local Item * getItemByName(const char *name, Arena *arena)
