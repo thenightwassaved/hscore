@@ -15,13 +15,13 @@ typedef struct PerPlayerData
 	int loaded; //internal use only
 
 	int id; //MySQL use
-} PlayerData;
+} PerPlayerData;
 
 typedef struct PerArenaData
 {
 	LinkedList arenaList;
 	LinkedList categoryList;
-} PlayerData;
+} PerArenaData;
 
 typedef struct Ihscoredatabase
 {
