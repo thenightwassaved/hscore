@@ -128,7 +128,7 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 				int ammoCount;
 				if (item->ammo != NULL)
 				{
-					ammoCount = items->getItemCount)(p, item->ammo, ship);
+					ammoCount = items->getItemCount(p, item->ammo, ship);
 				}
 				else
 				{
