@@ -1,7 +1,7 @@
 #ifndef HSCORE_ITEMS_H
 #define HSCORE_ITEMS_H
 
-#define I_HS_ITEMS "hscore_items-1"
+#define I_HSCORE_ITEMS "hscore_items-1"
 
 typedef struct Ihscoreitems
 {

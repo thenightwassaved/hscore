@@ -1,29 +1,41 @@
 #ifndef HSCORE_TYPES_H
 #define HSCORE_TYPES_H
 
+static char *shipNames[] =
+{
+	"Warbird",
+	"Javelin",
+	"Spider",
+	"Leviathan",
+	"Terrier",
+	"Weasel",
+	"Lancaster",
+	"Shark"
+};
+
 typedef enum EventAction
 {
 	//removes event->data amount of the items from the ship's inventory
-	REMOVE_ITEM,
+	ACTION_REMOVE_ITEM,
 
 	//removes event->data amount of the item's ammo type from inventory
-	REMOVE_ITEM_AMMO,
+	ACTION_REMOVE_ITEM_AMMO,
 
 	//sends prize #event->data to the player
-	PRIZE,
+	ACTION_PRIZE,
 
 	//sets the item's inventory data to event->data. This is useful with
 	//the "purchace" event.
-	SET_INVENTORY_DATA,
+	ACTION_SET_INVENTORY_DATA,
 
 	//does a ++ on inventory data.
-	DECREMENT_INVENTORY_DATA,
+	ACTION_DECREMENT_INVENTORY_DATA,
 
 	//does a -- on inventory data. A "datazero" event may be generated as a result.
-	DECREMENT_INVENTORY_DATA,
+	ACTION_DECREMENT_INVENTORY_DATA,
 
 	//Specs the player.
-	SPEC,
+	ACTION_SPEC,
 
 	//we need a lot more
 } EventAction

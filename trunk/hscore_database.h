@@ -12,6 +12,8 @@ typedef struct PlayerData
 
 	ShipHull hull[8];
 
+	int loaded; //internal use only
+
 	int id; //MySQL use
 } PlayerData;
 
@@ -25,7 +27,8 @@ typedef struct Ihscoredatabase
 {
 	INTERFACE_HEAD_DECL
 
-	int (*isLoaded)(Player *p); //returns 1 if loaded, 0 otherwise.
+	int (*areShipsLoaded)(Player *p); //returns 1 if player's per-arena ships are loaded, 0 otherwise.
+	int (*isLoaded)(Player *p); //returns 1 if player's globals are loaded, 0 otherwise.
 
 	LinkedList * (*getItemList)();
 	LinkedList * (*getStoreList)(Arena *arena);

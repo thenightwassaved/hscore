@@ -1,7 +1,7 @@
 #ifndef HSCORE_STOREMAN_H
 #define HSCORE_STOREMAN_H
 
-#define I_HS_ITEMS "hscore_storeman-1"
+#define I_HSCORE_STOREMAN "hscore_storeman-1"
 
 typedef struct Ihscorestoreman
 {
