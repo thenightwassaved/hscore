@@ -98,7 +98,7 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 	char *next;
 	char *message;
 
-	while (1) //get the flags
+	while (params != NULL) //get the flags
 	{
 		if (strncmp(params, "-f", 2) == 0)
 		{
@@ -114,6 +114,11 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 		}
 
 		params = strchr(params, ' ') + 1;
+	}
+
+	if (params == NULL)
+	{
+		chat->SendMessage(p, "Grant: invalid usage.");
 	}
 
 	int amount = strtol(params, &next, 0);
@@ -132,6 +137,8 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 		message = NULL;
 	}
 
+	//all the parsing is now complete
+
 	if (target->type == T_PLAYER) //private command
 	{
 		Player *t = target->u.p;
@@ -144,7 +151,7 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 
 				if (quiet)
 				{
-					chat->SendMessage(p, "Quietly gave player %s $%i.", t->name, amount);
+					chat->SendMessage(p, "Quietly granted player %s $%i.", t->name, amount);
 				}
 				else
 				{
@@ -157,7 +164,7 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 						chat->SendMessage(t, "You were granted $%i %s", amount, message);
 					}
 
-					chat->SendMessage(p, "Gave player %s $%i.", t->name, amount);
+					chat->SendMessage(p, "Granted player %s $%i.", t->name, amount);
 				}
 			}
 			else
@@ -174,8 +181,41 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 	{
 		if (force)
 		{
-			//FIXME
-			chat->SendMessage(p, "Not implemented yet.");
+          LinkedList set = LL_INITIALIZER;
+            Link *link;
+            pd->TargetToSet(target, &set);
+
+            for (link = LLGetHead(&set); link; link = link->next)
+            {
+				Player *t = link->data
+
+				if (db->Loaded(t))
+				{
+					GiveMoney(t, amount, MONEY_TYPE_GRANT);
+
+					if (!quiet)
+					{
+						if (message == NULL)
+						{
+							chat->SendMessage(t, "You were granted $%i.", amount);
+						}
+						else
+						{
+							chat->SendMessage(t, "You were granted $%i %s", amount, message);
+						}
+					}
+				}
+				else
+				{
+					chat->SendMessage(p, "Player %s has no data loaded.", t->name);
+				}
+			}
+
+			int count = LLCount(&set);
+
+			LLEmpty(&set);
+
+            chat->SendMessage(p, "You granted $%i to %i players.", amount, count);
 		}
 		else
 		{
