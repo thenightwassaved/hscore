@@ -71,6 +71,8 @@ typedef struct Item
 	ItemType *type1, *type2;
 	int typeDelta1, typeDelta2;
 
+	int max;
+
 	//if changes to this item should be delayed until a complete save (like on exit).
 	//This is a necessity when dealing with ammo. We don't want to update MySQL every
 	//time a gun is fired.

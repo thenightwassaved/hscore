@@ -46,6 +46,7 @@ local int isLoaded(Player *p);
 local LinkedList * getItemList();
 local LinkedList * getStoreList(Arena *arena);
 local LinkedList * getCategoryList(Arena *arena);
+local void updateItem(Player *p, int ship, Item *item, int newCount, int newData);
 local void addShip(Player *p, int ship, LinkedList *itemList);
 local void removeShip(Player *p, int ship);
 local PerPlayerData * getPerPlayerData(Player *p);
@@ -282,8 +283,11 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 
 		item->typeDelta1 = atoi(mysql->GetField(row, 10));			//type1_delta
 		item->typeDelta2 = atoi(mysql->GetField(row, 11));			//type2_delta
-		item->delayStatusWrite = atoi(mysql->GetField(row, 12));	//delay_write
-		item->ammoID = atoi(mysql->GetField(row, 13));				//ammo
+
+		item->typeDelta2 = atoi(mysql->GetField(row, 12));			//max
+
+		item->delayStatusWrite = atoi(mysql->GetField(row, 13));	//delay_write
+		item->ammoID = atoi(mysql->GetField(row, 14));				//ammo
 
 		//add the item type to the list
 		LLAdd(&itemList, item);
@@ -693,11 +697,15 @@ local void UnloadAllPerPlayerData()
 
 local void LoadPlayerGlobals(Player *p) //fetch globals from MySQL
 {
+	//FIXME: check if the player is already online
+
 	mysql->Query(loadPlayerGlobalsQueryCallback, p, 1, "SELECT id, money, exp, money_give, money_grant, money_buysell, money_kill, money_flag, money_ball, money_event FROM hs_players WHERE name = ?", p->name);
 }
 
 local void LoadPlayerShips(Player *p, Arena *arena) //fetch ships from MySQL
 {
+	//FIXME: check if data is valid
+
 	//FIXME
 }
 
@@ -733,7 +741,7 @@ local void LoadProperties()
 
 local void LoadItemList() //will call LoadProperties() and LoadEvents() when finished
 {
-	mysql->Query(loadItemsQueryCallback, NULL, 1, "SELECT id, name, short_description, long_description, buy_price, sell_price, exp_required, ships_allowed, type1, type2, type1_delta, type2_delta, delay_write, ammo FROM hs_items");
+	mysql->Query(loadItemsQueryCallback, NULL, 1, "SELECT id, name, short_description, long_description, buy_price, sell_price, exp_required, ships_allowed, type1, type2, type1_delta, type2_delta, max, delay_write, ammo FROM hs_items");
 }
 
 local void LoadItemTypeList() //will call LoadItemList() when finished loading
@@ -751,6 +759,8 @@ local void StorePlayerGlobals(Player *p) //store player globals. MUST FINISH IN 
 {
 	PerPlayerData *playerData = getPerPlayerData(p);
 
+	//FIXME, make sure to validate the data
+
 	mysql->Query(NULL, NULL, 0, "UPDATE hs_players SET money = #, exp = #, money_give = #, money_grant = #, money_buysell = #, money_kill = #, money_flag = #, money_ball = #, money_event = # WHERE id = #",
 		playerData->money,
 		playerData->exp,
@@ -766,7 +776,7 @@ local void StorePlayerGlobals(Player *p) //store player globals. MUST FINISH IN 
 
 local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST FINISH IN ONE QUERY LEVEL
 {
-	//FIXME
+	//FIXME, make sure to validate the data
 }
 
 local void StoreAllPerPlayerData()
@@ -928,6 +938,11 @@ local LinkedList * getCategoryList(Arena *arena)
 	return &(arenaData->categoryList);
 }
 
+local void updateItem(Player *p, int ship, Item *item, int newCount, int newData)
+{
+	//FIXME
+}
+
 local void addShip(Player *p, int ship, LinkedList *itemList)
 {
 	//FIXME
@@ -944,7 +959,7 @@ local Ihscoredatabase interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_DATABASE, "hscore_database")
 	areShipsLoaded, isLoaded, getItemList, getStoreList,
-	getCategoryList, addShip, removeShip, getPerPlayerData,
+	getCategoryList, updateItem, addShip, removeShip, getPerPlayerData,
 };
 
 EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
@@ -998,7 +1013,7 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 
 	fail:
 		mm->ReleaseInterface(lm);
-		mm->ReleaseInterface(chat);
+			mm->ReleaseInterface(chat);
 		mm->ReleaseInterface(cfg);
 		mm->ReleaseInterface(cmd);
 		mm->ReleaseInterface(mysql);

@@ -12,13 +12,14 @@ local Icmdman *cmd;
 local Ihscoredatabase *database;
 
 //interface prototypes
-local int hasItem(Player *p, Item *item, int ship);
+local int getItemCount(Player *p, Item *item, int ship);
 local void addItem(Player *p, Item *item, int ship, int amount);
 local void removeItem(Player *p, Item *item, int ship, int amount);
 local Item * getItemByName(const char *name, Arena *arena);
 local int getPropertySum(Player *p, int ship, const char *prop);
 local void triggerEvent(Player *p, int ship, const char *event);
-local int getFreeItemTypeSpots(Player *p, int ship, ItemType *type);
+local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship);
+
 
 local helptext_t itemInfoHelp =
 "Targets: none\n"
@@ -58,7 +59,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 	//FIXME
 }
 
-local int hasItem(Player *p, Item *item, int ship)
+local int getItemCount(Player *p, Item *item, int ship)
 {
 	//FIXME
 	return 0;
@@ -111,7 +112,7 @@ local void triggerEvent(Player *p, int ship, const char *event)
 	//FIXME
 }
 
-local int getFreeItemTypeSpots(Player *p, int ship, ItemType *type)
+local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship)
 {
 	//FIXME
 	return 0;
@@ -120,7 +121,7 @@ local int getFreeItemTypeSpots(Player *p, int ship, ItemType *type)
 local Ihscoreitems interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_ITEMS, "hscore_items")
-	hasItem, addItem, removeItem, getItemByName, getPropertySum,
+	getItemCount, addItem, removeItem, getItemByName, getPropertySum,
 	triggerEvent, getFreeItemTypeSpots,
 };
 
