@@ -1,0 +1,4 @@
+death
+kill
+spawn
+buy
