@@ -27,6 +27,8 @@ enum
 	MONEY_TYPE_EVENT
 } MoneyType;
 
+#define MONEY_TYPE_COUNT 7
+
 typedef struct Ihscoremoney
 {
 	INTERFACE_HEAD_DECL
