@@ -418,7 +418,7 @@ local void loadPlayerShipItemsQueryCallback(int status, db_res *result, void *pa
 			{
 				if (item != NULL)
 				{
-					ShipHull *hull = playerData->hull[ship]
+					ShipHull *hull = playerData->hull[ship];
 
 					InventoryEntry *inventoryEntry = amalloc(sizeof(*inventoryEntry));
 
@@ -824,7 +824,15 @@ local void LoadPlayerGlobals(Player *p) //fetch globals from MySQL
 
 local void LoadPlayerShipItems(Player *p, Arena *arena) //fetch ship items from MySQL
 {
-	mysql->Query(loadPlayerShipItemsQueryCallback, p, 1, "SELECT item_id, count, data, ship FROM hs_player_ship_items, hs_player_ships WHERE player_id = # AND arena = ? AND ship_id = id", playerData->id, getArenaIdentifier(arena));
+	if (areShipsLoaded(p))
+	{
+		PerPlayerData *playerData = getPerPlayerData(p);
+		mysql->Query(loadPlayerShipItemsQueryCallback, p, 1, "SELECT item_id, count, data, ship FROM hs_player_ship_items, hs_player_ships WHERE player_id = # AND arena = ? AND ship_id = id", playerData->id, getArenaIdentifier(arena));
+	}
+	else
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "Asked to load ship items for player without loaded ships.");
+	}
 }
 
 local void LoadPlayerShips(Player *p, Arena *arena) //fetch ships from MySQL. Will call LoadPlayerShipItems()
