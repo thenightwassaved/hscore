@@ -135,7 +135,7 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 				}
 				else
 				{
-					chat->SendMessage(p, "You many only have %i of item %s on your ship.", item->max, item->name);
+					chat->SendMessage(p, "You may only have %i of item %s on your ship.", item->max, item->name);
 				}
 			}
 			else
