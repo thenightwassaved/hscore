@@ -72,13 +72,13 @@ local void printShipList(Player *p)
 	chat->SendMessage(p, "| Ship Name | Buy Price | Sell Price | Exp    | Ship Description                                   |");
 	chat->SendMessage(p, "+-----------+-----------+------------+--------+----------------------------------------------------+");
 
-	for (i = 0; i < 8; i++)
+	for (int i = 0; i < 8; i++)
 	{
-		int buyPrice = cfg->GetInt(conf, shipNames[i], "BuyPrice", 0);
-		int sellPrice = cfg->GetInt(conf, shipNames[i], "SellPrice", 0);
-		int expRequired = cfg->GetInt(conf, shipNames[i], "ExpRequired", 0);
+		int buyPrice = cfg->GetInt(p->arena->conf, shipNames[i], "BuyPrice", 0);
+		int sellPrice = cfg->GetInt(p->arena->conf, shipNames[i], "SellPrice", 0);
+		int expRequired = cfg->GetInt(p->arena->conf, shipNames[i], "ExpRequired", 0);
 
-		const char *description = cfg->GetStr(conf, shipNames[i], "Description");
+		const char *description = cfg->GetStr(p->arena->conf, shipNames[i], "Description");
 
 		if (description == NULL)
 		{
@@ -90,7 +90,7 @@ local void printShipList(Player *p)
 			continue; //dont list the ship unless it can be bought.
 		}
 
-		chat->SendAnyMessage(&lst, type, 0, NULL, "| %-9s | $%-8i | $%-9i | %-6i | %-50s |", shipNames[i], buyPrice, sellPrice, expRequired, description);
+		chat->SendMessage(p, "| %-9s | $%-8i | $%-9i | %-6i | %-50s |", shipNames[i], buyPrice, sellPrice, expRequired, description);
 	}
 
 
