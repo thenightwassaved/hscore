@@ -99,21 +99,25 @@ local void printShipList(Player *p)
 
 local void buyItem(Player *p, Item *item)
 {
+	//FIXME
 	chat->SendMessage(p, "<buy item %s>", item->name);
 }
 
 local void sellItem(Player *p, Item *item)
 {
+	//FIXME
 	chat->SendMessage(p, "<sell item %s>", item->name);
 }
 
 local void buyShip(Player *p, int ship)
 {
+	//FIXME
 	chat->SendMessage(p, "<buy ship #%i>", ship);
 }
 
 local void sellShip(Player *p, int ship)
 {
+	//FIXME
 	chat->SendMessage(p, "<sell ship #%i>", ship);
 }
 
