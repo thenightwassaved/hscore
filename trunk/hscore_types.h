@@ -1,6 +1,33 @@
 #ifndef HSCORE_TYPES_H
 #define HSCORE_TYPES_H
 
+/*
+
+typedef struct Info
+{
+    char name[32];
+    char description[256];
+} Info;
+
+typedef struct Property
+{
+    Info info;
+
+    int value;
+} Property;
+
+typedef struct Item
+{
+    Info info;
+
+    int price;
+    int sellPrice;
+
+    LinkedList propertyList;
+} Item;
+
+*/
+
 enum
 {
 	//removes event->data amount of the items from the ship's inventory
