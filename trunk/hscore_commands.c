@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "asss.h"
 #include "hscore.h"
 #include "hscore_database.h"
