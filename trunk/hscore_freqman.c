@@ -99,7 +99,7 @@ local int FindLegalShip(Arena *arena, int freq, int ship)
 
 		//------------------------------HYPERSPACE MODIFIED STUFF------------------------------
 
-		if (cfg->GetInt(arena->cfg, ship_names[ship], "BuyPrice", 0) != 0) //ship is for sale
+		if (cfg->GetInt(arena->cfg, shipNames[ship], "BuyPrice", 0) != 0) //ship is for sale
 		{
 
 			if (database->areShipsLoaded(p))
