@@ -1,5 +1,10 @@
+//HSCore Rewards
+//D1st0rt and Bomook
+//4/15/05
+
 #include "asss.h"
 #include "hscore.h"
+#include <math.h>
 
 //modules
 local Imodman *mm;
@@ -8,24 +13,79 @@ local Ichat *chat;
 local Iconfig *cfg;
 local Ihscoremoney *money;
 
-/*local void flagWinCallback(Arena *arena, int freq)
+//This is assuming we're using fg_wz.py
+local void flagWinCallback(Arena *arena, int freq, int points)
 {
-	//FIXME
-}*/
+	//This one is important, needs to be discussed
+}
 
-local void goalCallback(Arena *arena, Player *p, int bid, int x, int y)
-{
-	//FIXME
+local void goalCallback(Arena *arena, Player *scorer, int bid, int x, int y)
+{	
+	/* 
+	 * money = coefficient * (pop^0.5) + minimum
+	 * Defaults:
+	 * coefficient = 500, minimum = 300
+	 */
+	
+	//Variable Declarations
+	float amount, coeff, min;
+	int reward;
+	Player *p;
+	Link *link;
+	
+	//Read Settings
+	coeff = (float)cfg->GetInt(arena->cfg, "HSReward", "GoalCoeff", 500);
+	min   = (float)cfg->GetInt(arena->cfg, "HSReward", "GoalMin",   300);
+	
+	//Calculate Reward	
+	amount = pow((float)arena->playing, 0.5);
+	amount *= coefficient;
+	amount += minimum;
+	reward  = (int)amount;
+	
+	//Distribute Wealth
+	FOR_EACH_PLAYER(p)
+	{
+		if(p->p_freq == scorer->p_freq && p->p_ship != SHIP_SPEC)
+		{
+			money->giveMoney(p, reward, MoneyType.MONEY_TYPE_BALL);
+			chat->sendMessage(p, "You received $%d for a team goal.", reward);	
+		}
+	}
 }
 
 local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty, int flags, int *pts, int *green)
 {
-	//FIXME
+	/* 
+	 * money = coefficient * (killeeBty + bonus) / (killerBty + bonus)) + minimum
+	 * Defaults:
+	 * Coefficient = 50, bonus = 5, minimum = 1
+	 */	
+	 
+	//Variable Declarations
+	float amount, coeff, bonus, min;
+	int reward;
+	
+	//Read Settings
+	coeff = (float)cfg->GetInt(arena->cfg, "HSReward", "KillCoeff", 50);
+	min   = (float)cfg->GetInt(arena->cfg, "HSReward", "KillMin",   1);
+	bonus = (float)cfg->GetInt(arena->cfg, "HSReward", "KillBonus", 5);
+	
+	//Calculate Reward	
+	amount  = (killer->bty + bonus);
+	amount /= (bounty + bonus);
+	amount *= coefficient;
+	amount += minimum;
+	reward  = (int)amount;
+	
+	//Distribute Wealth		
+	money->giveMoney(killer, amount, MoneyType.MONEY_TYPE_KILL);
+	chat->sendMessage(p, "You received $%d for killing %s (%d bounty).", reward, killee->name, bounty);	
 }
 
 local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalplayers, int flagsowned)
 {
-	//FIXME
+	//Are we going to have turf flags?
 }
 
 local Iperiodicpoints periodicInterface =
@@ -70,7 +130,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 	{
 		mm->RegInterface(&periodicInterface, arena);
 
-		//mm->RegCallback(CB_FLAGWIN, flagWinCallback, arena);
+		mm->RegCallback(CB_WARZONEWIN, flagWinCallback, arena);
 		mm->RegCallback(CB_GOAL, goalCallback, arena);
 		mm->RegCallback(CB_KILL, killCallback, arena);
 
@@ -80,7 +140,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 	{
 		mm->UnregInterface(&periodicInterface, arena);
 
-		//mm->UnregCallback(CB_FLAGWIN, flagWinCallback, arena);
+		mm->UnregCallback(CB_WARZONEWIN, flagWinCallback, arena);
 		mm->UnregCallback(CB_GOAL, goalCallback, arena);
 		mm->UnregCallback(CB_KILL, killCallback, arena);
 
