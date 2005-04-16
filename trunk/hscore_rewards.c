@@ -9,6 +9,7 @@
 //modules
 local Imodman *mm;
 local Ilogman *lm;
+local Iplayerdata *pd;
 local Ichat *chat;
 local Iconfig *cfg;
 local Ihscoremoney *money;
@@ -44,14 +45,16 @@ local void goalCallback(Arena *arena, Player *scorer, int bid, int x, int y)
 	reward  = (int)amount;
 
 	//Distribute Wealth
+	pd->Lock();
 	FOR_EACH_PLAYER(p)
 	{
 		if(p->p_freq == scorer->p_freq && p->p_ship != SHIP_SPEC)
 		{
 			money->giveMoney(p, reward, MoneyType.MONEY_TYPE_BALL);
-			chat->sendMessage(p, "You received $%d for a team goal.", reward);
+			chat->SendMessage(p, "You received $%d for a team goal.", reward);
 		}
 	}
+	pd->Unlock();
 }
 
 local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty, int flags, int *pts, int *green)
@@ -80,7 +83,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 
 	//Distribute Wealth
 	money->giveMoney(killer, amount, MoneyType.MONEY_TYPE_KILL);
-	chat->sendMessage(p, "You received $%d for killing %s (%d bounty).", reward, killee->name, bounty);
+	chat->SendMessage(p, "You received $%d for killing %s (%d bounty).", reward, killee->name, bounty);
 }
 
 local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalplayers, int flagsowned)
@@ -101,13 +104,15 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		mm = _mm;
 
 		lm = mm->GetInterface(I_LOGMAN, ALLARENAS);
+		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
 		chat = mm->GetInterface(I_CHAT, ALLARENAS);
 		cfg = mm->GetInterface(I_CONFIG, ALLARENAS);
 		money = mm->GetInterface(I_HSCORE_MONEY, ALLARENAS);
 
-		if (!lm || !chat || !cfg || !money)
+		if (!lm || !chat || !cfg || !money || !pd)
 		{
 			mm->ReleaseInterface(lm);
+			mm->ReleaseInterface(pd);
 			mm->ReleaseInterface(chat);
 			mm->ReleaseInterface(cfg);
 			mm->ReleaseInterface(money);
@@ -120,6 +125,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 	else if (action == MM_UNLOAD)
 	{
 		mm->ReleaseInterface(lm);
+		mm->ReleaseInterface(pd);
 		mm->ReleaseInterface(chat);
 		mm->ReleaseInterface(cfg);
 		mm->ReleaseInterface(money);
