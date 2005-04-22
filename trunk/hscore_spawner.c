@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "asss.h"
+#include "clientset.h"
 #include "hscore.h"
 #include "hscore_storeman.h"
 #include "hscore_database.h"
@@ -15,27 +16,27 @@ local Ihscoreitems *items;
 local Iclientset *clientset;
 local Ihscoredatabase *database;
 
-local override_key_t
+//local override_key_t
 
 local void loadOverrides()
 {
-	 clientset->GetOverrideKey(const char *section, const char *key);
+	 //clientset->GetOverrideKey(const char *section, const char *key);
 }
 
 local void recalcSettings(Player *p)
 {
-repel
-burst
-thor
-portal
-decoy
-brick
-rocket
+//repel
+//burst
+//thor
+//portal
+//decoy
+//brick
+//rocket
 }
 
 local void playerActionCallback(Player *p, int action, Arena *arena)
 {
-	else if (action == PA_ENTERARENA)
+	if (action == PA_ENTERARENA)
 	{
 		//the player is entering the arena.
 
