@@ -3,6 +3,7 @@
 //4/15/05
 
 #include "asss.h"
+#include "fg_wz.h"
 #include "hscore.h"
 #include <math.h>
 
@@ -50,7 +51,7 @@ local void goalCallback(Arena *arena, Player *scorer, int bid, int x, int y)
 	{
 		if(p->p_freq == scorer->p_freq && p->p_ship != SHIP_SPEC)
 		{
-			money->giveMoney(p, reward, MoneyType.MONEY_TYPE_BALL);
+			money->giveMoney(p, reward, MONEY_TYPE_BALL);
 			chat->SendMessage(p, "You received $%d for a team goal.", reward);
 		}
 	}
@@ -74,21 +75,22 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	min   = (float)cfg->GetInt(arena->cfg, "Kill", "HSKillMin",   1);
 	bonus = (float)cfg->GetInt(arena->cfg, "Kill", "HSKillBonus", 5);
 
-	//Calculate Reward
-	amount  = (killer->bty + bonus);
+	//Calculate Reward	
+	amount  = (killer->position.bounty + bonus);
 	amount /= (bounty + bonus);
 	amount *= coeff;
 	amount += min;
 	reward  = (int)amount;
 
 	//Distribute Wealth
-	money->giveMoney(killer, amount, MoneyType.MONEY_TYPE_KILL);
-	chat->SendMessage(p, "You received $%d for killing %s (%d bounty).", reward, killee->name, bounty);
+	money->giveMoney(killer, amount, MONEY_TYPE_KILL);
+	chat->SendMessage(killer, "You received $%d for killing %s (%d bounty).", reward, killed->name, bounty);
 }
 
 local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalplayers, int flagsowned)
 {
 	//Are we going to have turf flags?
+	return 0;
 }
 
 local Iperiodicpoints periodicInterface =
