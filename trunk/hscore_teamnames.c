@@ -42,7 +42,7 @@
 typedef struct ArenaData
 {
 	LinkedList teamDataList;
-} arenaData;
+} ArenaData;
 
 typedef struct TeamData
 {
@@ -50,7 +50,7 @@ typedef struct TeamData
 	char password[MAX_PASSWORD_LENGTH];
 	Player *owner;
 	int freq;
-} teamData;
+} TeamData;
 
 //modules
 local Imodman *mm;
