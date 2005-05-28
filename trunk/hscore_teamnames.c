@@ -96,8 +96,10 @@ local int getFreePrivFreq(Arena *arena)
 	LinkedList *list = getTeamDataList(arena);
 	Link *link;
 
-	int testFreq = PRIVSTART(arena->cfg) - 1; //we ++ it immediatly
+	int testFreq = PRIVSTART(arena->cfg);
 	int loop = 1;
+
+	testFreq--;//we ++ it immediatly
 
 	lock();
 	while (loop)
@@ -681,12 +683,26 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		mm->RegInterface(&teamnames_int, arena);
 		mm->RegInterface(&fm_int, arena);
 		return MM_OK;
+
+		cmd->AddCommand("team", teamCommand, ALLARENAS, teamHelp);
+		cmd->AddCommand("teams", teamsCommand, ALLARENAS, teamsHelp);
+		cmd->AddCommand("getteam", getTeamCommand, ALLARENAS, getTeamHelp);
+		cmd->AddCommand("getowner", getOwnerCommand, ALLARENAS, getOwnerHelp);
+		cmd->AddCommand("giveowner", teamCommand, ALLARENAS, giveOwnerHelp);
+		cmd->AddCommand("setteampassword", setTeamPasswordCommand, ALLARENAS, setTeamPasswordHelp);
 	}
 	else if (action == MM_DETACH)
 	{
 		mm->UnregInterface(&fm_int, arena);
 		mm->UnregInterface(&teamnames_int, arena);
 		return MM_OK;
+
+		cmd->RemoveCommand("team", teamCommand, ALLARENAS);
+		cmd->RemoveCommand("teams", teamsCommand, ALLARENAS);
+		cmd->RemoveCommand("getteam", getTeamCommand, ALLARENAS);
+		cmd->RemoveCommand("getowner", getOwnerCommand, ALLARENAS);
+		cmd->RemoveCommand("giveowner", giveOwnerCommand, ALLARENAS);
+		cmd->RemoveCommand("setteampassword", setTeamPasswordCommand, ALLARENAS);
 	}
 	return MM_FAIL;
 }
