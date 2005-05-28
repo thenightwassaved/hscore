@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include <limits.h>
+#include <stdio.h>
 
 #include "asss.h"
 #include "hscore.h"
@@ -157,7 +158,7 @@ local helptext_t teamsHelp =
 
 local void teamsCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	LinkedList *list = getTeamDataList(arena);
+	LinkedList *list = getTeamDataList(p->arena);
 	Link *link;
 
 	lock();
@@ -303,7 +304,7 @@ local const char * getFreqTeamName(int freq, Arena *arena)
 	}
 }
 
-local const char * getPlayerTeamName(Player *p);
+local const char * getPlayerTeamName(Player *p)
 {
 	return getFreqTeamName(p->p_freq, p->arena);
 }
@@ -649,12 +650,15 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 	if (action == MM_LOAD)
 	{
 		mm = mm_;
-		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
-		cfg = mm->GetInterface(I_CONFIG, ALLARENAS);
+		aman = mm->GetInterface(I_ARENAMAN, ALLARENAS);
+		lm = mm->GetInterface(I_LOGMAN, ALLARENAS);
 		chat = mm->GetInterface(I_CHAT, ALLARENAS);
+		cfg = mm->GetInterface(I_CONFIG, ALLARENAS);
+		cmd = mm->GetInterface(I_CMDMAN, ALLARENAS);
 		capman = mm->GetInterface(I_CAPMAN, ALLARENAS);
+		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
-		if (!pd || !cfg || !chat || !capman)
+		if (!aman || !lm || !chat || !cfg || !cmd || !capman || !pd || !database)
 			return MM_FAIL;
 		return MM_OK;
 	}
@@ -662,10 +666,14 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 	{
 		if (fm_int.head.refcount)
 			return MM_FAIL;
-		mm->ReleaseInterface(pd);
-		mm->ReleaseInterface(cfg);
+		mm->ReleaseInterface(aman);
+		mm->ReleaseInterface(lm);
 		mm->ReleaseInterface(chat);
+		mm->ReleaseInterface(cfg);
+		mm->ReleaseInterface(cmd);
 		mm->ReleaseInterface(capman);
+		mm->ReleaseInterface(pd);
+		mm->ReleaseInterface(database);
 		return MM_OK;
 	}
 	else if (action == MM_ATTACH)
