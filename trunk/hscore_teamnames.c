@@ -51,6 +51,7 @@ typedef struct TeamData
 	char password[MAX_PASSWORD_LENGTH];
 	Player *owner;
 	int freq;
+	Player *fakep;
 } TeamData;
 
 //modules
@@ -63,6 +64,7 @@ local Icmdman *cmd;
 local Icapman *capman;
 local Igame *game;
 local Iplayerdata *pd;
+local Ifake *fake;
 local Ihscoredatabase *database;
 
 //team name interface prototypes
@@ -92,19 +94,38 @@ local LinkedList * getTeamDataList(Arena *arena)
 	return &(data->teamDataList);
 }
 
-local int freqHasPlayers(Arena *arena, int freq, Player *ignore)
+local int freqHasPlayers(Arena *arena, int freq, Player *ignore1, Player *ignore2)
 {
 	Player *p;
 	Link *link;
 	pd->Lock();
 	FOR_EACH_PLAYER(p)
-		if (p->arena == arena && p->p_freq == freq && p != ignore)
+		if (p->arena == arena && p->p_freq == freq && p != ignore1 && p != ignore2)
 		{
 			pd->Unlock();
 			return 1;
 		}
 	pd->Unlock();
 	return 0;
+}
+
+local void removeOwnership(Player *p)
+{
+	LinkedList *list = getTeamDataList(arena);
+	Link *link;
+
+	lock();
+	for (link = LLGetHead(list); link; link = link->next)
+	{
+		TeamData *entry = link->data;
+		if (entry->owner == p)
+		{
+			entry->owner = NULL;
+		}
+	}
+	unlock();
+
+	return NULL;
 }
 
 local void cleanTeams(Arena *arena, Player *ignore)
@@ -118,9 +139,10 @@ local void cleanTeams(Arena *arena, Player *ignore)
 		TeamData *entry = link->data;
 		link = link->next;
 
-		if (freqHasPlayers(arena, entry->freq, ignore) == 0)
+		if (freqHasPlayers(arena, entry->freq, ignore, entry->fakep) == 0)
 		{
 			LLRemove(list, entry);
+			fake->EndFaked(entry->fakep);
 			afree(entry);
 		}
 	}
@@ -231,10 +253,14 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 				int max = cfg->GetInt(p->arena->cfg, "Team", "MaxPerPrivateTeam", 0);
 				if (max <= 0 || count < max)
 				{
-					game->SetFreq(p, entry->freq);
-					unlock();
-					cleanTeams(p->arena, NULL);
-					lock();
+					if (entry->freq != p->p_freq)
+					{
+						game->SetFreq(p, entry->freq);
+						unlock();
+						cleanTeams(p->arena, NULL);
+						removeOwnership(p);
+						lock();
+					}
 				}
 				else
 				{
@@ -260,6 +286,12 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 	astrncpy(team->password, password, MAX_PASSWORD_LENGTH);
 	team->freq = getFreePrivFreq(p->arena);
 	team->owner = p;
+
+	char fakeName[MAX_TEAM_NAME_LENGTH + 1];
+	fakeName[0] = '^';
+	astrncpy(fakeName, name, MAX_TEAM_NAME_LENGTH);
+
+	team->fakep = fake->CreateFakePlayer(fakeName, p->arena, SHIP_SPEC, team->freq);
 
 	//add the team to the list
 	lock();
@@ -644,8 +676,6 @@ local void Ship(Player *p, int *ship, int *freq)
 		}
 	}
 
-	cleanTeams(arena, p);
-
 	*ship = s; *freq = f;
 	return;
 
@@ -741,8 +771,20 @@ local void Freq(Player *p, int *ship, int *freq)
 	}
 
 	cleanTeams(arena, p);
+	removeOwnership(p);
 
 	*ship = s; *freq = f;
+}
+
+local void playerActionCallback(Player *p, int action, Arena *arena)
+{
+	if (action == PA_LEAVEARENA)
+	{
+		//the player is leaving an arena.
+
+		cleanTeams(arena);
+		removeOwnership(p);
+	}
 }
 
 local Ifreqman fm_int =
@@ -771,13 +813,16 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		capman = mm->GetInterface(I_CAPMAN, ALLARENAS);
 		game = mm->GetInterface(I_GAME, ALLARENAS);
 		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
+		fake = mm->GetInterface(I_FAKE, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
-		if (!aman || !lm || !chat || !cfg || !cmd || !capman || !game || !pd || !database)
+		if (!aman || !lm || !chat || !cfg || !cmd || !capman || !game || !pd || !fake || !database)
 			return MM_FAIL;
 
 		arenaDataKey = aman->AllocateArenaData(sizeof(ArenaData));
 		if (arenaDataKey == -1)
 			return MM_FAIL;
+
+		mm->RegCallback(CB_PLAYERACTION, playerActionCallback, ALLARENAS);
 
 		return MM_OK;
 	}
@@ -788,6 +833,8 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 
 		aman->FreeArenaData(arenaDataKey);
 
+		mm->UnregCallback(CB_PLAYERACTION, playerActionCallback, ALLARENAS);
+
 		mm->ReleaseInterface(aman);
 		mm->ReleaseInterface(lm);
 		mm->ReleaseInterface(chat);
@@ -796,6 +843,7 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		mm->ReleaseInterface(capman);
 		mm->ReleaseInterface(game);
 		mm->ReleaseInterface(pd);
+		mm->ReleaseInterface(fake);
 		mm->ReleaseInterface(database);
 		return MM_OK;
 	}
