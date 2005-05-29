@@ -232,9 +232,10 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 				int max = cfg->GetInt(p->arena->cfg, "Team", "MaxPerPrivateTeam", 0);
 				if (max <= 0 || count < max)
 				{
-					//fixme: check freq max
 					game->SetFreq(p, entry->freq);
+					unlock();
 					cleanTeams(p->arena);
+					lock();
 				}
 				else
 				{
