@@ -193,7 +193,7 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 
 	password = delimcpy(name, params, MAX_TEAM_NAME_LENGTH, ':');
 
-	if (name[0] == "\0" || password == NULL)
+	if (name[0] == '\0' || password == NULL)
 	{
 		chat->SendMessage(p, "You must specify both team name and password.");
 		return;
