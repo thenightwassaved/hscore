@@ -233,7 +233,9 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 	team->owner = p;
 
 	//add the team to the list
+	lock();
 	LLAdd(list, team);
+	unlock();
 
 	//assign
 	game->SetFreq(p, team->freq);
@@ -759,12 +761,20 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
 		if (!aman || !lm || !chat || !cfg || !cmd || !capman || !game || !pd || !database)
 			return MM_FAIL;
+
+		arenaDataKey = aman->AllocateArenaData(sizeof(ArenaData));
+		if (arenaDataKey == -1)
+			return MM_FAIL;
+
 		return MM_OK;
 	}
 	else if (action == MM_UNLOAD)
 	{
 		if (fm_int.head.refcount)
 			return MM_FAIL;
+
+		aman->FreeArenaData(arenaDataKey);
+
 		mm->ReleaseInterface(aman);
 		mm->ReleaseInterface(lm);
 		mm->ReleaseInterface(chat);
