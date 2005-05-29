@@ -177,13 +177,13 @@ local TeamData * getTeamData(int freq, Arena *arena)
 	return NULL;
 }
 
-local helptext_t teamHelp =
-"Targets: none or player\n"
+local helptext_t changeTeamHelp =
+"Targets: none\n"
 "Args: <name>[:<password>]\n"
 "Changes your team to team <name> if the password is correct.\n"
 "Will create the team if it does not exist.\n";
 
-local void teamCommand(const char *command, const char *params, Player *p, const Target *target)
+local void changeTeamCommand(const char *command, const char *params, Player *p, const Target *target)
 {
 	LinkedList *list = getTeamDataList(p->arena);
 	Link *link;
@@ -702,7 +702,7 @@ local void Freq(Player *p, int *ship, int *freq)
 		//only ?team can be used to go to private freqs
 		if (f >= privlimit)
 		{
-			chat->SendMessage(p, "You must use ?team to change to private teams.");
+			chat->SendMessage(p, "You must use ?changeteam to change to private teams.");
 			*freq = p->p_freq;
 			*ship = p->p_ship;
 			return;
@@ -783,7 +783,7 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 
 		LLInit(getTeamDataList(arena));
 
-		cmd->AddCommand("team", teamCommand, ALLARENAS, teamHelp);
+		cmd->AddCommand("changeteam", changeTeamCommand, ALLARENAS, changeTeamHelp);
 		cmd->AddCommand("teams", teamsCommand, ALLARENAS, teamsHelp);
 		cmd->AddCommand("getteam", getTeamCommand, ALLARENAS, getTeamHelp);
 		cmd->AddCommand("getowner", getOwnerCommand, ALLARENAS, getOwnerHelp);
@@ -801,7 +801,7 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		LLEnum(getTeamDataList(arena), afree);
 		LLEmpty(getTeamDataList(arena));
 
-		cmd->RemoveCommand("team", teamCommand, ALLARENAS);
+		cmd->RemoveCommand("changeteam", changeTeamCommand, ALLARENAS);
 		cmd->RemoveCommand("teams", teamsCommand, ALLARENAS);
 		cmd->RemoveCommand("getteam", getTeamCommand, ALLARENAS);
 		cmd->RemoveCommand("getowner", getOwnerCommand, ALLARENAS);
