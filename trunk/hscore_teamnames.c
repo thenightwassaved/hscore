@@ -238,7 +238,7 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 	}
 
 	//make sure they're in a safe or in spec
-	if (!(p->position.status & 0x20) || p->p_ship != SHIP_SPEC)
+	if (!(p->position.status & STATUS_SAFEZONE) && p->p_ship != SHIP_SPEC)
 	{
 		chat->SendMessage(p, "You must be in a safe zone or in spec.");
 		return;
