@@ -787,7 +787,7 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		cmd->AddCommand("teams", teamsCommand, ALLARENAS, teamsHelp);
 		cmd->AddCommand("getteam", getTeamCommand, ALLARENAS, getTeamHelp);
 		cmd->AddCommand("getowner", getOwnerCommand, ALLARENAS, getOwnerHelp);
-		cmd->AddCommand("giveowner", teamCommand, ALLARENAS, giveOwnerHelp);
+		cmd->AddCommand("giveowner", giveOwnerCommand, ALLARENAS, giveOwnerHelp);
 		cmd->AddCommand("setteampassword", setTeamPasswordCommand, ALLARENAS, setTeamPasswordHelp);
 
 		return MM_OK;
