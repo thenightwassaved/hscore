@@ -61,6 +61,7 @@ local Ichat *chat;
 local Iconfig *cfg;
 local Icmdman *cmd;
 local Icapman *capman;
+local Igame *game;
 local Iplayerdata *pd;
 local Ihscoredatabase *database;
 
@@ -89,6 +90,40 @@ local LinkedList * getTeamDataList(Arena *arena)
 {
 	ArenaData *data = P_ARENA_DATA(arena, arenaDataKey);
 	return &(data->teamDataList);
+}
+
+local int freqHasPlayers(Arena *arena, int freq)
+{
+	Player *p;
+	Link *link;
+	pd->Lock();
+	FOR_EACH_PLAYER(p)
+		if (p->arena == arena &&
+		    p->freq == freq)
+		{
+			pd->Unlock();
+			return 1;
+		}
+	pd->Unlock();
+	return 0;
+}
+
+local void cleanTeams(Arena *arena)
+{
+	LinkedList *list = getTeamDataList(arena);
+	Link *link;
+
+	lock();
+	for (link = LLGetHead(list); link; link = link->next)
+	{
+		TeamData *entry = link->data;
+		if (freqHasPlayers(arena, entry->freq) == 0)
+		{
+			LLRemove(list, entry);
+			afree(entry);
+		}
+	}
+	unlock();
 }
 
 local int getFreePrivFreq(Arena *arena)
@@ -150,7 +185,50 @@ local helptext_t teamHelp =
 
 local void teamCommand(const char *command, const char *params, Player *p, const Target *target)
 {
+	LinkedList *list = getTeamDataList(p->arena);
+	Link *link;
 
+	char *name;
+	char *pass;
+
+	//check for existing team
+
+	lock();
+	for (link = LLGetHead(list); link; link = link->next)
+	{
+		TeamData *entry = link->data;
+		if (strcasecmp(entry->name, name) == 0)
+		{
+			//password right?
+			if (strcmp(entry->password, pass) == 0)
+			{
+				game->SetFreq(p, entry->freq);
+			}
+			else
+			{
+				chat->SendMessage(p, "Incorrect password.");
+			}
+
+			unlock();
+			return;
+		}
+	}
+	unlock();
+
+
+
+	//no existing team, create
+	TeamData *team = amalloc(sizeof(*team));
+	astrncpy(team->name, name, MAX_TEAM_NAME_LENGTH);
+	astrncpy(team->password, pass, MAX_PASSWORD_LENGTH);
+	team->freq = getFreePrivFreq(p->arena);
+	team->owner = p;
+
+	//add the team to the list
+	LLAdd(list, team);
+
+	//assign
+	game->SetFreq(p, team->freq);
 }
 
 local helptext_t teamsHelp =
@@ -293,7 +371,7 @@ local const char * getFreqTeamName(int freq, Arena *arena)
 		char setting[16];
 		snprintf(setting, sizeof(setting), "Team%iName", freq);
 
-		const char *name = cfg->GetStr(arena->cfg, "Team", "TeamName");
+		const char *name = cfg->GetStr(arena->cfg, "Team", setting);
 
 		if (name == NULL)
 		{
@@ -543,6 +621,8 @@ local void Ship(Player *p, int *ship, int *freq)
 		}
 	}
 
+	cleanTeams(arena);
+
 	*ship = s; *freq = f;
 	return;
 
@@ -611,8 +691,14 @@ local void Freq(Player *p, int *ship, int *freq)
 			}
 		}
 
-		//check the team ownership
-		//if the team has a password, only ?team can be used
+		//only ?team can be used to go to private freqs
+		if (f >= privlimit)
+		{
+			chat->SendMessage(p, "You must use ?team to change to private teams.");
+			*freq = p->p_freq;
+			*ship = p->p_ship;
+			return;
+		}
 	}
 
 	/* make sure he has an appropriate ship for this freq */
@@ -630,6 +716,8 @@ local void Freq(Player *p, int *ship, int *freq)
 			chat->SendMessage(p,
 					"There are too many people playing in this arena.");
 	}
+
+	cleanTeams(arena);
 
 	*ship = s; *freq = f;
 }
@@ -658,9 +746,10 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		cfg = mm->GetInterface(I_CONFIG, ALLARENAS);
 		cmd = mm->GetInterface(I_CMDMAN, ALLARENAS);
 		capman = mm->GetInterface(I_CAPMAN, ALLARENAS);
+		game = mm->GetInterface(I_GAME, ALLARENAS);
 		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
-		if (!aman || !lm || !chat || !cfg || !cmd || !capman || !pd || !database)
+		if (!aman || !lm || !chat || !cfg || !cmd || !capman || !game || !pd || !database)
 			return MM_FAIL;
 		return MM_OK;
 	}
@@ -674,6 +763,7 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		mm->ReleaseInterface(cfg);
 		mm->ReleaseInterface(cmd);
 		mm->ReleaseInterface(capman);
+		mm->ReleaseInterface(game);
 		mm->ReleaseInterface(pd);
 		mm->ReleaseInterface(database);
 		return MM_OK;
@@ -682,7 +772,8 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 	{
 		mm->RegInterface(&teamnames_int, arena);
 		mm->RegInterface(&fm_int, arena);
-		return MM_OK;
+
+		LLInit(getTeamDataList(arena));
 
 		cmd->AddCommand("team", teamCommand, ALLARENAS, teamHelp);
 		cmd->AddCommand("teams", teamsCommand, ALLARENAS, teamsHelp);
@@ -690,12 +781,17 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		cmd->AddCommand("getowner", getOwnerCommand, ALLARENAS, getOwnerHelp);
 		cmd->AddCommand("giveowner", teamCommand, ALLARENAS, giveOwnerHelp);
 		cmd->AddCommand("setteampassword", setTeamPasswordCommand, ALLARENAS, setTeamPasswordHelp);
+
+		return MM_OK;
 	}
 	else if (action == MM_DETACH)
 	{
 		mm->UnregInterface(&fm_int, arena);
 		mm->UnregInterface(&teamnames_int, arena);
 		return MM_OK;
+
+		LLEnum(getTeamDataList(arena), afree);
+		LLEmpty(getTeamDataList(arena));
 
 		cmd->RemoveCommand("team", teamCommand, ALLARENAS);
 		cmd->RemoveCommand("teams", teamsCommand, ALLARENAS);
