@@ -189,9 +189,9 @@ local void teamCommand(const char *command, const char *params, Player *p, const
 	Link *link;
 
 	char name[MAX_TEAM_NAME_LENGTH];
-	const char password;
+	const char *password;
 
-	password = delimcpy(name, params, MAX_TEAM_NAME_LENGTH, ":");
+	password = delimcpy(name, params, MAX_TEAM_NAME_LENGTH, ':');
 
 	if (name[0] == "\0" || password == NULL)
 	{
