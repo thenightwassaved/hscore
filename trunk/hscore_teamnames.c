@@ -237,6 +237,14 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 		return;
 	}
 
+	//make sure they're in a safe or in spec
+	if (!(p->position.status & 0x20) || p->p_ship != SHIP_SPEC)
+	{
+		chat->SendMessage(p, "You must be in a safe zone or in spec.");
+		return;
+	}
+
+
 	//check for existing team
 
 	lock();
@@ -419,11 +427,17 @@ local void teamKickCommand(const char *command, const char *params, Player *p, c
 			if (target->type == T_PLAYER)
 			{
 				Player *t = target->u.p;
+				if (t != p)
+				{
+					game->SetFreqAndShip(t, SHIP_SPEC, t->arena->specfreq);
 
-				game->SetFreqAndShip(t, SHIP_SPEC, t->arena->specfreq);
-
-				chat->SendMessage(t, "You have been kicked off your team.");
-				chat->SendMessage(p, "Player kicked off of the team.");
+					chat->SendMessage(t, "You have been kicked off your team.");
+					chat->SendMessage(p, "Player kicked off of the team.");
+				}
+				else
+				{
+					chat->SendMessage(p, "You cannot kick yourself off.");
+				}
 			}
 			else
 			{
