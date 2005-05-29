@@ -159,6 +159,22 @@ local int getFreePrivFreq(Arena *arena)
 	return testFreq;
 }
 
+local int count_freq(Arena *arena, int freq, Player *excl, int inclspec)
+{
+	Player *p;
+	Link *link;
+	int t = 0;
+	pd->Lock();
+	FOR_EACH_PLAYER(p)
+		if (p->arena == arena &&
+		    p->p_freq == freq &&
+		    p != excl &&
+		    ( p->p_ship != SHIP_SPEC || inclspec ) )
+			t++;
+	pd->Unlock();
+	return t;
+}
+
 local TeamData * getTeamData(int freq, Arena *arena)
 {
 	LinkedList *list = getTeamDataList(arena);
@@ -427,23 +443,6 @@ local int count_current_playing(Arena *arena)
 	pd->Unlock();
 	return playing;
 }
-
-local int count_freq(Arena *arena, int freq, Player *excl, int inclspec)
-{
-	Player *p;
-	Link *link;
-	int t = 0;
-	pd->Lock();
-	FOR_EACH_PLAYER(p)
-		if (p->arena == arena &&
-		    p->p_freq == freq &&
-		    p != excl &&
-		    ( p->p_ship != SHIP_SPEC || inclspec ) )
-			t++;
-	pd->Unlock();
-	return t;
-}
-
 
 local int FindLegalShip(Player *p, int freq, int ship)
 {
