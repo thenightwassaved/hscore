@@ -99,7 +99,7 @@ local int freqHasPlayers(Arena *arena, int freq)
 	pd->Lock();
 	FOR_EACH_PLAYER(p)
 		if (p->arena == arena &&
-		    p->freq == freq)
+		    p->p_freq == freq)
 		{
 			pd->Unlock();
 			return 1;
