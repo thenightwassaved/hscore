@@ -212,8 +212,8 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 			//password right?
 			if (strcmp(entry->password, password) == 0)
 			{
-				int count = count_freq(p->arena, entry->freq, p, INCLSPEC(arena->cfg));
-				int max = cfg->GetInt(arena->cfg, "Team", "MaxPerPrivateTeam", 0);
+				int count = count_freq(p->arena, entry->freq, p, INCLSPEC(p->arena->cfg));
+				int max = cfg->GetInt(p->arena->cfg, "Team", "MaxPerPrivateTeam", 0);
 				if (max <= 0 || count < max)
 				{
 					//fixme: check freq max
