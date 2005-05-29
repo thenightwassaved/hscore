@@ -92,14 +92,13 @@ local LinkedList * getTeamDataList(Arena *arena)
 	return &(data->teamDataList);
 }
 
-local int freqHasPlayers(Arena *arena, int freq)
+local int freqHasPlayers(Arena *arena, int freq, Player *ignore)
 {
 	Player *p;
 	Link *link;
 	pd->Lock();
 	FOR_EACH_PLAYER(p)
-		if (p->arena == arena &&
-		    p->p_freq == freq)
+		if (p->arena == arena && p->p_freq == freq && p != ignore)
 		{
 			pd->Unlock();
 			return 1;
@@ -108,7 +107,7 @@ local int freqHasPlayers(Arena *arena, int freq)
 	return 0;
 }
 
-local void cleanTeams(Arena *arena)
+local void cleanTeams(Arena *arena, Player *ignore)
 {
 	LinkedList *list = getTeamDataList(arena);
 	Link *link = LLGetHead(list);
@@ -119,7 +118,7 @@ local void cleanTeams(Arena *arena)
 		TeamData *entry = link->data;
 		link = link->next;
 
-		if (freqHasPlayers(arena, entry->freq) == 0)
+		if (freqHasPlayers(arena, entry->freq, ignore) == 0)
 		{
 			LLRemove(list, entry);
 			afree(entry);
@@ -234,7 +233,7 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 				{
 					game->SetFreq(p, entry->freq);
 					unlock();
-					cleanTeams(p->arena);
+					cleanTeams(p->arena, NULL);
 					lock();
 				}
 				else
@@ -269,7 +268,7 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 
 	//assign
 	game->SetFreq(p, team->freq);
-	cleanTeams(p->arena);
+	cleanTeams(p->arena, NULL);
 }
 
 local helptext_t teamsHelp =
@@ -645,7 +644,7 @@ local void Ship(Player *p, int *ship, int *freq)
 		}
 	}
 
-	cleanTeams(arena);
+	cleanTeams(arena, p);
 
 	*ship = s; *freq = f;
 	return;
@@ -741,7 +740,7 @@ local void Freq(Player *p, int *ship, int *freq)
 					"There are too many people playing in this arena.");
 	}
 
-	cleanTeams(arena);
+	cleanTeams(arena, p);
 
 	*ship = s; *freq = f;
 }
