@@ -288,7 +288,7 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 
 	char fakeName[MAX_TEAM_NAME_LENGTH + 1];
 	fakeName[0] = '^';
-	astrncpy(fakeName, name, MAX_TEAM_NAME_LENGTH);
+	astrncpy(fakeName + 1, name, MAX_TEAM_NAME_LENGTH);
 
 	team->fakep = fake->CreateFakePlayer(fakeName, p->arena, SHIP_SPEC, team->freq);
 
@@ -385,6 +385,45 @@ local void giveOwnerCommand(const char *command, const char *params, Player *p, 
 			{
 				data->owner = target->u.p;
 				chat->SendMessage(p, "Ownership given to %s.", data->owner->name);
+			}
+			else
+			{
+				chat->SendMessage(p, "You must target a player.");
+			}
+		}
+		else
+		{
+			chat->SendMessage(p, "You are not the owner of your team.");
+		}
+	}
+	else
+	{
+		chat->SendMessage(p, "You are not on a private team.");
+	}
+}
+
+local helptext_t teamKickHelp =
+"Targets: player\n"
+"Args: none\n"
+"Kicks the specified player off of the team. "
+"The team password should be changed to prevent them from rejoining.\n";
+
+local void teamKickCommand(const char *command, const char *params, Player *p, const Target *target)
+{
+	TeamData *data = getTeamData(p->p_freq, p->arena);
+
+	if (data != NULL)
+	{
+		if (data->owner == p)
+		{
+			if (target->type == T_PLAYER)
+			{
+				Player *t = target->u.p;
+
+				game->SetFreqAndShip(t, SHIP_SPEC, t->arena->specfreq);
+
+				chat->SendMessage(t, "You have been kicked off your team.");
+				chat->SendMessage(p, "Player kicked off of the team.");
 			}
 			else
 			{
@@ -675,6 +714,12 @@ local void Ship(Player *p, int *ship, int *freq)
 		}
 	}
 
+	if (*freq != f)
+	{
+		cleanTeams(arena, p);
+		removeOwnership(p);
+	}
+
 	*ship = s; *freq = f;
 	return;
 
@@ -858,6 +903,7 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		cmd->AddCommand("getteam", getTeamCommand, ALLARENAS, getTeamHelp);
 		cmd->AddCommand("getowner", getOwnerCommand, ALLARENAS, getOwnerHelp);
 		cmd->AddCommand("giveowner", giveOwnerCommand, ALLARENAS, giveOwnerHelp);
+		cmd->AddCommand("teamkick", teamKickCommand, ALLARENAS, teamKickHelp);
 		cmd->AddCommand("setteampassword", setTeamPasswordCommand, ALLARENAS, setTeamPasswordHelp);
 
 		return MM_OK;
@@ -876,6 +922,7 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		cmd->RemoveCommand("getteam", getTeamCommand, ALLARENAS);
 		cmd->RemoveCommand("getowner", getOwnerCommand, ALLARENAS);
 		cmd->RemoveCommand("giveowner", giveOwnerCommand, ALLARENAS);
+		cmd->RemoveCommand("teamkick", teamKickCommand, ALLARENAS);
 		cmd->RemoveCommand("setteampassword", setTeamPasswordCommand, ALLARENAS);
 	}
 	return MM_FAIL;
