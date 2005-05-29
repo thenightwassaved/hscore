@@ -188,8 +188,16 @@ local void teamCommand(const char *command, const char *params, Player *p, const
 	LinkedList *list = getTeamDataList(p->arena);
 	Link *link;
 
-	char *name;
-	char *pass;
+	char name[MAX_TEAM_NAME_LENGTH];
+	const char password;
+
+	password = delimcpy(name, params, MAX_TEAM_NAME_LENGTH, ":");
+
+	if (name[0] == "\0" || password == NULL)
+	{
+		chat->SendMessage(p, "You must specify both team name and password.");
+		return;
+	}
 
 	//check for existing team
 
@@ -200,7 +208,7 @@ local void teamCommand(const char *command, const char *params, Player *p, const
 		if (strcasecmp(entry->name, name) == 0)
 		{
 			//password right?
-			if (strcmp(entry->password, pass) == 0)
+			if (strcmp(entry->password, password) == 0)
 			{
 				game->SetFreq(p, entry->freq);
 			}
@@ -220,7 +228,7 @@ local void teamCommand(const char *command, const char *params, Player *p, const
 	//no existing team, create
 	TeamData *team = amalloc(sizeof(*team));
 	astrncpy(team->name, name, MAX_TEAM_NAME_LENGTH);
-	astrncpy(team->password, pass, MAX_PASSWORD_LENGTH);
+	astrncpy(team->password, password, MAX_PASSWORD_LENGTH);
 	team->freq = getFreePrivFreq(p->arena);
 	team->owner = p;
 
