@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "asss.h"
+#include "fake.h"
 #include "hscore.h"
 #include "hscore_database.h"
 #include "hscore_teamnames.h"
@@ -111,7 +112,7 @@ local int freqHasPlayers(Arena *arena, int freq, Player *ignore1, Player *ignore
 
 local void removeOwnership(Player *p)
 {
-	LinkedList *list = getTeamDataList(arena);
+	LinkedList *list = getTeamDataList(p->arena);
 	Link *link;
 
 	lock();
@@ -124,8 +125,6 @@ local void removeOwnership(Player *p)
 		}
 	}
 	unlock();
-
-	return NULL;
 }
 
 local void cleanTeams(Arena *arena, Player *ignore)
@@ -782,7 +781,7 @@ local void playerActionCallback(Player *p, int action, Arena *arena)
 	{
 		//the player is leaving an arena.
 
-		cleanTeams(arena);
+		cleanTeams(arena, p);
 		removeOwnership(p);
 	}
 }
