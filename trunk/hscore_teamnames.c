@@ -110,9 +110,9 @@ local int freqHasPlayers(Arena *arena, int freq, Player *ignore1, Player *ignore
 	return 0;
 }
 
-local void removeOwnership(Player *p)
+local void removeOwnership(Player *p, Arena *arena)
 {
-	LinkedList *list = getTeamDataList(p->arena);
+	LinkedList *list = getTeamDataList(arena);
 	Link *link;
 
 	lock();
@@ -265,7 +265,7 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 						game->SetFreq(p, entry->freq);
 						unlock();
 						cleanTeams(p->arena, NULL);
-						removeOwnership(p);
+						removeOwnership(p, p->arena);
 						lock();
 					}
 				}
@@ -731,7 +731,7 @@ local void Ship(Player *p, int *ship, int *freq)
 	if (*freq != f)
 	{
 		cleanTeams(arena, p);
-		removeOwnership(p);
+		removeOwnership(p, arena);
 	}
 
 	*ship = s; *freq = f;
@@ -829,7 +829,7 @@ local void Freq(Player *p, int *ship, int *freq)
 	}
 
 	cleanTeams(arena, p);
-	removeOwnership(p);
+	removeOwnership(p, arena);
 
 	*ship = s; *freq = f;
 }
@@ -841,7 +841,7 @@ local void playerActionCallback(Player *p, int action, Arena *arena)
 		//the player is leaving an arena.
 
 		cleanTeams(arena, p);
-		removeOwnership(p);
+		removeOwnership(p, arena);
 	}
 }
 
