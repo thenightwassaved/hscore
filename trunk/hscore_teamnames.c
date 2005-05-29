@@ -111,12 +111,14 @@ local int freqHasPlayers(Arena *arena, int freq)
 local void cleanTeams(Arena *arena)
 {
 	LinkedList *list = getTeamDataList(arena);
-	Link *link;
+	Link *link = LLGetHead(list);
 
 	lock();
-	for (link = LLGetHead(list); link; link = link->next)
+	while (link != NULL)
 	{
 		TeamData *entry = link->data;
+		link = link->next;
+
 		if (freqHasPlayers(arena, entry->freq) == 0)
 		{
 			LLRemove(list, entry);
