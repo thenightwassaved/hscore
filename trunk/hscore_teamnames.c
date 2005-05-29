@@ -212,7 +212,18 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 			//password right?
 			if (strcmp(entry->password, password) == 0)
 			{
-				game->SetFreq(p, entry->freq);
+				int count = count_freq(arena, f, p, INCLSPEC(arena->cfg));
+				int max = cfg->GetInt(ch, "Team", "MaxPerPrivateTeam", 0);
+				if (max <= 0 || count < max)
+				{
+					//fixme: check freq max
+					game->SetFreq(p, entry->freq);
+					cleanTeams(p->arena);
+				}
+				else
+				{
+					chat->SendMessage(p, "Too many players on that team.");
+				}
 			}
 			else
 			{
@@ -241,6 +252,7 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 
 	//assign
 	game->SetFreq(p, team->freq);
+	cleanTeams(p->arena);
 }
 
 local helptext_t teamsHelp =
