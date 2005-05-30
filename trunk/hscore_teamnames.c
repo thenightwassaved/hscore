@@ -934,7 +934,6 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 	{
 		mm->UnregInterface(&fm_int, arena);
 		mm->UnregInterface(&teamnames_int, arena);
-		return MM_OK;
 
 		lock();
 		LLEnum(getTeamDataList(arena), afree);
@@ -948,6 +947,8 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		cmd->RemoveCommand("giveowner", giveOwnerCommand, ALLARENAS);
 		cmd->RemoveCommand("teamkick", teamKickCommand, ALLARENAS);
 		cmd->RemoveCommand("setteampassword", setTeamPasswordCommand, ALLARENAS);
+
+		return MM_OK;
 	}
 	return MM_FAIL;
 }
