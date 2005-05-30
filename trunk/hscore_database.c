@@ -1245,6 +1245,7 @@ local int periodicStoreTimer(void *param)
 {
     lm->Log(L_INFO, "<hscore_database> Storing player data.");
     StoreAllPerPlayerData();
+    return 1;
 }
 
 //+-----------------------+
