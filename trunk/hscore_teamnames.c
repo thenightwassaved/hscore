@@ -391,8 +391,15 @@ local void giveOwnerCommand(const char *command, const char *params, Player *p, 
 		{
 			if (target->type == T_PLAYER)
 			{
-				data->owner = target->u.p;
-				chat->SendMessage(p, "Ownership given to %s.", data->owner->name);
+				if (target->u.p->p_freq == p->p_freq)
+				{
+					data->owner = target->u.p;
+					chat->SendMessage(p, "Ownership given to %s.", data->owner->name);
+				}
+				else
+				{
+					chat->SendMessage(p, "That player is not on your team!");
+				}
 			}
 			else
 			{
