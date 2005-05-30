@@ -759,6 +759,7 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 		category->id = atoi(mysql->GetField(row, 0));					//id
 		astrncpy(category->name, mysql->GetField(row, 1), 32);			//name
 		astrncpy(category->description, mysql->GetField(row, 2), 64);	//description
+		category->hidden = atoi(mysql->GetField(row, 3));				//hidden
 
 		//add the item type to the list
 		lock();
@@ -988,7 +989,7 @@ local void LoadCategoryItems(Arena *arena)
 
 local void LoadCategoryList(Arena *arena) //leads to LoadCategoryItems() being called
 {
-	mysql->Query(loadArenaCategoriesQueryCallback, arena, 1, "SELECT id, name, description FROM hs_categories WHERE arena = ? ORDER BY hs_categories.order ASC", getArenaIdentifier(arena));
+	mysql->Query(loadArenaCategoriesQueryCallback, arena, 1, "SELECT id, name, description, hidden FROM hs_categories WHERE arena = ? ORDER BY hs_categories.order ASC", getArenaIdentifier(arena));
 }
 
 local void LoadStoreItems(Arena *arena)
@@ -1237,6 +1238,13 @@ local void arenaActionCallback(Arena *arena, int action)
 	{
 		//do we need to do anything?
 	}
+}
+
+
+local int periodicStoreTimer(void *param)
+{
+    lm->Log(L_INFO, "<hscore_database> Storing player data.");
+    StoreAllPerPlayerData();
 }
 
 //+-----------------------+
@@ -1541,7 +1549,7 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 		cmd->AddCommand("reloaditems", reloadItemsCommand, ALLARENAS, reloadItemsHelp);
 		cmd->AddCommand("storeall", storeAllCommand, ALLARENAS, storeAllHelp);
 
-		//FIXME: add periodic saving
+		ml->SetTimer(periodicStoreTimer, 30000, 30000, NULL, NULL);
 
 		return MM_OK;
 
@@ -1564,6 +1572,8 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 		{
 			return MM_FAIL;
 		}
+
+		ml->ClearTimer(periodicStoreTimer, NULL);
 
 		cmd->RemoveCommand("reloaditems", reloadItemsCommand, ALLARENAS);
 		cmd->RemoveCommand("storeall", storeAllCommand, ALLARENAS);
