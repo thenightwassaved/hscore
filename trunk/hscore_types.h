@@ -26,7 +26,7 @@ typedef enum EventAction
 	ACTION_SPEC,
 
 	//sends a shipreset packet and reprizes all items (antideath, really)
-	ACTION_SHIP_RESET
+	ACTION_SHIP_RESET,
 
 	//calls a callback passing an eventid of event->data.
 	ACTION_CALLBACK
