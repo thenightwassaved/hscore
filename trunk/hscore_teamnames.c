@@ -846,9 +846,8 @@ local void playerActionCallback(Player *p, int action, Arena *arena)
 	if (action == PA_LEAVEARENA)
 	{
 		//the player is leaving an arena.
-
-		cleanTeams(arena, p);
 		removeOwnership(p, arena);
+		cleanTeams(arena, p);
 	}
 }
 
@@ -917,7 +916,9 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		mm->RegInterface(&teamnames_int, arena);
 		mm->RegInterface(&fm_int, arena);
 
+		lock();
 		LLInit(getTeamDataList(arena));
+		unlock();
 
 		cmd->AddCommand("changeteam", changeTeamCommand, ALLARENAS, changeTeamHelp);
 		cmd->AddCommand("teams", teamsCommand, ALLARENAS, teamsHelp);
@@ -935,8 +936,10 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		mm->UnregInterface(&teamnames_int, arena);
 		return MM_OK;
 
+		lock();
 		LLEnum(getTeamDataList(arena), afree);
 		LLEmpty(getTeamDataList(arena));
+		unlock();
 
 		cmd->RemoveCommand("changeteam", changeTeamCommand, ALLARENAS);
 		cmd->RemoveCommand("teams", teamsCommand, ALLARENAS);
