@@ -303,15 +303,17 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 {
 	Item *item = entry->item;
 
-	if (event->action == ACTION_REMOVE_ITEM) //removes event->data amount of the items from the ship's inventory
+	int action = event->action;
+
+	if (action == ACTION_REMOVE_ITEM) //removes event->data amount of the items from the ship's inventory
 	{
 		//FIXME
 	}
-	else if (event->action == ACTION_REMOVE_ITEM_AMMO) //removes event->data amount of the item's ammo type from inventory
+	else if (action == ACTION_REMOVE_ITEM_AMMO) //removes event->data amount of the item's ammo type from inventory
 	{
 		//FIXME
 	}
-	else if (event->action == ACTION_PRIZE) //sends prize #event->data to the player
+	else if (action == ACTION_PRIZE) //sends prize #event->data to the player
 	{
 		int prize = event->data && 0x1F;
 		int count = event->data >> 5;
@@ -327,23 +329,24 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 
 		game->GivePrize(&t, prize, count);
 	}
-	else if (event->action == ACTION_SET_INVENTORY_DATA) //sets the item's inventory data to event->data.
+	else if (action == ACTION_SET_INVENTORY_DATA) //sets the item's inventory data to event->data.
 	{
 		entry->data = event->data;
 	}
-	else if (event->action == 	ACTION_INCREMENT_INVENTORY_DATA) //does a ++ on inventory data.
+	else if (action == 	ACTION_INCREMENT_INVENTORY_DATA) //does a ++ on inventory data.
 	{
 		entry->data++;
 	}
-	else if (event->action == ACTION_DECREMENT_INVENTORY_DATA) //does a -- on inventory data. A "datazero" event may be generated as a result.
+	else if (action == ACTION_DECREMENT_INVENTORY_DATA) //does a -- on inventory data. A "datazero" event may be generated as a result.
 	{
 		entry->data--;
+		//FIXME: datazero
 	}
-	else if (event->action == ACTION_SPEC) //Specs the player.
+	else if (action == ACTION_SPEC) //Specs the player.
 	{
 		game->SetFreqAndShip(p, SHIP_SPEC, p->arena->specfreq);
 	}
-	else if (event->action == ACTION_SHIP_RESET) //sends a shipreset packet and reprizes all items (antideath, really)
+	else if (action == ACTION_SHIP_RESET) //sends a shipreset packet and reprizes all items (antideath, really)
 	{
 		Target t;
 		t.type = T_PLAYER;
@@ -351,6 +354,14 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 
 		game->ShipReset(&t);
 		//FIXME
+	}
+	else if (action == ACTION_CALLBACK) //calls a callback passing an eventid of event->data.
+	{
+		DO_CBS(CB_EVENT_ACTION, p->arena, eventActionFunction, (p, event->data));
+	}
+	else
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "Unknown action code %i", action);
 	}
 
 }

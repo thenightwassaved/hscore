@@ -3,6 +3,12 @@
 
 #define I_HSCORE_ITEMS "hscore_items-3"
 
+//callback
+#define CB_EVENT_ACTION "eventaction"
+
+//callback function prototype
+typedef void (*eventActionFunction)(Player *p, int eventID);
+
 typedef struct Ihscoreitems
 {
 	INTERFACE_HEAD_DECL

@@ -6,12 +6,15 @@
 #include "hscore_database.h"
 #include "hscore_shipnames.h"
 
+#define SEE_HIDDEN_CATEGORIES "seehiddencat"
+
 //modules
 local Imodman *mm;
 local Ilogman *lm;
 local Ichat *chat;
 local Iconfig *cfg;
 local Icmdman *cmd;
+local Icapman *capman;
 local Ihscoremoney *money;
 local Ihscoreitems *items;
 local Ihscoredatabase *database;
@@ -30,8 +33,14 @@ local void printAllCategories(Player *p)
 	for (link = LLGetHead(categoryList); link; link = link->next)
 	{
 		Category *category = link->data;
-
-		chat->SendMessage(p, "| %-32s | %-64s |", category->name, category->description);
+		if (category->hidden && capman->HasCapability(p, SEE_HIDDEN_CATEGORIES))
+		{
+			chat->SendMessage(p, "| (%-30s) | %-64s |", category->name, category->description);
+		}
+		else if (!category->hidden)
+		{
+			chat->SendMessage(p, "| %-32s | %-64s |", category->name, category->description);
+		}
 	}
 	database->unlock();
 
@@ -48,21 +57,24 @@ local void printCategoryItems(Player *p, Category *category) //call with lock he
 	chat->SendMessage(p, "| Item Name        | Buy Price | Sell Price | Exp    | Ships    | Item Description                 |");
 	chat->SendMessage(p, "+------------------+-----------+------------+--------+----------+----------------------------------+");
 
-	for (link = LLGetHead(&category->itemList); link; link = link->next)
+	if (!category->hidden || capman->HasCapability(p, SEE_HIDDEN_CATEGORIES))
 	{
-		Item *item = link->data;
-
-		char shipMask[] = "12345678";
-
-		for (int i = 0; i < 8; i++)
+		for (link = LLGetHead(&category->itemList); link; link = link->next)
 		{
-			if (!((item->shipsAllowed >> i) & 0x1))
-			{
-				shipMask[i] = ' ';
-			}
-		}
+			Item *item = link->data;
 
-		chat->SendMessage(p, "| %-16s | %-9i | %-10i | %-6i | %-8s | %-32s |", item->name, item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->shortDesc);
+			char shipMask[] = "12345678";
+
+			for (int i = 0; i < 8; i++)
+			{
+				if (!((item->shipsAllowed >> i) & 0x1))
+				{
+					shipMask[i] = ' ';
+				}
+			}
+
+			chat->SendMessage(p, "| %-16s | %-9i | %-10i | %-6i | %-8s | %-32s |", item->name, item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->shortDesc);
+		}
 	}
 
 	chat->SendMessage(p, "+------------------+-----------+------------+--------+----------+----------------------------------+");
@@ -103,51 +115,58 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 {
 	if ((item->shipsAllowed >> ship) & 0x1)
 	{
-		if (money->getMoney(p) >= item->buyPrice * count)
+		if (item->buyPrice)
 		{
-			if (money->getExp(p) >= item->expRequired)
+			if (money->getMoney(p) >= item->buyPrice * count)
 			{
-				if (items->getItemCount(p, item, ship) + count <= item->max)
+				if (money->getExp(p) >= item->expRequired)
 				{
-					if (item->type1 != NULL)
+					if (items->getItemCount(p, item, ship) + count <= item->max)
 					{
-						if (items->getFreeItemTypeSpots(p, item->type1, ship) - (item->typeDelta1 * count) < 0) //have no free spots
+						if (item->type1 != NULL)
 						{
-							chat->SendMessage(p, "You do not have enough free %s spots.", item->type1->name);
-							return;
+							if (items->getFreeItemTypeSpots(p, item->type1, ship) - (item->typeDelta1 * count) < 0) //have no free spots
+							{
+								chat->SendMessage(p, "You do not have enough free %s spots.", item->type1->name);
+								return;
+							}
 						}
-					}
 
-					if (item->type2 != NULL)
+						if (item->type2 != NULL)
+						{
+							if (items->getFreeItemTypeSpots(p, item->type2, ship) - (item->typeDelta2 * count) < 0) //have no free spots
+							{
+								chat->SendMessage(p, "You do not have enough free %s spots.", item->type2->name);
+								return;
+							}
+						}
+
+						items->addItem(p, item, ship, count);
+
+						money->giveMoney(p, -item->buyPrice * count, MONEY_TYPE_BUYSELL);
+
+						//FIXME: Call event
+
+						chat->SendMessage(p, "You purchaced %i of item %s for $%i.", count, item->name, item->buyPrice * count);
+					}
+					else
 					{
-						if (items->getFreeItemTypeSpots(p, item->type2, ship) - (item->typeDelta2 * count) < 0) //have no free spots
-						{
-							chat->SendMessage(p, "You do not have enough free %s spots.", item->type2->name);
-							return;
-						}
+						chat->SendMessage(p, "You may only have %i of item %s on your ship.", item->max, item->name);
 					}
-
-					items->addItem(p, item, ship, count);
-
-					money->giveMoney(p, -item->buyPrice * count, MONEY_TYPE_BUYSELL);
-
-					//FIXME: Call event
-
-					chat->SendMessage(p, "You purchaced %i of item %s for $%i.", count, item->name, item->buyPrice * count);
 				}
 				else
 				{
-					chat->SendMessage(p, "You may only have %i of item %s on your ship.", item->max, item->name);
+					chat->SendMessage(p, "You need %i more experience to buy item %s.", item->expRequired - money->getExp(p), item->name);
 				}
 			}
 			else
 			{
-				chat->SendMessage(p, "You need %i more experience to buy item %s.", item->expRequired - money->getExp(p), item->name);
+				chat->SendMessage(p, "You do not have enough money to buy item %s. You need $%i more.", item->name, item->buyPrice * count - money->getMoney(p));
 			}
 		}
 		else
 		{
-			chat->SendMessage(p, "You do not have enough money to buy item %s. You need $%i more.", item->name, item->buyPrice * count - money->getMoney(p));
+			chat->SendMessage(p, "Item %s is not for sale.", item->name);
 		}
 	}
 	else

@@ -28,7 +28,8 @@ typedef enum EventAction
 	//sends a shipreset packet and reprizes all items (antideath, really)
 	ACTION_SHIP_RESET
 
-	//we need a lot more
+	//calls a callback passing an eventid of event->data.
+	ACTION_CALLBACK
 } EventAction;
 
 typedef struct Event
@@ -112,6 +113,8 @@ typedef struct Category
 	char description[64]; //displayed inline on the ?buy menu
 
 	LinkedList itemList; //a list of member items that are displayed
+
+	int hidden; //1 means a hidden category, 0 means visible
 
 	int id; //mysql use
 } Category;
