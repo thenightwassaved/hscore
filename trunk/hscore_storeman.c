@@ -55,7 +55,21 @@ local void storeInfoCommand(const char *command, const char *params, Player *p, 
 
 			if (strcasecmp(params, store->name) == 0)
 			{
-				chat->SendMessage(p, "FIXME: Info on store %s", store->name);
+				chat->SendMessage(p, "+----------------------------------+");
+				chat->SendMessage(p, "| %-32s |", store->name);
+				chat->SendMessage(p, "+----------------------------------+---------------------------------------------------------------+");
+
+				char buf[256], *t;
+				const char *temp = NULL;
+
+				while (strsplit(store->description, "\n", buf, 256, &temp))
+				{
+					chat->SendMessage(p, "| %96s |", buf);
+				}
+
+				chat->SendMessage(p, "+--------------------------------------------------------------------------------------------------+");
+
+				database->unlock();
 				return;
 			}
 		}
