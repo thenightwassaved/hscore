@@ -190,6 +190,143 @@ local void LinkAmmo()
 	unlock();
 }
 
+//+----------------------------------+
+//|                                  |
+//|  MySQL Table Creation Functions  |
+//|                                  |
+//+----------------------------------+
+
+#define CREATE_CATEGORIES_TABLE \
+"CREATE TABLE IF NOT EXISTS `hs_categories` (" \
+"  `id` int(10) unsigned NOT NULL auto_increment," \
+"  `name` varchar(32) NOT NULL default ''," \
+"  `description` varchar(64) NOT NULL default ''," \
+"  `arena` varchar(32) NOT NULL default ''," \
+"  `order` tinyint(4) NOT NULL default '0'," \
+"  `hidden` tinyint(4) NOT NULL default '0'," \
+"  PRIMARY KEY  (`id`)" \
+")"
+
+#define CREATE_CATEGORY_ITEMS_TABLE \
+"CREATE TABLE IF NOT EXISTS `hs_category_items` (" \
+"  `item_id` int(10) unsigned NOT NULL default '0'," \
+"  `category_id` int(10) unsigned NOT NULL default '0'," \
+"  `order` tinyint(4) NOT NULL default '0'" \
+")"
+
+#define CREATE_ITEM_EVENTS_TABLE \
+"CREATE TABLE IF NOT EXISTS `hs_item_events` (" \
+"  `item_id` int(10) unsigned NOT NULL default '0'," \
+"  `event` varchar(16) NOT NULL default ''," \
+"  `action` mediumint(9) NOT NULL default '0'," \
+"  `data` int(11) NOT NULL default '0'," \
+"  `message` varchar(200) NOT NULL default ''" \
+")"
+
+#define CREATE_ITEM_PROPERTIES_TABLE \
+"CREATE TABLE IF NOT EXISTS `hs_item_properties` (" \
+"  `item_id` int(10) unsigned NOT NULL default '0'," \
+"  `name` varchar(32) NOT NULL default ''," \
+"  `value` int(11) NOT NULL default '0'" \
+")"
+
+#define CREATE_ITEM_TYPES_TABLE \
+"CREATE TABLE IF NOT EXISTS `hs_item_types` (" \
+"  `id` int(10) unsigned NOT NULL auto_increment," \
+"  `name` varchar(32) NOT NULL default ''," \
+"  `max` int(11) NOT NULL default '0'," \
+"  PRIMARY KEY  (`id`)" \
+")"
+
+#define CREATE_ITEMS_TABLE \
+"CREATE TABLE IF NOT EXISTS `hs_items` (" \
+"  `id` int(10) unsigned NOT NULL auto_increment," \
+"  `name` varchar(16) NOT NULL default ''," \
+"  `short_description` varchar(32) NOT NULL default ''," \
+"  `long_description` varchar(200) NOT NULL default ''," \
+"  `buy_price` int(11) NOT NULL default '0'," \
+"  `sell_price` int(11) NOT NULL default '0'," \
+"  `exp_required` int(11) NOT NULL default '0'," \
+"  `ships_allowed` int(11) NOT NULL default '0'," \
+"  `type1` int(10) unsigned NOT NULL default '0'," \
+"  `type2` int(10) unsigned NOT NULL default '0'," \
+"  `type1_delta` int(11) NOT NULL default '0'," \
+"  `type2_delta` int(11) NOT NULL default '0'," \
+"  `max` int(11) NOT NULL default '0'," \
+"  `delay_write` tinyint(4) NOT NULL default '0'," \
+"  `ammo` int(10) unsigned NOT NULL default '0'," \
+"  PRIMARY KEY  (`id`)" \
+")"
+
+#define CREATE_PLAYER_SHIP_ITEMS_TABLE \
+"CREATE TABLE IF NOT EXISTS `hs_player_ship_items` (" \
+"  `ship_id` int(10) unsigned NOT NULL default '0'," \
+"  `item_id` int(10) unsigned NOT NULL default '0'," \
+"  `count` int(11) NOT NULL default '0'," \
+"  `data` int(11) NOT NULL default '0'," \
+"  PRIMARY KEY  (`ship_id`,`item_id`)" \
+")"
+
+#define CREATE_PLAYER_SHIPS_TABLE \
+"CREATE TABLE IF NOT EXISTS `hs_player_ships` (" \
+"  `id` int(10) unsigned NOT NULL auto_increment," \
+"  `player_id` int(10) unsigned NOT NULL default '0'," \
+"  `ship` tinyint(4) NOT NULL default '0'," \
+"  `arena` varchar(32) NOT NULL default ''," \
+"  PRIMARY KEY  (`id`)" \
+")"
+
+#define CREATE_PLAYERS_TABLE \
+"CREATE TABLE IF NOT EXISTS `hs_players` (" \
+"  `id` int(10) unsigned NOT NULL auto_increment," \
+"  `name` varchar(32) NOT NULL default ''," \
+"  `money` int(11) NOT NULL default '0'," \
+"  `exp` int(11) NOT NULL default '0'," \
+"  `money_give` int(11) NOT NULL default '0'," \
+"  `money_grant` int(11) NOT NULL default '0'," \
+"  `money_buysell` int(11) NOT NULL default '0'," \
+"  `money_kill` int(11) NOT NULL default '0'," \
+"  `money_flag` int(11) NOT NULL default '0'," \
+"  `money_ball` int(11) NOT NULL default '0'," \
+"  `money_event` int(11) NOT NULL default '0'," \
+"  PRIMARY KEY  (`id`)" \
+")"
+
+#define CREATE_STORE_ITEMS_TABLE \
+"CREATE TABLE IF NOT EXISTS `hs_store_items` (" \
+"  `item_id` int(10) unsigned NOT NULL default '0'," \
+"  `store_id` int(10) unsigned NOT NULL default '0'," \
+"  `order` tinyint(4) NOT NULL default '0'" \
+")"
+
+#define CREATE_STORES_TABLE \
+"CREATE TABLE IF NOT EXISTS `hs_stores` (" \
+"  `id` int(10) unsigned NOT NULL auto_increment," \
+"  `name` varchar(32) NOT NULL default ''," \
+"  `description` varchar(200) NOT NULL default ''," \
+"  `region` varchar(16) NOT NULL default ''," \
+"  `arena` varchar(32) NOT NULL default ''," \
+"  `order` tinyint(4) NOT NULL default '0'," \
+"  PRIMARY KEY  (`id`)" \
+")"
+
+
+
+local void initTables()
+{
+	mysql->Query(NULL, NULL, 0, CREATE_CATEGORIES_TABLE);
+	mysql->Query(NULL, NULL, 0, CREATE_CATEGORY_ITEMS_TABLE);
+	mysql->Query(NULL, NULL, 0, CREATE_ITEM_EVENTS_TABLE);
+	mysql->Query(NULL, NULL, 0, CREATE_ITEM_PROPERTIES_TABLE);
+	mysql->Query(NULL, NULL, 0, CREATE_ITEM_TYPES_TABLE);
+	mysql->Query(NULL, NULL, 0, CREATE_ITEMS_TABLE);
+	mysql->Query(NULL, NULL, 0, CREATE_PLAYER_SHIP_ITEMS_TABLE);
+	mysql->Query(NULL, NULL, 0, CREATE_PLAYER_SHIPS_TABLE);
+	mysql->Query(NULL, NULL, 0, CREATE_PLAYERS_TABLE);
+	mysql->Query(NULL, NULL, 0, CREATE_STORE_ITEMS_TABLE);
+	mysql->Query(NULL, NULL, 0, CREATE_STORES_TABLE);
+}
+
 //+-------------------------+
 //|                         |
 //|  MySQL Query Callbacks  |
@@ -1538,6 +1675,8 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 
 		LLInit(&itemList);
 		LLInit(&itemTypeList);
+
+		initTables();
 
 		LoadItemTypeList();
 
