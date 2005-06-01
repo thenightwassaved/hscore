@@ -860,11 +860,11 @@ local void playerActionCallback(Player *p, int action, Arena *arena)
 	if (action == PA_LEAVEARENA)
 	{
 		//the player is leaving an arena.
-		lm->LogP(L_DEBUG, "hscore_teamnames", p, "Starting player removal.");
+		lm->LogP(L_DRIVEL, "hscore_teamnames", p, "Starting player removal.");
 		removeOwnership(p, arena);
-		lm->LogP(L_DEBUG, "hscore_teamnames", p, "Finished removing ownership.");
+		lm->LogP(L_DRIVEL, "hscore_teamnames", p, "Finished removing ownership.");
 		cleanTeams(arena, p);
-		lm->LogP(L_DEBUG, "hscore_teamnames", p, "Finished cleaning teams.");
+		lm->LogP(L_DRIVEL, "hscore_teamnames", p, "Finished cleaning teams.");
 	}
 }
 
