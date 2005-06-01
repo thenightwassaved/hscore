@@ -436,10 +436,24 @@ local void teamKickCommand(const char *command, const char *params, Player *p, c
 				Player *t = target->u.p;
 				if (t != p)
 				{
-					game->SetFreqAndShip(t, SHIP_SPEC, t->arena->specfreq);
+					if (t->p_freq == p->p_freq)
+					{
+						if (t != data->fakep)
+						{
+							game->SetFreqAndShip(t, SHIP_SPEC, t->arena->specfreq);
 
-					chat->SendMessage(t, "You have been kicked off your team.");
-					chat->SendMessage(p, "Player kicked off of the team.");
+							chat->SendMessage(t, "You have been kicked off your team.");
+							chat->SendMessage(p, "Player kicked off of the team.");
+						}
+						else
+						{
+							chat->SendMessage(p, "Nice try ;)");
+						}
+					}
+					else
+					{
+						chat->SendMessage(p, "That player is not on your team.");
+					}
 				}
 				else
 				{
@@ -846,8 +860,11 @@ local void playerActionCallback(Player *p, int action, Arena *arena)
 	if (action == PA_LEAVEARENA)
 	{
 		//the player is leaving an arena.
+		lm->LogP(L_DEBUG, "hscore_teamnames", p, "Starting player removal.");
 		removeOwnership(p, arena);
+		lm->LogP(L_DEBUG, "hscore_teamnames", p, "Finished removing ownership.");
 		cleanTeams(arena, p);
+		lm->LogP(L_DEBUG, "hscore_teamnames", p, "Finished cleaning teams.");
 	}
 }
 
