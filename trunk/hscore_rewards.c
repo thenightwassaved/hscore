@@ -1,6 +1,6 @@
 //HSCore Rewards
 //D1st0rt and Bomook
-//4/15/05
+//5/31/05
 
 #include "asss.h"
 #include "fg_wz.h"
@@ -18,7 +18,40 @@ local Ihscoremoney *money;
 //This is assuming we're using fg_wz.py
 local void flagWinCallback(Arena *arena, int freq, int *points)
 {
-	//This one is important, needs to be discussed
+	/*
+	 * money = (coefficient * jackpot)^exponent * pop
+	 * Defaults:
+	 * coefficient = 200, exponent = 0.5
+	 */
+
+	 //Variable Declarations
+	 double amount, coeff, exp, pts;
+	 int reward;
+	 Player *p;
+	 Link *link;
+
+	 //Read Settings
+	 coeff = (double)cfg->GetInt(arena->cfg, "Flag", "HSFlagCoeff", 200);
+	 exp = (double)cfg->GetInt(arena->cfg, "Flag", "HSFlagExp", 500) / 1000;
+	 pts = (double)(*points);
+
+	 //Calculate Reward
+	 amount = coeff * pts;
+	 amount = pow(amount, exp);
+	 amount *= (double)arena->playing;
+	 reward = (int)amount;
+
+	 //Distribute Wealth
+    pd->Lock();
+	FOR_EACH_PLAYER(p)
+	{
+		if(p->p_freq == freq && p->p_ship != SHIP_SPEC)
+		{
+			money->giveMoney(p, reward, MONEY_TYPE_FLAG);
+			chat->SendMessage(p, "You received $%d for a flag victory.", reward);
+		}
+	}
+	pd->Unlock();
 }
 
 local void goalCallback(Arena *arena, Player *scorer, int bid, int x, int y)
@@ -30,17 +63,17 @@ local void goalCallback(Arena *arena, Player *scorer, int bid, int x, int y)
 	 */
 
 	//Variable Declarations
-	float amount, coeff, min;
+	double amount, coeff, min;
 	int reward;
 	Player *p;
 	Link *link;
 
 	//Read Settings
-	coeff = (float)cfg->GetInt(arena->cfg, "Soccer", "HSGoalCoeff", 500);
-	min   = (float)cfg->GetInt(arena->cfg, "Soccer", "HSGoalMin",   300);
+	coeff = (double)cfg->GetInt(arena->cfg, "Soccer", "HSGoalCoeff", 500);
+	min   = (double)cfg->GetInt(arena->cfg, "Soccer", "HSGoalMin",   300);
 
 	//Calculate Reward
-	amount = pow((float)arena->playing, 0.5);
+	amount = pow((double)arena->playing, 0.5);
 	amount *= coeff;
 	amount += min;
 	reward  = (int)amount;
@@ -67,15 +100,15 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	 */
 
 	//Variable Declarations
-	float amount, coeff, bonus, min;
+	double amount, coeff, bonus, min;
 	int reward;
 
 	//Read Settings
-	coeff = (float)cfg->GetInt(arena->cfg, "Kill", "HSKillCoeff", 50);
-	min   = (float)cfg->GetInt(arena->cfg, "Kill", "HSKillMin",   1);
-	bonus = (float)cfg->GetInt(arena->cfg, "Kill", "HSKillBonus", 5);
+	coeff = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillCoeff", 50);
+	min   = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillMin",   1);
+	bonus = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillBonus", 5);
 
-	//Calculate Reward	
+	//Calculate Reward
 	amount  = (killer->position.bounty + bonus);
 	amount /= (bounty + bonus);
 	amount *= coeff;
@@ -89,7 +122,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 
 local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalplayers, int flagsowned)
 {
-	//Are we going to have turf flags?
+	//is this implemented?
 	return 0;
 }
 
