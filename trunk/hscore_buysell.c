@@ -340,6 +340,8 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 				if (strcasecmp(params, category->name) == 0)
 				{
 					printCategoryItems(p, category);
+
+					database->unlock();
 					return;
 				}
 			}
