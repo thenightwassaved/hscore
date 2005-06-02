@@ -178,7 +178,9 @@ local void LinkAmmo()
 
 		if (item->ammoID != 0)
 		{
+			unlock();
 			Item *ammo = getItemByID(item->ammoID);
+			lock();
 			item->ammo = ammo;
 
 			if (item->ammo == NULL)
