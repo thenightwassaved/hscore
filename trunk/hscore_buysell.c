@@ -449,16 +449,18 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 		chat = mm->GetInterface(I_CHAT, ALLARENAS);
 		cfg = mm->GetInterface(I_CONFIG, ALLARENAS);
 		cmd = mm->GetInterface(I_CMDMAN, ALLARENAS);
+		capman = mm->GetInterface(I_CAPMAN, ALLARENAS);
 		money = mm->GetInterface(I_HSCORE_MONEY, ALLARENAS);
 		items = mm->GetInterface(I_HSCORE_ITEMS, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
 
-		if (!lm || !chat || !cfg || !cmd || !money || !items || !database)
+		if (!lm || !chat || !cfg || !cmd || !capman || !money || !items || !database)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(chat);
 			mm->ReleaseInterface(cfg);
 			mm->ReleaseInterface(cmd);
+			mm->ReleaseInterface(capman);
 			mm->ReleaseInterface(money);
 			mm->ReleaseInterface(items);
 			mm->ReleaseInterface(database);
@@ -474,6 +476,7 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(chat);
 		mm->ReleaseInterface(cfg);
 		mm->ReleaseInterface(cmd);
+		mm->ReleaseInterface(capman);
 		mm->ReleaseInterface(money);
 		mm->ReleaseInterface(items);
 		mm->ReleaseInterface(database);
