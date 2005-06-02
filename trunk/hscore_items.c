@@ -352,17 +352,30 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 
 local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with lock held
 {
-	Item *item = entry->item;
-
 	int action = event->action;
 
-	if (action == ACTION_REMOVE_ITEM) //removes event->data amount of the items from the ship's inventory
+
+	//do the message
+	if (event->message[0] != '\0')
+		chat->SendMessage(p, "%s", event->message);
+	}
+
+	//do the action
+	if (action == ACTION_NO_ACTION) //do nothing
 	{
-		//FIXME
+		//nothing :)
+	}
+	else if (action == ACTION_REMOVE_ITEM) //removes event->data amount of the items from the ship's inventory
+	{
+		unlock();
+		addItem(p, entry->item, p->p_ship, -event->data);
+		lock();
 	}
 	else if (action == ACTION_REMOVE_ITEM_AMMO) //removes event->data amount of the item's ammo type from inventory
 	{
-		//FIXME
+		unlock();
+		addItem(p, entry->item->ammo, p->p_ship, -event->data);
+		lock();
 	}
 	else if (action == ACTION_PRIZE) //sends prize #event->data to the player
 	{
@@ -391,7 +404,20 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 	else if (action == ACTION_DECREMENT_INVENTORY_DATA) //does a -- on inventory data. A "datazero" event may be generated as a result.
 	{
 		entry->data--;
-		//FIXME: datazero
+		if (entry->data == 0)
+		{
+			Link *eventLink;
+			for (eventLink = LLGetHead(&item->eventList); eventLink; eventLink = eventLink->next)
+			{
+				Event *eventToCheck = eventLink->data;
+
+				if (strcmp(eventToCheck->event, "datazero") == 0)
+				{
+					doEvent(p, entry, eventToCheck);
+					break;
+				}
+			}
+		}
 	}
 	else if (action == ACTION_SPEC) //Specs the player.
 	{
@@ -404,7 +430,7 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 		t.u.p = p;
 
 		game->ShipReset(&t);
-		//FIXME
+		//FIXME: reprize
 	}
 	else if (action == ACTION_CALLBACK) //calls a callback passing an eventid of event->data.
 	{
@@ -414,7 +440,6 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 	{
 		lm->LogP(L_ERROR, "hscore_items", p, "Unknown action code %i", action);
 	}
-
 }
 
 local int getItemCount(Player *p, Item *item, int ship)
@@ -786,6 +811,12 @@ local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship)
 	return count;
 }
 
+local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty, int flags, int *pts, int *green)
+{
+	triggerEvent(killer, p->p_ship, "kill");
+	triggerEvent(killed, p->p_ship, "death");
+}
+
 local Ihscoreitems interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_ITEMS, "hscore_items")
@@ -820,6 +851,8 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 
 		mm->RegInterface(&interface, ALLARENAS);
 
+		mm->RegCallback(CB_KILL, killCallback, ALLARENAS);
+
 		cmd->AddCommand("iteminfo", itemInfoCommand, ALLARENAS, itemInfoHelp);
 		cmd->AddCommand("grantitem", grantItemCommand, ALLARENAS, grantItemHelp);
 
@@ -831,6 +864,8 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 		{
 			return MM_FAIL;
 		}
+
+		mm->UnregCallback(CB_KILL, killCallback, ALLARENAS);
 
 		cmd->RemoveCommand("iteminfo", itemInfoCommand, ALLARENAS);
 		cmd->RemoveCommand("grantitem", grantItemCommand, ALLARENAS);

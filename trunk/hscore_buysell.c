@@ -145,7 +145,7 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 
 						money->giveMoney(p, -item->buyPrice * count, MONEY_TYPE_BUYSELL);
 
-						//FIXME: Call event
+						items->triggerEventOnItem(p, item, ship, "buy");
 
 						chat->SendMessage(p, "You purchaced %i of item %s for $%i.", count, item->name, item->buyPrice * count);
 					}
@@ -197,11 +197,12 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 			}
 		}
 
+		//trigger before it's sold!
+		items->triggerEventOnItem(p, item, ship, "sell");
+
 		items->addItem(p, item, ship, -count);
 
 		money->giveMoney(p, item->sellPrice * count, MONEY_TYPE_BUYSELL);
-
-		//FIXME: Call event
 
 		chat->SendMessage(p, "You sold %i of item %s for $%i.", count, item->name, item->sellPrice * count);
 	}
