@@ -62,9 +62,9 @@ local void storeInfoCommand(const char *command, const char *params, Player *p, 
 				char buf[256];
 				const char *temp = NULL;
 
-				while (strsplit(store->description, "\n", buf, 256, &temp))
+				while (strsplit(store->description, "ß", buf, 256, &temp))
 				{
-					chat->SendMessage(p, "| %96s |", buf);
+					chat->SendMessage(p, "| %-96s |", buf);
 				}
 
 				chat->SendMessage(p, "+--------------------------------------------------------------------------------------------------+");
