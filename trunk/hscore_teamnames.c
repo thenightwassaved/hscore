@@ -855,16 +855,22 @@ local void Freq(Player *p, int *ship, int *freq)
 	*ship = s; *freq = f;
 }
 
+local void shipChangeCallback(Player *p, int newship, int newfreq)
+{
+	if (newfreq != p->p_freq)
+	{
+		removeOwnership(p, arena);
+		cleanTeams(arena, p);
+	}
+}
+
 local void playerActionCallback(Player *p, int action, Arena *arena)
 {
 	if (action == PA_LEAVEARENA)
 	{
 		//the player is leaving an arena.
-		lm->LogP(L_DRIVEL, "hscore_teamnames", p, "Starting player removal. %d", p->status);
 		removeOwnership(p, arena);
-		lm->LogP(L_DRIVEL, "hscore_teamnames", p, "Finished removing ownership. %d", p->status);
 		cleanTeams(arena, p);
-		lm->LogP(L_DRIVEL, "hscore_teamnames", p, "Finished cleaning teams. %d", p->status);
 	}
 }
 
@@ -904,6 +910,7 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 			return MM_FAIL;
 
 		mm->RegCallback(CB_PLAYERACTION, playerActionCallback, ALLARENAS);
+		mm->RegCallback(CB_SHIPCHANGE, shipChangeCallback, ALLARENAS);
 
 		return MM_OK;
 	}
@@ -915,6 +922,7 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		aman->FreeArenaData(arenaDataKey);
 
 		mm->UnregCallback(CB_PLAYERACTION, playerActionCallback, ALLARENAS);
+		mm->UnregCallback(CB_SHIPCHANGE, shipChangeCallback, ALLARENAS);
 
 		mm->ReleaseInterface(aman);
 		mm->ReleaseInterface(lm);
