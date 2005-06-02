@@ -89,7 +89,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 		{
 			Property *prop = link->data;
 			chat->SendMessage(p, "| %-16s | %-14i |", prop->name, prop->value);
-			link = link->next
+			link = link->next;
 		}
 		chat->SendMessage(p, "+------------------+----------------+");
 	}
