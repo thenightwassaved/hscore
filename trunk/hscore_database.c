@@ -1584,7 +1584,7 @@ local void addShip(Player *p, int ship) //the ships id may not be valid until la
 	playerData->hull[ship] = hull;
 
 	mysql->Query(NULL, NULL, 0, "INSERT INTO hs_player_ships VALUES (NULL, #, #, ?)", playerData->id, ship, getArenaIdentifier(p->arena));
-	mysql->Query(loadShipIDQueryCallback, hull, 1, "SELECT id FROM hs_player_ships WHERE player_id = # AND ship = #", playerData->id, ship);
+	mysql->Query(loadShipIDQueryCallback, hull, 1, "SELECT id FROM hs_player_ships WHERE player_id = # AND ship = # AND arena = ?", playerData->id, ship, getArenaIdentifier(p->arena));
 
 	unlock();
 }
