@@ -368,15 +368,15 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 	}
 	else if (action == ACTION_REMOVE_ITEM) //removes event->data amount of the items from the ship's inventory
 	{
-		unlock();
+		database->unlock();
 		addItem(p, entry->item, p->p_ship, -event->data);
-		lock();
+		database->lock();
 	}
 	else if (action == ACTION_REMOVE_ITEM_AMMO) //removes event->data amount of the item's ammo type from inventory
 	{
-		unlock();
+		database->unlock();
 		addItem(p, entry->item->ammo, p->p_ship, -event->data);
-		lock();
+		database->lock();
 	}
 	else if (action == ACTION_PRIZE) //sends prize #event->data to the player
 	{
@@ -408,7 +408,7 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 		if (entry->data == 0)
 		{
 			Link *eventLink;
-			for (eventLink = LLGetHead(&item->eventList); eventLink; eventLink = eventLink->next)
+			for (eventLink = LLGetHead(&entry->item->eventList); eventLink; eventLink = eventLink->next)
 			{
 				Event *eventToCheck = eventLink->data;
 
