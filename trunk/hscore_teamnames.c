@@ -6,10 +6,10 @@
 
 #include "asss.h"
 #include "fake.h"
-#include "hscore.h"
-#include "hscore_database.h"
-#include "hscore_teamnames.h"
-#include "hscore_shipnames.h"
+//#include "hscore.h"
+//#include "hscore_database.h"
+//#include "hscore_teamnames.h"
+//#include "hscore_shipnames.h"
 
 /* cfghelp: Team:InitalSpec, arena, bool, def: 0
  * If players entering the arena are always assigned to spectator mode. */
@@ -66,7 +66,7 @@ local Icapman *capman;
 local Igame *game;
 local Iplayerdata *pd;
 local Ifake *fake;
-local Ihscoredatabase *database;
+//local Ihscoredatabase *database;
 
 //team name interface prototypes
 local const char * getFreqTeamName(int freq, Arena *arena);
@@ -573,7 +573,7 @@ local int FindLegalShip(Player *p, int freq, int ship)
 
 		//------------------------------HYPERSPACE MODIFIED STUFF------------------------------
 
-		if (cfg->GetInt(p->arena->cfg, shipNames[ship], "BuyPrice", 0) != 0) //ship is for sale
+		/*if (cfg->GetInt(p->arena->cfg, shipNames[ship], "BuyPrice", 0) != 0) //ship is for sale
 		{
 
 			if (database->areShipsLoaded(p))
@@ -591,7 +591,7 @@ local int FindLegalShip(Player *p, int freq, int ship)
 				chat->SendMessage(p, "Your ship data is not loaded in this arena. If you just entered, please wait a moment and try again.");
 				return SHIP_SPEC;
 			}
-		}
+		}*/
 
 		return ship;
 	}
@@ -901,8 +901,8 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		game = mm->GetInterface(I_GAME, ALLARENAS);
 		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
 		fake = mm->GetInterface(I_FAKE, ALLARENAS);
-		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
-		if (!aman || !lm || !chat || !cfg || !cmd || !capman || !game || !pd || !fake || !database)
+		//database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
+		if (!aman || !lm || !chat || !cfg || !cmd || !capman || !game || !pd || !fake/* || !database*/)
 			return MM_FAIL;
 
 		arenaDataKey = aman->AllocateArenaData(sizeof(ArenaData));
@@ -933,7 +933,7 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		mm->ReleaseInterface(game);
 		mm->ReleaseInterface(pd);
 		mm->ReleaseInterface(fake);
-		mm->ReleaseInterface(database);
+		//mm->ReleaseInterface(database);
 		return MM_OK;
 	}
 	else if (action == MM_ATTACH)
