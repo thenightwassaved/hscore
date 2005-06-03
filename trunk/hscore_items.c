@@ -813,8 +813,8 @@ local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship)
 
 local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty, int flags, int *pts, int *green)
 {
-	triggerEvent(killer, p->p_ship, "kill");
-	triggerEvent(killed, p->p_ship, "death");
+	triggerEvent(killer, killer->p_ship, "kill");
+	triggerEvent(killed, killed->p_ship, "death");
 }
 
 local Ihscoreitems interface =

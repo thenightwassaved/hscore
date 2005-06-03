@@ -2,5 +2,6 @@ death
 kill
 spawn
 buy
+sell
 transwarp
 gate
