@@ -357,6 +357,7 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 
 	//do the message
 	if (event->message[0] != '\0')
+	{
 		chat->SendMessage(p, "%s", event->message);
 	}
 
