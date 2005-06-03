@@ -272,7 +272,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 				}
 
 				addItem(t, item, ship, count);
-				tems->triggerEventOnItem(t, item, ship, "init");
+				triggerEventOnItem(t, item, ship, "init");
 
 				if (!quiet)
 				{
@@ -326,7 +326,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					else
 					{
 						addItem(t, item, ship, count);
-						tems->triggerEventOnItem(t, item, ship, "init");
+						triggerEventOnItem(t, item, ship, "init");
 						if (!quiet)
 						{
 							chat->SendMessage(t, "You were granted %i of item %s on your %s.", count, item->name, shipNames[ship]);
