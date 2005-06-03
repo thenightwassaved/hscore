@@ -355,7 +355,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with lock held
 {
 	int action = event->action;
-
+	int oldData = entry->data;
 
 	//do the message
 	if (event->message[0] != '\0')
@@ -398,16 +398,23 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 	}
 	else if (action == ACTION_SET_INVENTORY_DATA) //sets the item's inventory data to event->data.
 	{
-		entry->data = event->data;
+		database->updateItem(p, p->p_ship, item, entry->count, event->data);
 	}
 	else if (action == 	ACTION_INCREMENT_INVENTORY_DATA) //does a ++ on inventory data.
 	{
-		entry->data++;
+		database->updateItem(p, p->p_ship, item, entry->count, entry->data + 1);
 	}
 	else if (action == ACTION_DECREMENT_INVENTORY_DATA) //does a -- on inventory data. A "datazero" event may be generated as a result.
 	{
-		entry->data--;
-		if (entry->data == 0)
+		int newData = entry->data - 1;
+		if (newData < 0)
+		{
+			newData = 0;
+		}
+
+		database->updateItem(p, p->p_ship, item, entry->count, newData);
+
+		if (newData == 0)
 		{
 			Link *eventLink;
 			for (eventLink = LLGetHead(&entry->item->eventList); eventLink; eventLink = eventLink->next)
@@ -417,7 +424,6 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 				if (strcmp(eventToCheck->event, "datazero") == 0)
 				{
 					doEvent(p, entry, eventToCheck);
-					break;
 				}
 			}
 		}
@@ -442,6 +448,12 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 	else
 	{
 		lm->LogP(L_ERROR, "hscore_items", p, "Unknown action code %i", action);
+	}
+
+
+	if (entry->data != oldData)
+	{
+
 	}
 }
 
