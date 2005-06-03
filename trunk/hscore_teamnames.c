@@ -859,8 +859,8 @@ local void shipChangeCallback(Player *p, int newship, int newfreq)
 {
 	if (newfreq != p->p_freq)
 	{
-		removeOwnership(p, arena);
-		cleanTeams(arena, p);
+		removeOwnership(p, p->arena);
+		cleanTeams(p->arena, p);
 	}
 }
 
