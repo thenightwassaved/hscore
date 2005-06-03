@@ -3,5 +3,4 @@ kill
 spawn
 buy
 sell
-transwarp
-gate
+init
