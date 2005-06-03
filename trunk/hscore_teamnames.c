@@ -8,7 +8,7 @@
 #include "fake.h"
 //#include "hscore.h"
 //#include "hscore_database.h"
-//#include "hscore_teamnames.h"
+#include "hscore_teamnames.h"
 //#include "hscore_shipnames.h"
 
 /* cfghelp: Team:InitalSpec, arena, bool, def: 0
