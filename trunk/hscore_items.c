@@ -398,11 +398,11 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 	}
 	else if (action == ACTION_SET_INVENTORY_DATA) //sets the item's inventory data to event->data.
 	{
-		database->updateItem(p, p->p_ship, item, entry->count, event->data);
+		database->updateItem(p, p->p_ship, entry->item, entry->count, event->data);
 	}
 	else if (action == 	ACTION_INCREMENT_INVENTORY_DATA) //does a ++ on inventory data.
 	{
-		database->updateItem(p, p->p_ship, item, entry->count, entry->data + 1);
+		database->updateItem(p, p->p_ship, entry->item, entry->count, entry->data + 1);
 	}
 	else if (action == ACTION_DECREMENT_INVENTORY_DATA) //does a -- on inventory data. A "datazero" event may be generated as a result.
 	{
@@ -412,7 +412,7 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 			newData = 0;
 		}
 
-		database->updateItem(p, p->p_ship, item, entry->count, newData);
+		database->updateItem(p, p->p_ship, entry->item, entry->count, newData);
 
 		if (newData == 0)
 		{
