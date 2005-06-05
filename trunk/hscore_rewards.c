@@ -122,8 +122,42 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 
 local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalplayers, int flagsowned)
 {
-	//is this implemented?
-	return 0;
+	/*
+	 * money = (flagcoeff * flagcount) / (teamcoeff * teamsize)
+	 * Defaults:
+	 * flagcoeff = 200, teamcoeff = 1
+	 */
+
+	 //Variable Declarations
+	double amount, fcoeff, tcoeff;
+	int reward;
+	Player *p;
+	Link *link;
+
+
+	 //Read Settings
+	fcoeff = (double)cfg->GetInt(arena->cfg, "Periodic", "HSFlagCoeff", 200);
+	tcoeff = (double)cfg->GetInt(arena->cfg, "Periodic", "HSTeamCoeff", 200);
+
+
+	//Calculate reward
+	amount  = (fcoeff * (double)flagsowned);
+	amount /= (tcoeff * (double)freqplayers);
+	reward = (int)amount;
+
+	//Distribute Wealth
+	pd->Lock();
+	FOR_EACH_PLAYER(p)
+	{
+		if(p->p_freq == freq && p->p_ship != SHIP_SPEC)
+		{
+			money->giveMoney(p, reward, MONEY_TYPE_FLAG);
+			chat->SendMessage(p, "You received $%d for holding %d flag(s).", reward, flagsowned);
+		}
+	}
+	pd->Unlock();
+
+	return reward;
 }
 
 local Iperiodicpoints periodicInterface =
