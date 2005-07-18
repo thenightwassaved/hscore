@@ -1,19 +1,8 @@
-ALL_STUFF += hscore.$(SO)
+hscore_mods = 	hscore_buysell hscore_commands hscore_database \
+		hscore_items hscore_money hscore_mysql hscore_rewards\
+		hscore_spawner hscore_storeman hscore_freqman \
+		hscore_moneystub hscore_itemstub hscore_teamnames
 
-hscore.$(SO): modules/hscore/trunk/hscore_buysell.o \
-	modules/hscore/trunk/hscore_commands.o \
-	modules/hscore/trunk/hscore_database.o \
-	modules/hscore/trunk/hscore_items.o \
-	modules/hscore/trunk/hscore_money.o \
-	modules/hscore/trunk/hscore_mysql.o \
-	modules/hscore/trunk/hscore_rewards.o \
-	modules/hscore/trunk/hscore_spawner.o \
-	modules/hscore/trunk/hscore_storeman.o \
-	modules/hscore/trunk/hscore_freqman.o \
-	modules/hscore/trunk/hscore_moneystub.o \
-	modules/hscore/trunk/hscore_itemsstub.o \
-	modules/hscore/trunk/hscore_teamnames.o
-hscore.$(SO): LIBS=$(MYSQL_LDFLAGS)
+hscore_libs = 	$(MYSQL_LDFLAGS)	
 
-modules/hscore/trunk/hscore_mysql.o: CFLAGS += $(MYSQL_CFLAGS)
-
+$(eval $(call dl_template,hscore))
