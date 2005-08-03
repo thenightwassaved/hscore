@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 
 #include "asss.h"
 #include "hscore.h"
@@ -314,6 +315,8 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 	int count = 1;
 	const char *newParams;
 
+	char *next; //for strtol
+
 	while (params != NULL) //get the flags
 	{
 		if (*params == '-')
@@ -448,6 +451,8 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 	int force = 0;
 	int count = 1;
 	const char *newParams;
+
+	char *next; //for strtol
 
 	while (params != NULL) //get the flags
 	{
