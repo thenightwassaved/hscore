@@ -311,13 +311,69 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 	LinkedList *categoryList = database->getCategoryList(p->arena);
 	Link *link;
 
-	if (strcasecmp(params, "") == 0) //no params
+	int count = 1;
+	const char *newParams;
+
+	while (params != NULL) //get the flags
+	{
+		if (*params == '-')
+		{
+			params++;
+			if (*params == '\0')
+			{
+				newParams = params;
+				break;
+			}
+			if (*params == 'c')
+			{
+				params = strchr(params, ' ');
+				if (params) //check so that params can still == NULL
+				{
+					params++; //we want *after* the space
+				}
+				else
+				{
+					chat->SendMessage(p, "Buy: invalid usage.");
+					return;
+				}
+
+				count = strtol(params, &next, 0);
+
+				if (next == params)
+				{
+					chat->SendMessage(p, "Buy: bad count.");
+					return;
+				}
+
+				params = next;
+			}
+		}
+		else if (*params == ' ')
+		{
+			params++;
+		}
+		else if (*params == '\0')
+		{
+			chat->SendMessage(p, "Buy: invalid usage.");
+			return;
+		}
+		else
+		{
+			newParams = params;
+			break;
+		}
+	}
+
+	//finished parsing
+
+
+	if (strcasecmp(newParams, "") == 0) //no params
 	{
 		printAllCategories(p);
 	}
 	else //has params
 	{
-		if (strcasecmp(params, "ships") == 0) //print ship list
+		if (strcasecmp(newParams, "ships") == 0) //print ship list
 		{
 			printShipList(p);
 		}
@@ -326,7 +382,7 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 			//check if they're asking for a ship
 			for (int i = 0; i < 8; i++)
 			{
-				if (strcasecmp(params, shipNames[i]) == 0)
+				if (strcasecmp(newParams, shipNames[i]) == 0)
 				{
 					buyShip(p, i);
 					return;
@@ -339,7 +395,7 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 			{
 				Category *category = link->data;
 
-				if (strcasecmp(params, category->name) == 0)
+				if (strcasecmp(newParams, category->name) == 0)
 				{
 					printCategoryItems(p, category);
 
@@ -350,7 +406,7 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 			database->unlock();
 
 			//not a category. check for an item
-			Item *item = items->getItemByName(params, p->arena);
+			Item *item = items->getItemByName(newParams, p->arena);
 			if (item != NULL)
 			{
 				if (p->p_ship != SHIP_SPEC)
@@ -359,7 +415,7 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 					if (playerData->hull[p->p_ship] != NULL)
 					{
 						//check - counts
-						buyItem(p, item, 1, p->p_ship);
+						buyItem(p, item, count, p->p_ship);
 					}
 					else
 					{
@@ -389,7 +445,80 @@ local helptext_t sellHelp =
 
 local void sellCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	if (strcasecmp(params, "") == 0) //no params
+	int force = 0;
+	int count = 1;
+	const char *newParams;
+
+	while (params != NULL) //get the flags
+	{
+		if (*params == '-')
+		{
+			params++;
+			if (*params == '\0')
+			{
+				newParams = params;
+				break;
+			}
+
+			if (*params == 'f')
+			{
+				force = 1;
+
+				params = strchr(params, ' ');
+				if (params) //check so that params can still == NULL
+				{
+					params++; //we want *after* the space
+				}
+				else
+				{
+					chat->SendMessage(p, "Sell: invalid usage.");
+					return;
+				}
+			}
+			if (*params == 'c')
+			{
+				params = strchr(params, ' ');
+				if (params) //check so that params can still == NULL
+				{
+					params++; //we want *after* the space
+				}
+				else
+				{
+					chat->SendMessage(p, "Sell: invalid usage.");
+					return;
+				}
+
+				count = strtol(params, &next, 0);
+
+				if (next == params)
+				{
+					chat->SendMessage(p, "Sell: bad count.");
+					return;
+				}
+
+				params = next;
+			}
+		}
+		else if (*params == ' ')
+		{
+			params++;
+		}
+		else if (*params == '\0')
+		{
+			chat->SendMessage(p, "Sell: invalid usage.");
+			return;
+		}
+		else
+		{
+			newParams = params;
+			break;
+		}
+	}
+
+	//finished parsing
+
+
+	if (strcasecmp(newParams, "") == 0) //no params
 	{
 		chat->SendMessage(p, "Please use ?buy to find the item you wish to sell");
 	}
@@ -398,7 +527,7 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 		//check if they're asking for a ship
 		for (int i = 0; i < 8; i++)
 		{
-			if (strcasecmp(params, shipNames[i]) == 0)
+			if (strcasecmp(newParams, shipNames[i]) == 0)
 			{
 				if (i != p->p_ship)
 				{
@@ -414,7 +543,7 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 		}
 
 		//check for an item
-		Item *item = items->getItemByName(params, p->arena);
+		Item *item = items->getItemByName(newParams, p->arena);
 		if (item != NULL)
 		{
 			if (p->p_ship != SHIP_SPEC)
@@ -423,7 +552,7 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 				if (playerData->hull[p->p_ship] != NULL)
 				{
 					//check - counts
-					sellItem(p, item, 1, p->p_ship);
+					sellItem(p, item, count, p->p_ship);
 				}
 				else
 				{
