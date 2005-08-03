@@ -357,8 +357,8 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 		}
 		else if (*params == '\0')
 		{
-			chat->SendMessage(p, "Buy: invalid usage.");
-			return;
+			newParams = params;
+			break;
 		}
 		else
 		{
@@ -510,8 +510,8 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 		}
 		else if (*params == '\0')
 		{
-			chat->SendMessage(p, "Sell: invalid usage.");
-			return;
+			newParams = params;
+			break;
 		}
 		else
 		{
