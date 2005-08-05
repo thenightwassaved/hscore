@@ -77,28 +77,14 @@ EXPORT int MM_hscore_prizer(int action, Imodman *_mm, Arena *arena)
 		if(!chat || !game || !items || !net)
 			return MM_FAIL;
 
-		return MM_OK;
-	}
-	else if(action == MM_POSTLOAD)
-	{
 		net->AddPacket(C2S_POSITION, Pppk);
-		return MM_OK;
-	}
-	else if(action == MM_ATTACH)
-	{
-		return MM_OK;
-	}
-	else if(action == MM_DETACH)
-	{
-		return MM_OK;
-	}
-	else if(action == MM_PREUNLOAD)
-	{
-		net->RemovePacket(C2S_POSITION, Pppk);
+
 		return MM_OK;
 	}
 	else if(action == MM_UNLOAD)
 	{
+		net->RemovePacket(C2S_POSITION, Pppk);
+
 		mm->ReleaseInterface(chat);
 		mm->ReleaseInterface(game);
 		mm->ReleaseInterface(items);
