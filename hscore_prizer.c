@@ -32,32 +32,54 @@ local void prize(Player *p)
 	t->type = T_PLAYER;
 	t->u.p = p;
 
-	game->GivePrize(t, 9, items->getPropertySum(p, p->pkt.ship, "bomblevel"));
-	game->GivePrize(t, 8, items->getPropertySum(p, p->pkt.ship, "gunlevel"));
+	int bomblevel = items->getPropertySum(p, p->pkt.ship, "bomblevel");
+	if (bomblevel) game->GivePrize(t, 9, bomblevel);
+	int gunlevel = items->getPropertySum(p, p->pkt.ship, "gunlevel");
+	if (gunlevel) game->GivePrize(t, 8, gunlevel);
 
-	game->GivePrize(t, 21, items->getPropertySum(p, p->pkt.ship, "repel"));
-	game->GivePrize(t, 22, items->getPropertySum(p, p->pkt.ship, "burst"));
-	game->GivePrize(t, 23, items->getPropertySum(p, p->pkt.ship, "thor"));
-	game->GivePrize(t, 24, items->getPropertySum(p, p->pkt.ship, "portal"));
-	game->GivePrize(t, 25, items->getPropertySum(p, p->pkt.ship, "decoy"));
-	game->GivePrize(t, 26, items->getPropertySum(p, p->pkt.ship, "brick"));
-	game->GivePrize(t, 27, items->getPropertySum(p, p->pkt.ship, "rocket"));
+	int repel = items->getPropertySum(p, p->pkt.ship, "repel");
+	if (repel) game->GivePrize(t, 21, repel);
+	int burst = items->getPropertySum(p, p->pkt.ship, "burst");
+	if (burst) game->GivePrize(t, 22, burst);
+	int thor = items->getPropertySum(p, p->pkt.ship, "thor");
+	if (thor) game->GivePrize(t, 23, thor);
+	int portal = items->getPropertySum(p, p->pkt.ship, "portal");
+	if (portal) game->GivePrize(t, 24, portal);
+	int decoy = items->getPropertySum(p, p->pkt.ship, "decoy");
+	if (decoy) game->GivePrize(t, 25, decoy);
+	int brick = items->getPropertySum(p, p->pkt.ship, "brick");
+	if (brick) game->GivePrize(t, 26, brick);
+	int rocket = items->getPropertySum(p, p->pkt.ship, "rocket");
+	if (rocket) game->GivePrize(t, 27, rocket);
 
-	game->GivePrize(t, 6, items->getPropertySum(p, p->pkt.ship, "xradar"));
-	game->GivePrize(t, 5, items->getPropertySum(p, p->pkt.ship, "cloak"));
-	game->GivePrize(t, 4, items->getPropertySum(p, p->pkt.ship, "stealth"));
-	game->GivePrize(t, 20, items->getPropertySum(p, p->pkt.ship, "antiwarp"));
+	int xradar = items->getPropertySum(p, p->pkt.ship, "xradar");
+	if (xradar) game->GivePrize(t, 6, xradar);
+	int cloak = items->getPropertySum(p, p->pkt.ship, "cloak");
+	if (cloak) game->GivePrize(t, 5, cloak);
+	int stealth = items->getPropertySum(p, p->pkt.ship, "stealth");
+	if (stealth) game->GivePrize(t, 4, stealth);
+	int antiwarp = items->getPropertySum(p, p->pkt.ship, "antiwarp");
+	if (antiwarp) game->GivePrize(t, 20, antiwarp);
 
-	game->GivePrize(t, 11, items->getPropertySum(p, p->pkt.ship, "thrust"));
-	game->GivePrize(t, 12, items->getPropertySum(p, p->pkt.ship, "speed"));
-	game->GivePrize(t, 2, items->getPropertySum(p, p->pkt.ship, "energy"));
-	game->GivePrize(t, 1, items->getPropertySum(p, p->pkt.ship, "recharge"));
-	game->GivePrize(t, 3, items->getPropertySum(p, p->pkt.ship, "rotation"));
+	int thrust = items->getPropertySum(p, p->pkt.ship, "thrust");
+	if (thrust) game->GivePrize(t, 11, thrust);
+	int speed = items->getPropertySum(p, p->pkt.ship, "speed");
+	if (speed) game->GivePrize(t, 12, speed);
+	int energy = items->getPropertySum(p, p->pkt.ship, "energy");
+	if (energy) game->GivePrize(t, 2, energy);
+	int recharge = items->getPropertySum(p, p->pkt.ship, "recharge");
+	if (recharge) game->GivePrize(t, 1, recharge);
+	int rotation = items->getPropertySum(p, p->pkt.ship, "rotation");
+	if (rotation) game->GivePrize(t, 3, rotation);
 
-	game->GivePrize(t, 10, items->getPropertySum(p, p->pkt.ship, "bounce"));
-	game->GivePrize(t, 16, items->getPropertySum(p, p->pkt.ship, "prox"));
-	game->GivePrize(t, 19, items->getPropertySum(p, p->pkt.ship, "shrapnel"));
-	game->GivePrize(t, 15, items->getPropertySum(p, p->pkt.ship, "multifire"));
+	int bounce = items->getPropertySum(p, p->pkt.ship, "bounce");
+	if (bounce) game->GivePrize(t, 10, bounce);
+	int prox = items->getPropertySum(p, p->pkt.ship, "prox");
+	if (prox) game->GivePrize(t, 16, prox);
+	int shrapnel = items->getPropertySum(p, p->pkt.ship, "shrapnel");
+	if (shrapnel) game->GivePrize(t, 19, shrapnel);
+	int multifire = items->getPropertySum(p, p->pkt.ship, "multifire");
+	if (multifire) game->GivePrize(t, 15, multifire);
 }
 
 local void Pppk(Player *p, byte *p2, int len)
