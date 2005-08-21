@@ -28,7 +28,7 @@ local void printAllCategories(Player *p)
 	chat->SendMessage(p, "+----------------------------------+------------------------------------------------------------------+");
 	chat->SendMessage(p, "| Category Name                    | Category Description                                             |");
 	chat->SendMessage(p, "+----------------------------------+------------------------------------------------------------------+");
-	chat->SendMessage(p, "| Ships                            | All the ship hulls can you buy in this arena.                    |");
+	chat->SendMessage(p, "| Ships                            | All the ship hulls you can buy in this arena.                    |");
 
 	database->lock();
 	for (link = LLGetHead(categoryList); link; link = link->next)
@@ -271,7 +271,7 @@ local void buyShip(Player *p, int ship)
 	}
 }
 
-local void sellShip(Player *p, int ship)
+local void sellShip(Player *p, int ship, int force)
 {
 	int sellPrice = cfg->GetInt(p->arena->cfg, shipNames[ship], "SellPrice", 0);
 
@@ -280,12 +280,18 @@ local void sellShip(Player *p, int ship)
 		PerPlayerData *playerData = database->getPerPlayerData(p);
 		if (playerData->hull[ship] != NULL)
 		{
-			//FIXME: add checking for non-empty ships
-			database->removeShip(p, ship);
+			if (force || !ships have stuff)
+			{
+				database->removeShip(p, ship);
 
-			money->giveMoney(p, sellPrice, MONEY_TYPE_BUYSELL);
+				money->giveMoney(p, sellPrice, MONEY_TYPE_BUYSELL);
 
-			chat->SendMessage(p, "You sold your %s for $%i.", shipNames[ship], sellPrice);
+				chat->SendMessage(p, "You sold your %s for $%i.", shipNames[ship], sellPrice);
+			}
+			else
+			{
+				chat->SendMessage(p, "Your ship still have items on it. Use ?buy -f <ship> to sell anyway");
+			}
 		}
 		else
 		{
@@ -536,7 +542,7 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 			{
 				if (i != p->p_ship)
 				{
-					sellShip(p, i);
+					sellShip(p, i, force);
 				}
 				else
 				{

@@ -382,8 +382,8 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 	}
 	else if (action == ACTION_PRIZE) //sends prize #event->data to the player
 	{
-		int prize = event->data && 0x1F;
-		int count = event->data >> 5;
+		int prize = event->data % 100;
+		int count = abs(event->data / 100);
 
 		if (count == 0)
 		{
