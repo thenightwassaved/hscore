@@ -8,6 +8,7 @@ local Igame *game;
 local Ihscoreitems *items;
 local Inet *net;
 local Iarenaman *aman;
+local Iconfig *cfg;
 
 local HashTable *inCenterWarper;
 
@@ -135,8 +136,9 @@ EXPORT int MM_hscore_prizer(int action, Imodman *_mm, Arena *arena)
 		items = mm->GetInterface(I_HSCORE_ITEMS, ALLARENAS);
 		net = mm->GetInterface(I_NET, ALLARENAS);
 		aman = mm->GetInterface(I_ARENAMAN, ALLARENAS);
+		cfg = mm->GetInterface(I_CONFIG, ALLARENAS);
 
-		if(!chat || !game || !items || !net || !aman)
+		if(!chat || !game || !items || !net || !aman || !cfg)
 			return MM_FAIL;
 
 		spawnkey = aman->AllocateArenaData(sizeof(SpawnData));
@@ -159,6 +161,8 @@ EXPORT int MM_hscore_prizer(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(game);
 		mm->ReleaseInterface(items);
 		mm->ReleaseInterface(net);
+		mm->ReleaseInterface(aman);
+		mm->ReleaseInterface(cfg);
 
 		return MM_OK;
 	}
