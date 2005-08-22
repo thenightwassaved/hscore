@@ -272,7 +272,21 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 				}
 
 				addItem(t, item, ship, count);
-				triggerEventOnItem(t, item, ship, "init");
+
+				if (count > 0)
+				{
+					for (int i = 0; i < count; i++)
+					{
+						triggerEventOnItem(t, item, ship, "add");
+					}
+				}
+				else
+				{
+					for (int i = 0; i < -count; i++)
+					{
+						triggerEventOnItem(t, item, ship, "del");
+					}
+				}
 
 				if (!quiet)
 				{
@@ -370,14 +384,22 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 	}
 	else if (action == ACTION_REMOVE_ITEM) //removes event->data amount of the items from the ship's inventory
 	{
-		database->unlock();
+		database->unlock(); //fixme: bad mutex
 		addItem(p, entry->item, p->p_ship, -event->data);
+		for (int i = 0; i < event->data; i++)
+		{
+			triggerEventOnItem(p, entry->item, p->p_ship, "del"); //fixme, this could be improved greatly
+		}
 		database->lock();
 	}
 	else if (action == ACTION_REMOVE_ITEM_AMMO) //removes event->data amount of the item's ammo type from inventory
 	{
-		database->unlock();
+		database->unlock(); //fixme: bad mutex
 		addItem(p, entry->item->ammo, p->p_ship, -event->data);
+		for (int i = 0; i < event->data; i++)
+		{
+			triggerEventOnItem(p, entry->item->ammo, p->p_ship, "del"); //fixme, this could be improved greatly
+		}
 		database->lock();
 	}
 	else if (action == ACTION_PRIZE) //sends prize #event->data to the player
@@ -398,13 +420,13 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 	}
 	else if (action == ACTION_SET_INVENTORY_DATA) //sets the item's inventory data to event->data.
 	{
-		database->unlock();
+		database->unlock(); //fixme: bad mutex
 		database->updateItem(p, p->p_ship, entry->item, entry->count, event->data);
 		database->lock();
 	}
 	else if (action == 	ACTION_INCREMENT_INVENTORY_DATA) //does a ++ on inventory data.
 	{
-		database->unlock();
+		database->unlock(); //fixme: bad mutex
 		database->updateItem(p, p->p_ship, entry->item, entry->count, entry->data + 1);
 		database->lock();
 	}
@@ -416,7 +438,7 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 			newData = 0;
 		}
 
-		database->unlock();
+		database->unlock(); //fixme: bad mutex
 		database->updateItem(p, p->p_ship, entry->item, entry->count, newData);
 		database->lock();
 
@@ -558,6 +580,13 @@ local void addItem(Player *p, Item *item, int ship, int amount)
 	}
 	database->unlock();
 
+	int doInit = 0;
+	if (count == 0 && amount != 0)
+	{
+		//we need to do an init event.
+		doInit = 1;
+	}
+
 	count += amount;
 
 	if (count < 0)
@@ -567,6 +596,11 @@ local void addItem(Player *p, Item *item, int ship, int amount)
 	}
 
 	database->updateItem(p, ship, item, count, data);
+
+	if (doInit)
+	{
+		triggerEventOnItem(p, item, ship, "init");
+	}
 }
 
 local Item * getItemByName(const char *name, Arena *arena)
@@ -640,7 +674,7 @@ local int getPropertySum(Player *p, int ship, const char *propString)
 
 		if (item->ammo != NULL)
 		{
-			database->unlock(); //so we can call getItemCount
+			database->unlock(); //so we can call getItemCount //fixme: bad mutex
 			int itemCount = getItemCount(p, item->ammo, ship); //POSSIBLE FIXME?
 			database->lock(); //relock
 

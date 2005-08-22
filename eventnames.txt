@@ -1,6 +1,9 @@
 death
 kill
-spawn
+//spawn
+init
 buy
 sell
-init
+add
+del
+datazero

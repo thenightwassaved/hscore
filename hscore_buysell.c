@@ -147,7 +147,13 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 						money->giveMoney(p, -item->buyPrice * count, MONEY_TYPE_BUYSELL);
 
 						items->triggerEventOnItem(p, item, ship, "buy");
-						items->triggerEventOnItem(p, item, ship, "init");
+
+						for (int i = 0; i < count; i++)
+						{
+							items->triggerEventOnItem(p, item, ship, "add");
+						}
+
+						items->triggerEventOnItem(p, item, ship, "add");
 
 						chat->SendMessage(p, "You purchased %i of item %s for $%i.", count, item->name, item->buyPrice * count);
 					}
@@ -201,6 +207,10 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 
 		//trigger before it's sold!
 		items->triggerEventOnItem(p, item, ship, "sell");
+		for (int i = 0; i < count; i++)
+		{
+			items->triggerEventOnItem(p, item, ship, "del");
+		}
 
 		items->addItem(p, item, ship, -count);
 
@@ -302,8 +312,6 @@ local void sellShip(Player *p, int ship, int force)
 	{
 		chat->SendMessage(p, "Your ships are not loaded.");
 	}
-
-	database->removeShip(p, ship);
 }
 
 local helptext_t buyHelp =
@@ -374,7 +382,11 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 	}
 
 	//finished parsing
-
+	if (count < 1)
+	{
+		chat->SendMessage(p, "Nice try.");
+		return;
+	}
 
 	if (strcasecmp(newParams, "") == 0) //no params
 	{
@@ -527,7 +539,11 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 	}
 
 	//finished parsing
-
+	if (count < 1)
+	{
+		chat->SendMessage(p, "Nice try.");
+		return;
+	}
 
 	if (strcasecmp(newParams, "") == 0) //no params
 	{

@@ -28,7 +28,7 @@ local void shipsCommand(const char *command, const char *params, Player *p, cons
 		PerPlayerData *playerData = database->getPerPlayerData(t);
 
 		char unowned[] = " ";
-		char unaval[] = "Unaval";
+		char unaval[] = "Free";
 		char *status[8];
 
 		//+---------+---------+--------+-----------+---------+--------+-----------+--------+
