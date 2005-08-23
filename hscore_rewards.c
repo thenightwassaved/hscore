@@ -40,6 +40,7 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 	 amount = pow(amount, exp);
 	 amount *= (double)arena->playing;
 	 reward = (int)amount;
+	 exp = (int)(amount / 8);
 
 	 //Distribute Wealth
     pd->Lock();
@@ -48,7 +49,7 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 		if(p->p_freq == freq && p->p_ship != SHIP_SPEC)
 		{
 			money->giveMoney(p, reward, MONEY_TYPE_FLAG);
-			chat->SendMessage(p, "You received $%d for a flag victory.", reward);
+			chat->SendMessage(p, "You received $%d and %d exp for a flag victory.", reward, exp);
 		}
 	}
 	pd->Unlock();
@@ -64,7 +65,7 @@ local void goalCallback(Arena *arena, Player *scorer, int bid, int x, int y)
 
 	//Variable Declarations
 	double amount, coeff, min;
-	int reward;
+	int reward, exp;
 	Player *p;
 	Link *link;
 
@@ -77,6 +78,7 @@ local void goalCallback(Arena *arena, Player *scorer, int bid, int x, int y)
 	amount *= coeff;
 	amount += min;
 	reward  = (int)amount;
+	exp = (int)(amount / 10);
 
 	//Distribute Wealth
 	pd->Lock();
@@ -85,7 +87,7 @@ local void goalCallback(Arena *arena, Player *scorer, int bid, int x, int y)
 		if(p->p_freq == scorer->p_freq && p->p_ship != SHIP_SPEC)
 		{
 			money->giveMoney(p, reward, MONEY_TYPE_BALL);
-			chat->SendMessage(p, "You received $%d for a team goal.", reward);
+			chat->SendMessage(p, "You received $%d and %d exp for a team goal.", reward, exp);
 		}
 	}
 	pd->Unlock();
@@ -101,7 +103,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 
 	//Variable Declarations
 	double amount, coeff, bonus, min;
-	int reward;
+	int reward, exp;
 
 	//Read Settings
 	coeff = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillCoeff", 50);
@@ -109,15 +111,19 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	bonus = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillBonus", 5);
 
 	//Calculate Reward
-	amount  = (killer->position.bounty + bonus);
-	amount /= (bounty + bonus);
+	amount  = (bounty + bonus);
+	if(killer->position.bounty == 1)
+		amount /= (bounty + bonus);
+	else
+		amount /= (killer->position.bounty + bonus);
 	amount *= coeff;
 	amount += min;
 	reward  = (int)amount;
+	exp = (int)(amount / 10);
 
 	//Distribute Wealth
 	money->giveMoney(killer, amount, MONEY_TYPE_KILL);
-	chat->SendMessage(killer, "You received $%d for killing %s (%d bounty).", reward, killed->name, bounty);
+	chat->SendMessage(killer, "You received $%d and %d exp for killing %s (%d bounty).", reward, exp, killed->name, bounty);
 }
 
 local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalplayers, int flagsowned)
@@ -130,7 +136,7 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 
 	 //Variable Declarations
 	double amount, fcoeff, tcoeff;
-	int reward;
+	int reward, exp;
 	Player *p;
 	Link *link;
 
@@ -144,6 +150,7 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 	amount  = (fcoeff * (double)flagsowned);
 	amount /= (tcoeff * (double)freqplayers);
 	reward = (int)amount;
+	exp = (int)(amount / 15);
 
 	//Distribute Wealth
 	pd->Lock();
@@ -152,7 +159,7 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 		if(p->p_freq == freq && p->p_ship != SHIP_SPEC)
 		{
 			money->giveMoney(p, reward, MONEY_TYPE_FLAG);
-			chat->SendMessage(p, "You received $%d for holding %d flag(s).", reward, flagsowned);
+			chat->SendMessage(p, "You received $%d and %d exp for holding %d flag(s).", reward, exp, flagsowned);
 		}
 	}
 	pd->Unlock();
