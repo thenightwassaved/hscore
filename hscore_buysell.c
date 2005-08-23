@@ -153,8 +153,6 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 							items->triggerEventOnItem(p, item, ship, "add");
 						}
 
-						items->triggerEventOnItem(p, item, ship, "add");
-
 						chat->SendMessage(p, "You purchased %i of item %s for $%i.", count, item->name, item->buyPrice * count);
 					}
 					else

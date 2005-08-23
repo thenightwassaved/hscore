@@ -16,7 +16,7 @@ typedef enum EventAction
 	ACTION_PRIZE,
 
 	//sets the item's inventory data to event->data. This is useful with
-	//the "purchace" event.
+	//the "init" event.
 	ACTION_SET_INVENTORY_DATA,
 
 	//does a ++ on inventory data.
