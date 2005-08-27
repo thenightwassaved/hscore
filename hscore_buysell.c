@@ -97,7 +97,7 @@ local void printShipList(Player *p)
 
 		if (description == NULL)
 		{
-			description = "<No description avalible>";
+			description = "<No description available>";
 		}
 
 		if (buyPrice == 0)

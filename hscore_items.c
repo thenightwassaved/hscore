@@ -385,11 +385,11 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event) //called with
 	else if (action == ACTION_REMOVE_ITEM) //removes event->data amount of the items from the ship's inventory
 	{
 		database->unlock(); //fixme: bad mutex
-		addItem(p, entry->item, p->p_ship, -event->data);
 		for (int i = 0; i < event->data; i++)
 		{
 			triggerEventOnItem(p, entry->item, p->p_ship, "del"); //fixme, this could be improved greatly
 		}
+		addItem(p, entry->item, p->p_ship, -event->data);
 		database->lock();
 	}
 	else if (action == ACTION_REMOVE_ITEM_AMMO) //removes event->data amount of the item's ammo type from inventory
