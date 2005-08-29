@@ -87,6 +87,7 @@ local void goalCallback(Arena *arena, Player *scorer, int bid, int x, int y)
 		if(p->p_freq == scorer->p_freq && p->p_ship != SHIP_SPEC)
 		{
 			money->giveMoney(p, reward, MONEY_TYPE_BALL);
+			money->giveExp(p, exp);
 			chat->SendMessage(p, "You received $%d and %d exp for a team goal.", reward, exp);
 		}
 	}
@@ -123,6 +124,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 
 	//Distribute Wealth
 	money->giveMoney(killer, amount, MONEY_TYPE_KILL);
+	money->giveExp(killer, exp);
 	chat->SendMessage(killer, "You received $%d and %d exp for killing %s (%d bounty).", reward, exp, killed->name, bounty);
 }
 
@@ -159,6 +161,7 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 		if(p->p_freq == freq && p->p_ship != SHIP_SPEC)
 		{
 			money->giveMoney(p, reward, MONEY_TYPE_FLAG);
+			money->giveExp(p, exp);
 			chat->SendMessage(p, "You received $%d and %d exp for holding %d flag(s).", reward, exp, flagsowned);
 		}
 	}

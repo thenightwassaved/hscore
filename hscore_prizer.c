@@ -43,11 +43,11 @@ local void prize(Player *p)
 	int burst = items->getPropertySum(p, p->pkt.ship, "burst");
 	if (burst) game->GivePrize(t, 22, burst);
 	int thor = items->getPropertySum(p, p->pkt.ship, "thor");
-	if (thor) game->GivePrize(t, 23, thor);
+	if (thor) game->GivePrize(t, 24, thor);
 	int portal = items->getPropertySum(p, p->pkt.ship, "portal");
-	if (portal) game->GivePrize(t, 24, portal);
+	if (portal) game->GivePrize(t, 28, portal);
 	int decoy = items->getPropertySum(p, p->pkt.ship, "decoy");
-	if (decoy) game->GivePrize(t, 25, decoy);
+	if (decoy) game->GivePrize(t, 23, decoy);
 	int brick = items->getPropertySum(p, p->pkt.ship, "brick");
 	if (brick) game->GivePrize(t, 26, brick);
 	int rocket = items->getPropertySum(p, p->pkt.ship, "rocket");
