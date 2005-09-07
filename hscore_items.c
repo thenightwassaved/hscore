@@ -130,7 +130,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 				return;
 			}
 
-			if (*params == 'f')
+			else if (*params == 'f')
 			{
 				force = 1;
 
@@ -145,7 +145,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					return;
 				}
 			}
-			if (*params == 'q')
+			else if (*params == 'q')
 			{
 				quiet = 1;
 
@@ -160,7 +160,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					return;
 				}
 			}
-			if (*params == 'c')
+			else if (*params == 'c')
 			{
 				params = strchr(params, ' ');
 				if (params) //check so that params can still == NULL
@@ -183,7 +183,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 
 				params = next;
 			}
-			if (*params == 's')
+			else if (*params == 's')
 			{
 				params = strchr(params, ' ');
 				if (params) //check so that params can still == NULL
@@ -271,31 +271,57 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					}
 				}
 
-				addItem(t, item, ship, count);
-
-				if (count > 0)
+				int newItemCount = items->getItemCount(t, item, ship) + count;
+				if (item->max == 0 || newItemCount <= item->max)
 				{
-					for (int i = 0; i < count; i++)
+					if (item->type1 != NULL)
 					{
-						triggerEventOnItem(t, item, ship, "add");
+						if (items->getFreeItemTypeSpots(t, item->type1, ship) - (item->typeDelta1 * count) < 0) //have no free spots
+						{
+							chat->SendMessage(p, "Does not have enough free %s spots.", item->type1->name);
+							return;
+						}
+					}
+
+					if (item->type2 != NULL)
+					{
+						if (items->getFreeItemTypeSpots(t, item->type2, ship) - (item->typeDelta2 * count) < 0) //have no free spots
+						{
+							chat->SendMessage(p, "Does not have enough free %s spots.", item->type2->name);
+							return;
+						}
+					}
+
+					addItem(t, item, ship, count);
+
+					if (count > 0)
+					{
+						for (int i = 0; i < count; i++)
+						{
+							triggerEventOnItem(t, item, ship, "add");
+						}
+					}
+					else
+					{
+						for (int i = 0; i < -count; i++)
+						{
+							triggerEventOnItem(t, item, ship, "del");
+						}
+					}
+
+					if (!quiet)
+					{
+						chat->SendMessage(t, "You were granted %i of item %s on your %s.", count, item->name, shipNames[ship]);
+						chat->SendMessage(p, "You granted %i of item %s to player %s", count, item->name, t->name);
+					}
+					else
+					{
+						chat->SendMessage(p, "You quietly granted %i of item %s to player %s", count, item->name, t->name);
 					}
 				}
 				else
 				{
-					for (int i = 0; i < -count; i++)
-					{
-						triggerEventOnItem(t, item, ship, "del");
-					}
-				}
-
-				if (!quiet)
-				{
-					chat->SendMessage(t, "You were granted %i of item %s on your %s.", count, item->name, shipNames[ship]);
-					chat->SendMessage(p, "You granted %i of item %s to player %s", count, item->name, t->name);
-				}
-				else
-				{
-					chat->SendMessage(p, "You quietly granted %i of item %s to player %s", count, item->name, t->name);
+					chat->SendMessage(p, "%i would exceed the max of %i for item %s.", newItemCount, item->max, item->name);
 				}
 			}
 			else
@@ -326,10 +352,37 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					{
 						if (t->p_ship != SHIP_SPEC)
 						{
-							addItem(t, item, t->p_ship, count);
-							if (!quiet)
+							int newItemCount = items->getItemCount(t, item, ship) + count;
+							if (item->max == 0 || newItemCount <= item->max)
 							{
-								chat->SendMessage(t, "You were granted %i of item %s on your %s.", count, item->name, shipNames[t->p_ship]);
+								if (item->type1 != NULL)
+								{
+									if (items->getFreeItemTypeSpots(t, item->type1, ship) - (item->typeDelta1 * count) < 0) //have no free spots
+									{
+										chat->SendMessage(p, "Player %s does not have enough free %s spots.", t->name, item->type1->name);
+										return;
+									}
+								}
+
+								if (item->type2 != NULL)
+								{
+									if (items->getFreeItemTypeSpots(t, item->type2, ship) - (item->typeDelta2 * count) < 0) //have no free spots
+									{
+										chat->SendMessage(p, "Player %s does not have enough free %s spots.", t->name, item->type2->name);
+										return;
+									}
+								}
+
+
+								addItem(t, item, t->p_ship, count);
+								if (!quiet)
+								{
+									chat->SendMessage(t, "You were granted %i of item %s on your %s.", count, item->name, shipNames[t->p_ship]);
+								}
+							}
+							else
+							{
+								chat->SendMessage(p, "Giving Player %s %i of item %s would exceed the max of %i.", t->name, newItemCount, item->name, item->max);
 							}
 						}
 						else

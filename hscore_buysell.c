@@ -298,7 +298,7 @@ local void sellShip(Player *p, int ship, int force)
 			}
 			else
 			{
-				chat->SendMessage(p, "Your ship still have items on it. Use ?buy -f <ship> to sell anyway");
+				chat->SendMessage(p, "Your ship still have items on it. Use ?sell -f <ship> to sell anyway");
 			}
 		}
 		else
