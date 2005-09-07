@@ -271,12 +271,12 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					}
 				}
 
-				int newItemCount = items->getItemCount(t, item, ship) + count;
+				int newItemCount = getItemCount(t, item, ship) + count;
 				if (item->max == 0 || newItemCount <= item->max)
 				{
 					if (item->type1 != NULL)
 					{
-						if (items->getFreeItemTypeSpots(t, item->type1, ship) - (item->typeDelta1 * count) < 0) //have no free spots
+						if (getFreeItemTypeSpots(t, item->type1, ship) - (item->typeDelta1 * count) < 0) //have no free spots
 						{
 							chat->SendMessage(p, "Does not have enough free %s spots.", item->type1->name);
 							return;
@@ -285,7 +285,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 
 					if (item->type2 != NULL)
 					{
-						if (items->getFreeItemTypeSpots(t, item->type2, ship) - (item->typeDelta2 * count) < 0) //have no free spots
+						if (getFreeItemTypeSpots(t, item->type2, ship) - (item->typeDelta2 * count) < 0) //have no free spots
 						{
 							chat->SendMessage(p, "Does not have enough free %s spots.", item->type2->name);
 							return;
@@ -352,12 +352,12 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					{
 						if (t->p_ship != SHIP_SPEC)
 						{
-							int newItemCount = items->getItemCount(t, item, ship) + count;
+							int newItemCount = getItemCount(t, item, ship) + count;
 							if (item->max == 0 || newItemCount <= item->max)
 							{
 								if (item->type1 != NULL)
 								{
-									if (items->getFreeItemTypeSpots(t, item->type1, ship) - (item->typeDelta1 * count) < 0) //have no free spots
+									if (getFreeItemTypeSpots(t, item->type1, ship) - (item->typeDelta1 * count) < 0) //have no free spots
 									{
 										chat->SendMessage(p, "Player %s does not have enough free %s spots.", t->name, item->type1->name);
 										return;
@@ -366,7 +366,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 
 								if (item->type2 != NULL)
 								{
-									if (items->getFreeItemTypeSpots(t, item->type2, ship) - (item->typeDelta2 * count) < 0) //have no free spots
+									if (getFreeItemTypeSpots(t, item->type2, ship) - (item->typeDelta2 * count) < 0) //have no free spots
 									{
 										chat->SendMessage(p, "Player %s does not have enough free %s spots.", t->name, item->type2->name);
 										return;
