@@ -129,6 +129,7 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 						if (!storeman)
 						{
 							storemanOk = 1;
+							lm->LogP(L_ERROR, "hscore_storeman", p, "Unable to get storeman");
 						}
 						else
 						{
