@@ -134,6 +134,7 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 						else
 						{
 							storemanOk = storeman->canBuyItem(p, item);
+							lm->LogP(L_ERROR, "hscore_storeman", p, "Got storeman result %i", storemanOk);
 						}
 						mm->ReleaseInterface(storeman);
 
