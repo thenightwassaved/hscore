@@ -124,7 +124,7 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 				{
 					if (item->max == 0 || items->getItemCount(p, item, ship) + count <= item->max)
 					{
-						Ihscorestoreman *storeman = mm->GetInterface(I_LOGMAN, p->arena);
+						Ihscorestoreman *storeman = mm->GetInterface(I_HSCORE_STOREMAN, p->arena);
 						int storemanOk;
 						if (!storeman)
 						{
