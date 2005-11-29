@@ -108,8 +108,13 @@ local int canBuyItem(Player *p, Item *item) /*must be unlocked*/
 					if (mapdata->Contains(region, p->position.x >> 4, p->position.y >> 4))
 					{
 						database->unlock();
+						lm->LogP(L_ERROR, "hscore_storeman", p, "Region %s contains player", store->region);
 						return 1; //player's in the region
 					}
+				}
+				else
+				{
+					lm->LogP(L_ERROR, "hscore_storeman", p, "Unknown region %s", store->region);
 				}
 			}
 		}
