@@ -22,7 +22,7 @@ local void sellingItem(Player *p, Item *item);
 local helptext_t storeInfoHelp =
 "Targets: none\n"
 "Args: none or <store>\n"
-"If a store is specified, this shows you information about it.\n"
+"If a store is specified, this shows you the store's description.\n"
 "Otherwise, this command gives a list of stores in the arena.\n";
 
 local void storeInfoCommand(const char *command, const char *params, Player *p, const Target *target)
