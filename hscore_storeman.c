@@ -10,6 +10,7 @@ local Imodman *mm;
 local Ilogman *lm;
 local Ichat *chat;
 local Icmdman *cmd;
+local Imapdata *mapdata;
 local Ihscoredatabase *database;
 
 //interface prototypes
@@ -84,6 +85,8 @@ local int canBuyItem(Player *p, Item *item) /*must be unlocked*/
 {
 	//check each store to find ones that sells the item
 
+	Link *link, *itemLink;
+
 	database->lock();
 	for (link = LLGetHead(database->getStoreList(p->arena)); link; link = link->next)
 	{
@@ -146,6 +149,7 @@ EXPORT int MM_hscore_storeman(int action, Imodman *_mm, Arena *arena)
 		lm = mm->GetInterface(I_LOGMAN, ALLARENAS);
 		chat = mm->GetInterface(I_CHAT, ALLARENAS);
 		cmd = mm->GetInterface(I_CMDMAN, ALLARENAS);
+		mapdata = mm->GetInterface(I_MAPDATA, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
 
 		if (!lm || !chat || !cmd || !database)
@@ -153,6 +157,7 @@ EXPORT int MM_hscore_storeman(int action, Imodman *_mm, Arena *arena)
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(chat);
 			mm->ReleaseInterface(cmd);
+			mm->ReleaseInterface(mapdata);
 			mm->ReleaseInterface(database);
 
 			return MM_FAIL;
@@ -165,6 +170,7 @@ EXPORT int MM_hscore_storeman(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(lm);
 		mm->ReleaseInterface(chat);
 		mm->ReleaseInterface(cmd);
+		mm->ReleaseInterface(mapdata);
 		mm->ReleaseInterface(database);
 
 		return MM_OK;
