@@ -124,36 +124,55 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 				{
 					if (item->max == 0 || items->getItemCount(p, item, ship) + count <= item->max)
 					{
-						if (item->type1 != NULL)
+						Ihscorestoreman *storeman = mm->GetInterface(I_LOGMAN, p->arena);
+						int storemanOk;
+						if (!storeman)
 						{
-							if (items->getFreeItemTypeSpots(p, item->type1, ship) - (item->typeDelta1 * count) < 0) //have no free spots
+							storemanOk = 1;
+						}
+						else
+						{
+							storemanOk = storeman->canBuyItem(p, item);
+						}
+						mm->ReleaseInterface(storeman);
+
+						if (storemanOk)
+						{
+							if (item->type1 != NULL)
 							{
-								chat->SendMessage(p, "You do not have enough free %s spots.", item->type1->name);
-								return;
+								if (items->getFreeItemTypeSpots(p, item->type1, ship) - (item->typeDelta1 * count) < 0) //have no free spots
+								{
+									chat->SendMessage(p, "You do not have enough free %s spots.", item->type1->name);
+									return;
+								}
 							}
-						}
 
-						if (item->type2 != NULL)
-						{
-							if (items->getFreeItemTypeSpots(p, item->type2, ship) - (item->typeDelta2 * count) < 0) //have no free spots
+							if (item->type2 != NULL)
 							{
-								chat->SendMessage(p, "You do not have enough free %s spots.", item->type2->name);
-								return;
+								if (items->getFreeItemTypeSpots(p, item->type2, ship) - (item->typeDelta2 * count) < 0) //have no free spots
+								{
+									chat->SendMessage(p, "You do not have enough free %s spots.", item->type2->name);
+									return;
+								}
 							}
+
+							items->addItem(p, item, ship, count);
+
+							money->giveMoney(p, -item->buyPrice * count, MONEY_TYPE_BUYSELL);
+
+							items->triggerEventOnItem(p, item, ship, "buy");
+
+							for (int i = 0; i < count; i++)
+							{
+								items->triggerEventOnItem(p, item, ship, "add");
+							}
+
+							chat->SendMessage(p, "You purchased %i of item %s for $%i.", count, item->name, item->buyPrice * count);
 						}
-
-						items->addItem(p, item, ship, count);
-
-						money->giveMoney(p, -item->buyPrice * count, MONEY_TYPE_BUYSELL);
-
-						items->triggerEventOnItem(p, item, ship, "buy");
-
-						for (int i = 0; i < count; i++)
+						else
 						{
-							items->triggerEventOnItem(p, item, ship, "add");
+							chat->SendMessage(p, "You cannot buy item %s at your current location. Go to a store that sells it.", item->name);
 						}
-
-						chat->SendMessage(p, "You purchased %i of item %s for $%i.", count, item->name, item->buyPrice * count);
 					}
 					else
 					{
@@ -185,36 +204,55 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 {
 	if (items->getItemCount(p, item, ship) >= count)
 	{
-		if (item->type1 != NULL)
+		Ihscorestoreman *storeman = mm->GetInterface(I_LOGMAN, p->arena);
+		int storemanOk;
+		if (!storeman)
 		{
-			if (items->getFreeItemTypeSpots(p, item->type1, ship) + item->typeDelta1 * count < 0)
+			storemanOk = 1;
+		}
+		else
+		{
+			storemanOk = storeman->canSellItem(p, item);
+		}
+		mm->ReleaseInterface(storeman);
+
+		if (storemanOk)
+		{
+			if (item->type1 != NULL)
 			{
-				chat->SendMessage(p, "You do not have enough free %s spots.", item->type1->name);
-				return;
+				if (items->getFreeItemTypeSpots(p, item->type1, ship) + item->typeDelta1 * count < 0)
+				{
+					chat->SendMessage(p, "You do not have enough free %s spots.", item->type1->name);
+					return;
+				}
 			}
-		}
 
-		if (item->type2 != NULL)
-		{
-			if (items->getFreeItemTypeSpots(p, item->type2, ship) + item->typeDelta2 * count < 0)
+			if (item->type2 != NULL)
 			{
-				chat->SendMessage(p, "You do not have enough free %s spots.", item->type2->name);
-				return;
+				if (items->getFreeItemTypeSpots(p, item->type2, ship) + item->typeDelta2 * count < 0)
+				{
+					chat->SendMessage(p, "You do not have enough free %s spots.", item->type2->name);
+					return;
+				}
 			}
-		}
 
-		//trigger before it's sold!
-		items->triggerEventOnItem(p, item, ship, "sell");
-		for (int i = 0; i < count; i++)
+			//trigger before it's sold!
+			items->triggerEventOnItem(p, item, ship, "sell");
+			for (int i = 0; i < count; i++)
+			{
+				items->triggerEventOnItem(p, item, ship, "del");
+			}
+
+			items->addItem(p, item, ship, -count);
+
+			money->giveMoney(p, item->sellPrice * count, MONEY_TYPE_BUYSELL);
+
+			chat->SendMessage(p, "You sold %i of item %s for $%i.", count, item->name, item->sellPrice * count);
+		}
+		else
 		{
-			items->triggerEventOnItem(p, item, ship, "del");
+			chat->SendMessage(p, "You cannot sell item %s at your current location. Go to a store that buys it.", item->name);
 		}
-
-		items->addItem(p, item, ship, -count);
-
-		money->giveMoney(p, item->sellPrice * count, MONEY_TYPE_BUYSELL);
-
-		chat->SendMessage(p, "You sold %i of item %s for $%i.", count, item->name, item->sellPrice * count);
 	}
 	else
 	{

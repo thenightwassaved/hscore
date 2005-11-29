@@ -80,16 +80,45 @@ local void storeInfoCommand(const char *command, const char *params, Player *p, 
 	}
 }
 
-local int canBuyItem(Player *p, Item *item)
+local int canBuyItem(Player *p, Item *item) /*must be unlocked*/
 {
-	//FIXME
-	return 0;
+	//check each store to find ones that sells the item
+
+	database->lock();
+	for (link = LLGetHead(database->getStoreList(p->arena)); link; link = link->next)
+	{
+		Store *store = link->data;
+
+		for (itemLink = LLGetHead(&store->itemList); itemLink; itemLink = itemLink->next)
+		{
+			Item *storeItem = itemLink->data;
+
+			if (storeItem == item)
+			{
+				//store has the item
+				//check if the player is in that store's region.
+
+				Region *region = mapdata->FindRegionByName(p->arena, store->region);
+
+				if (region != NULL)
+				{
+					if (mapdata->Contains(region, p->position.x >> 4, p->position.y >> 4))
+					{
+						database->unlock();
+						return 1; //player's in the region
+					}
+				}
+			}
+		}
+	}
+	database->unlock();
+
+	return 0; //player is not in any stores that sell the item.
 }
 
-local int canSellItem(Player *p, Item *item)
+local int canSellItem(Player *p, Item *item) /*must be unlocked*/
 {
-	//FIXME
-	return 0;
+	return canBuyItem(p, item);
 }
 
 local void buyingItem(Player *p, Item *item)
