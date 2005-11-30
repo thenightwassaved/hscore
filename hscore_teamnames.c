@@ -927,7 +927,6 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		mm->ReleaseInterface(chat);
 		mm->ReleaseInterface(cfg);
 		mm->ReleaseInterface(cmd);
-		mm->ReleaseInterface(capman);
 		mm->ReleaseInterface(game);
 		mm->ReleaseInterface(pd);
 		mm->ReleaseInterface(fake);
