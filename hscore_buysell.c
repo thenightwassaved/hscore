@@ -129,12 +129,10 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 						if (!storeman)
 						{
 							storemanOk = 1;
-							lm->LogP(L_ERROR, "hscore_storeman", p, "Unable to get storeman");
 						}
 						else
 						{
 							storemanOk = storeman->canBuyItem(p, item);
-							lm->LogP(L_ERROR, "hscore_storeman", p, "Got storeman result %i", storemanOk);
 						}
 						mm->ReleaseInterface(storeman);
 
@@ -206,7 +204,7 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 {
 	if (items->getItemCount(p, item, ship) >= count)
 	{
-		Ihscorestoreman *storeman = mm->GetInterface(I_LOGMAN, p->arena);
+		Ihscorestoreman *storeman = mm->GetInterface(I_HSCORE_STOREMAN, p->arena);
 		int storemanOk;
 		if (!storeman)
 		{

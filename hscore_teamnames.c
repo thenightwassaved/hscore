@@ -62,7 +62,6 @@ local Ilogman *lm;
 local Ichat *chat;
 local Iconfig *cfg;
 local Icmdman *cmd;
-local Icapman *capman;
 local Igame *game;
 local Iplayerdata *pd;
 local Ifake *fake;
@@ -897,12 +896,11 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		chat = mm->GetInterface(I_CHAT, ALLARENAS);
 		cfg = mm->GetInterface(I_CONFIG, ALLARENAS);
 		cmd = mm->GetInterface(I_CMDMAN, ALLARENAS);
-		capman = mm->GetInterface(I_CAPMAN, ALLARENAS);
 		game = mm->GetInterface(I_GAME, ALLARENAS);
 		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
 		fake = mm->GetInterface(I_FAKE, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
-		if (!aman || !lm || !chat || !cfg || !cmd || !capman || !game || !pd || !fake || !database)
+		if (!aman || !lm || !chat || !cfg || !cmd || !game || !pd || !fake || !database)
 			return MM_FAIL;
 
 		arenaDataKey = aman->AllocateArenaData(sizeof(ArenaData));
