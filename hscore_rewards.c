@@ -113,10 +113,14 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 
 	//Calculate Reward
 	amount  = (bounty + bonus);
-	if(killer->position.bounty == 1)
-		amount /= (bounty + bonus);
-	else
-		amount /= (killer->position.bounty + bonus);
+
+	//1-Bty Guard: was bad for those who actually were noobs :(
+	//if(killer->position.bounty == 1)
+	//	amount /= (bounty + bonus);
+	//else
+	//	amount /= (killer->position.bounty + bonus);
+	
+	amount /= (killer->position.bounty + bonus);
 	amount *= coeff;
 	amount += min;
 	reward  = (int)amount;
