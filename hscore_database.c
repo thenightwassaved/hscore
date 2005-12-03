@@ -1559,6 +1559,8 @@ local void updateItemNoLock(Player *p, int ship, Item *item, int newCount, int n
 
 local void updateInventoryNoLock(Player *p, int ship, InventoryEntry *entry, int newCount, int newData)
 {
+	PerPlayerData *playerData = getPerPlayerData(p);
+
 	if (ship < 0 || 7 < ship)
 	{
 		lm->LogP(L_ERROR, "hscore_database", p, "asked to update item on ship %i", ship);
@@ -1577,7 +1579,6 @@ local void updateInventoryNoLock(Player *p, int ship, InventoryEntry *entry, int
 		return;
 	}
 
-	PerPlayerData *playerData = getPerPlayerData(p);
 	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
 	if (newCount != 0)
