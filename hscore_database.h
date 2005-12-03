@@ -1,7 +1,7 @@
 #ifndef HSCORE_DATABASE_H
 #define HSCORE_DATABASE_H
 
-#define I_HSCORE_DATABASE "hscore_database-3"
+#define I_HSCORE_DATABASE "hscore_database-4"
 
 typedef struct PerPlayerData
 {
@@ -41,6 +41,8 @@ typedef struct Ihscoredatabase
 	//call whenever you want an item to be written back into SQL
 	//a newCount of 0 will delete the item from the database
 	void (*updateItem)(Player *p, int ship, Item *item, int newCount, int newData);
+	void (*updateItemNoLock)(Player *p, int ship, Item *item, int newCount, int newData);
+	void (*updateInventoryNoLock)(Player *p, int ship, InvetoryEntry *entry, int newCount, int newData);
 
 	void (*addShip)(Player *p, int ship);
 	void (*removeShip)(Player *p, int ship); //NOTE: will destroy all items on the ship

@@ -70,6 +70,8 @@ local LinkedList * getCategoryList(Arena *arena);
 local void lock();
 local void unlock();
 local void updateItem(Player *p, int ship, Item *item, int newCount, int newData);
+local void updateItemNoLock(Player *p, int ship, Item *item, int newCount, int newData);
+local void updateInventoryNoLock(Player *p, int ship, InvetoryEntry *entry, int newCount, int newData);
 local void addShip(Player *p, int ship);
 local void removeShip(Player *p, int ship);
 local PerPlayerData *getPerPlayerData(Player *p);
@@ -762,7 +764,7 @@ local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedD
 			}
 		}
 
-		//FIXME: Add error on bad storeID
+		//bad store id will give no error!
 	}
 
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i store items were loaded from MySQL.", results);
@@ -861,7 +863,7 @@ local void loadCategoryItemsQueryCallback(int status, db_res *result, void *pass
 			}
 		}
 
-		//FIXME: Add error on bad categoryID
+		//bad category id will give no error!
 	}
 
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i cateogry items were loaded from MySQL.", results);
@@ -1218,7 +1220,7 @@ local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST 
 
 					while (shipID == -1)
 					{
-						shipID = playerData->hull[i]->id;
+						shipID = playerData->hull[i]->id; //fixme: bad
 					}
 				}
 
@@ -1434,6 +1436,13 @@ local void unlock()
 
 local void updateItem(Player *p, int ship, Item *item, int newCount, int newData)
 {
+	lock();
+	updateItemNoLock(p, ship, item, newCount, newData);
+	unlock();
+}
+
+local void updateItemNoLock(Player *p, int ship, Item *item, int newCount, int newData)
+{
 	PerPlayerData *playerData = getPerPlayerData(p);
 
 	if (ship < 0 || 7 < ship)
@@ -1457,7 +1466,6 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 	Link *link;
 	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
-	lock();
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
 		InventoryEntry *entry = link->data;
@@ -1485,7 +1493,7 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 
 							while (shipID == -1)
 							{
-								shipID = playerData->hull[ship]->id;
+								shipID = playerData->hull[ship]->id; //fixme: bad?
 							}
 						}
 
@@ -1503,7 +1511,7 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 
 					while (shipID == -1)
 					{
-						shipID = playerData->hull[ship]->id;
+						shipID = playerData->hull[ship]->id; //fixme: bad?
 					}
 				}
 
@@ -1513,8 +1521,7 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 				afree(entry);
 			}
 
-			unlock();
-			return; //premature return
+			return;
 		}
 	}
 
@@ -1530,7 +1537,7 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 
 			while (shipID == -1)
 			{
-				shipID = playerData->hull[ship]->id;
+				shipID = playerData->hull[ship]->id; //fixme: bad
 			}
 		}
 
@@ -1548,8 +1555,79 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 	{
 		lm->LogP(L_ERROR, "hscore_database", p, "asked to remove item %s not on ship %i", item->name, ship);
 	}
+}
 
-	unlock();
+local void updateInventoryNoLock(Player *p, int ship, InvetoryEntry *entry, int newCount, int newData)
+{
+	if (ship < 0 || 7 < ship)
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to update item on ship %i", ship);
+		return;
+	}
+
+	if (!areShipsLoaded(p))
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to update item on unloaded ships");
+		return;
+	}
+
+	if (playerData->hull[ship] == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to update item on unowned ship %i", ship);
+		return;
+	}
+
+	PerPlayerData *playerData = getPerPlayerData(p);
+	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+
+	if (newCount != 0)
+	{
+		if (entry->count == newCount && entry->data == newData)
+		{
+			lm->LogP(L_ERROR, "hscore_database", p, "asked to update inventory entry %s with no change", entry->item->name);
+		}
+		else
+		{
+			entry->count = newCount;
+			entry->data = newData;
+
+			if (!entry->item->delayStatusWrite)
+			{
+				int shipID = playerData->hull[ship]->id;
+
+				if (shipID == -1)
+				{
+					lm->LogP(L_DRIVEL, "hscore_database", p, "waiting for ship id load");
+
+					while (shipID == -1)
+					{
+						shipID = playerData->hull[ship]->id; //fixme: bad
+					}
+				}
+
+				mysql->Query(NULL, NULL, 0, "REPLACE INTO hs_player_ship_items VALUES (#,#,#,#)", shipID, entry->item->id, newCount, newData);
+			}
+		}
+	}
+	else
+	{
+		int shipID = playerData->hull[ship]->id;
+
+		if (shipID == -1)
+		{
+			lm->LogP(L_DRIVEL, "hscore_database", p, "waiting for ship id load");
+
+			while (shipID == -1)
+			{
+				shipID = playerData->hull[ship]->id; //fixme: bad
+			}
+		}
+
+		mysql->Query(NULL, NULL, 0, "DELETE FROM hs_player_ship_items WHERE ship_id = # AND item_id = #", shipID, entry->item->id);
+
+		LLRemove(inventoryList, entry);
+		afree(entry);
+	}
 }
 
 local void addShip(Player *p, int ship) //the ships id may not be valid until later
@@ -1619,7 +1697,7 @@ local void removeShip(Player *p, int ship)
 
 		while (shipID == -1)
 		{
-			shipID = playerData->hull[ship]->id;
+			shipID = playerData->hull[ship]->id; //fixme: bad
 		}
 	}
 
@@ -1639,7 +1717,9 @@ local Ihscoredatabase interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_DATABASE, "hscore_database")
 	areShipsLoaded, isLoaded, getItemList, getStoreList,
-	getCategoryList, lock, unlock, updateItem, addShip, removeShip, getPerPlayerData,
+	getCategoryList, lock, unlock, updateItem,
+	updateItemNoLock, updateInventoryNoLock,
+	addShip, removeShip, getPerPlayerData,
 };
 
 EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)

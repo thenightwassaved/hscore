@@ -15,6 +15,7 @@ local int getPropertySum(Player *p, int ship, const char *prop);
 local void triggerEvent(Player *p, int ship, const char *event);
 local void triggerEventOnItem(Player *p, Item *item, int ship, const char *event);
 local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship);
+local int hasItemsLeftOnShip(Player *p, int ship);
 
 
 local int getItemCount(Player *p, Item *item, int ship)
@@ -81,11 +82,17 @@ local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship)
 	return 0;
 }
 
+local int hasItemsLeftOnShip(Player *p, int ship)
+{
+	chat->SendMessage(p, "hasItemsLeftOnShip should not be used by non-core modules!");
+	return 0;
+}
+
 local Ihscoreitems interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_ITEMS, "hscore_itemsstub")
 	getItemCount, addItem, getItemByName, getPropertySum,
-	triggerEvent, triggerEventOnItem, getFreeItemTypeSpots,
+	triggerEvent, triggerEventOnItem, getFreeItemTypeSpots, hasItemsLeftOnShip,
 };
 
 EXPORT int MM_hscore_itemsstub(int action, Imodman *_mm, Arena *arena)

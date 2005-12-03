@@ -326,7 +326,7 @@ local void sellShip(Player *p, int ship, int force)
 		PerPlayerData *playerData = database->getPerPlayerData(p);
 		if (playerData->hull[ship] != NULL)
 		{
-			if (force /*|| !ships have stuff*/) //fixme
+			if (force || items->hasItemsLeftOnShip(p, p->p_ship))
 			{
 				database->removeShip(p, ship);
 
@@ -336,7 +336,7 @@ local void sellShip(Player *p, int ship, int force)
 			}
 			else
 			{
-				chat->SendMessage(p, "Your ship still have items on it. Use ?sell -f <ship> to sell anyway");
+				chat->SendMessage(p, "Your ship still have items on it. Use ?sell -f %s to sell anyway", shipNames[ship]);
 			}
 		}
 		else
