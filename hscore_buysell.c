@@ -326,7 +326,7 @@ local void sellShip(Player *p, int ship, int force)
 		PerPlayerData *playerData = database->getPerPlayerData(p);
 		if (playerData->hull[ship] != NULL)
 		{
-			if (force || items->hasItemsLeftOnShip(p, p->p_ship))
+			if (force || items->hasItemsLeftOnShip(p, ship))
 			{
 				database->removeShip(p, ship);
 
