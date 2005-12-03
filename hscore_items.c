@@ -589,7 +589,7 @@ local int internalGetItemCount(Player *p, Item *item, int ship) //call with lock
 	return 0; //don't have it
 }
 
-local void addItem(Player *p, Item *item, int ship, int amount) //call with lock
+local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
 
@@ -802,7 +802,7 @@ local void internalTriggerEvent(Player *p, int ship, const char *eventName) //ca
 	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
 	Link *link = LLGetHead(inventoryList);
-	for (link != null)
+	for (link != NULL)
 	{
 		InventoryEntry *entry = link->data;
 		Item *item = entry->item;
@@ -871,7 +871,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
 	Link *link = LLGetHead(inventoryList);
-	for (link != null)
+	for (link != NULL)
 	{
 		InventoryEntry *entry = link->data;
 		Item *item = entry->item;
@@ -955,7 +955,7 @@ local hasItemsLeftOnShip(Player *p, int ship) //lock doesn't matter
 {
 	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
-	if (LLGetHead(inventoryList) == null)
+	if (LLGetHead(inventoryList) == NULL)
 	{
 		return 0;
 	}
