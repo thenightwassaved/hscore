@@ -596,25 +596,25 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 	if (item == NULL)
 	{
 		lm->LogP(L_ERROR, "hscore_items", p, "asked to add a NULL item.");
-		return;
+		return 0;
 	}
 
 	if (!database->areShipsLoaded(p))
 	{
 		lm->LogP(L_ERROR, "hscore_items", p, "asked to add item to a player with unloaded ships");
-		return;
+		return 0;
 	}
 
 	if (ship < 0 || 7 < ship)
 	{
 		lm->LogP(L_ERROR, "hscore_items", p, "asked to add item to ship %i", ship);
-		return;
+		return 0;
 	}
 
 	if (playerData->hull[ship] == NULL)
 	{
 		lm->LogP(L_ERROR, "hscore_items", p, "asked to add item to unowned ship %i", ship);
-		return;
+		return 0;
 	}
 
 	Link *link;
@@ -802,7 +802,7 @@ local void internalTriggerEvent(Player *p, int ship, const char *eventName) //ca
 	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
 	Link *link = LLGetHead(inventoryList);
-	for (link != NULL)
+	while (link != NULL)
 	{
 		InventoryEntry *entry = link->data;
 		Item *item = entry->item;
@@ -871,7 +871,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
 	Link *link = LLGetHead(inventoryList);
-	for (link != NULL)
+	while (link != NULL)
 	{
 		InventoryEntry *entry = link->data;
 		Item *item = entry->item;
