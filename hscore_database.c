@@ -71,7 +71,7 @@ local void lock();
 local void unlock();
 local void updateItem(Player *p, int ship, Item *item, int newCount, int newData);
 local void updateItemNoLock(Player *p, int ship, Item *item, int newCount, int newData);
-local void updateInventoryNoLock(Player *p, int ship, InvetoryEntry *entry, int newCount, int newData);
+local void updateInventoryNoLock(Player *p, int ship, InventoryEntry *entry, int newCount, int newData);
 local void addShip(Player *p, int ship);
 local void removeShip(Player *p, int ship);
 local PerPlayerData *getPerPlayerData(Player *p);
@@ -1557,7 +1557,7 @@ local void updateItemNoLock(Player *p, int ship, Item *item, int newCount, int n
 	}
 }
 
-local void updateInventoryNoLock(Player *p, int ship, InvetoryEntry *entry, int newCount, int newData)
+local void updateInventoryNoLock(Player *p, int ship, InventoryEntry *entry, int newCount, int newData)
 {
 	if (ship < 0 || 7 < ship)
 	{
