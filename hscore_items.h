@@ -26,8 +26,6 @@ typedef struct Ihscoreitems
 	int (*getFreeItemTypeSpots)(Player *p, ItemType *type, int ship);
 
 	int (*hasItemsLeftOnShip)(Player *p, int ship);
-
-	//more required, i'm sure
 } Ihscoreitems;
 
 #endif //HSCORE_ITEMS_H
