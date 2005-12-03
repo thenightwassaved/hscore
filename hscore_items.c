@@ -532,6 +532,13 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 	return removed;
 }
 
+local int getItemCount(Player *p, Item *item, int ship)
+{
+	database->lock();
+	internalGetItemCount(p, item, ship);
+	database->unlock();
+}
+
 local int internalGetItemCount(Player *p, Item *item, int ship) //call with lock held
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
@@ -751,6 +758,13 @@ local int getPropertySum(Player *p, int ship, const char *propString) //call wit
 	return count;
 }
 
+local void triggerEvent(Player *p, int ship, const char *eventName)
+{
+	database->lock();
+	internalTriggerEvent(p, ship, eventName);
+	database->unlock();
+}
+
 local void internalTriggerEvent(Player *p, int ship, const char *eventName) //called with lock held
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
@@ -805,6 +819,13 @@ local void internalTriggerEvent(Player *p, int ship, const char *eventName) //ca
 			}
 		}
 	}
+}
+
+local void triggerEventOnItem(Player *p, Item *triggerItem, int ship, const char *eventName)
+{
+	database->lock();
+	internalTriggerEventOnItem(p, triggerItem, ship, eventName);
+	database->unlock();
 }
 
 local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, const char *eventName) //lock must be held
