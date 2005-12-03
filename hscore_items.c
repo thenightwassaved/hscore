@@ -951,8 +951,28 @@ local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship) //call with 
 	return count;
 }
 
-local hasItemsLeftOnShip(Player *p, int ship) //lock doesn't matter
+local int hasItemsLeftOnShip(Player *p, int ship) //lock doesn't matter
 {
+	PerPlayerData *playerData = database->getPerPlayerData(p);
+
+	if (!database->areShipsLoaded(p))
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to check items left from a player with unloaded ships");
+		return 0;
+	}
+
+	if (ship < 0 || 7 < ship)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to check items left on ship %i", ship);
+		return 0;
+	}
+
+	if (playerData->hull[ship] == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to check items left on unowned ship %i", ship);
+		return 0;
+	}
+
 	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
 	if (LLGetHead(inventoryList) == NULL)
