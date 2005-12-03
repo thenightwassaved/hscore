@@ -15,6 +15,11 @@ local Iplayerdata *pd;
 local Igame *game;
 local Ihscoredatabase *database;
 
+//a few internal functions
+local int internalGetItemCount(Player *p, Item *item, int ship);
+local void internalTriggerEvent(Player *p, int ship, const char *event);
+local void internalTriggerEventOnItem(Player *p, Item *item, int ship, const char *event);
+
 //interface prototypes
 local int getItemCount(Player *p, Item *item, int ship);
 local int addItem(Player *p, Item *item, int ship, int amount);
@@ -424,7 +429,6 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 {
 	int removed = 0;
 	int action = event->action;
-	int oldData = entry->data;
 
 	//do the message
 	if (event->message[0] != '\0')
@@ -535,8 +539,9 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 local int getItemCount(Player *p, Item *item, int ship)
 {
 	database->lock();
-	internalGetItemCount(p, item, ship);
+	int count = internalGetItemCount(p, item, ship);
 	database->unlock();
+	return count;
 }
 
 local int internalGetItemCount(Player *p, Item *item, int ship) //call with lock held
