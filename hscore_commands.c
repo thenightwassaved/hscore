@@ -131,9 +131,9 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 				{
 
 					Link *ammoLink;
-					for (ammolink = LLGetHead(&playerData->hull[ship]->inventoryEntryList); ammolink; ammolink = ammolink->next)
+					for (ammoLink = LLGetHead(&playerData->hull[ship]->inventoryEntryList); ammoLink; ammoLink = ammoLink->next)
 					{
-						InventoryEntry *ammoEntry = ammolink->data;
+						InventoryEntry *ammoEntry = ammoLink->data;
 
 						if (ammoEntry->item == item->ammo)
 						{
