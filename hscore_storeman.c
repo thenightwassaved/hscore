@@ -100,6 +100,12 @@ local int canBuyItem(Player *p, Item *item) /*must be unlocked*/
 			{
 				//store has the item
 				//check if the player is in that store's region.
+				if (strcmp(store->region, "anywhere") == 0)
+				{
+					database->unlock();
+					return 1;
+				}
+
 
 				Region *region = mapdata->FindRegionByName(p->arena, store->region);
 
@@ -121,7 +127,49 @@ local int canBuyItem(Player *p, Item *item) /*must be unlocked*/
 
 local int canSellItem(Player *p, Item *item) /*must be unlocked*/
 {
-	return canBuyItem(p, item);
+	//check each store to find ones that sells the item
+
+	Link *link, *itemLink;
+	int inStore = 0;
+
+	database->lock();
+	for (link = LLGetHead(database->getStoreList(p->arena)); link; link = link->next)
+	{
+		Store *store = link->data;
+
+		for (itemLink = LLGetHead(&store->itemList); itemLink; itemLink = itemLink->next)
+		{
+			Item *storeItem = itemLink->data;
+
+			if (storeItem == item)
+			{
+				inStore = 1;
+
+				//store has the item
+				//check if the player is in that store's region.
+				if (strcmp(store->region, "anywhere") == 0)
+				{
+					database->unlock();
+					return 1;
+				}
+
+
+				Region *region = mapdata->FindRegionByName(p->arena, store->region);
+
+				if (region != NULL)
+				{
+					if (mapdata->Contains(region, p->position.x >> 4, p->position.y >> 4))
+					{
+						database->unlock();
+						return 1; //player's in the region
+					}
+				}
+			}
+		}
+	}
+	database->unlock();
+
+	return !inStore; //if it's in a store, they can't sell it.
 }
 
 local void buyingItem(Player *p, Item *item)
