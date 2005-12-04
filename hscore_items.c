@@ -581,7 +581,6 @@ local int internalGetItemCount(Player *p, Item *item, int ship) //call with lock
 
 		if (entry->item == item)
 		{
-			database->unlock();
 			return entry->count;
 		}
 	}

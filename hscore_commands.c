@@ -129,9 +129,18 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 				int ammoCount;
 				if (item->ammo != NULL)
 				{
-					database->unlock(); //so we can call without deadlocking
-					ammoCount = items->getItemCount(p, item->ammo, ship); //POSSIBLE FIXME?
-					database->lock();
+
+					Link *ammoLink;
+					for (ammolink = LLGetHead(&playerData->hull[ship]->inventoryEntryList); ammolink; ammolink = ammolink->next)
+					{
+						InventoryEntry *ammoEntry = ammolink->data;
+
+						if (ammoEntry->item == item->ammo)
+						{
+
+							ammoCount = ammoEntry->count;
+						}
+					}
 				}
 				else
 				{
