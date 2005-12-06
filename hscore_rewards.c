@@ -35,7 +35,7 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 	 expn = (double)cfg->GetInt(arena->cfg, "Flag", "HSFlagExp", 500) / 1000;
 	 pts = (double)(*points);
 
-	 chat->SendArenaMessage(arena, "coeff=%d expn=%d pts=%d", coeff, expn, pts);
+	 chat->SendArenaMessage(arena, "coeff=%f expn=%f pts=%f", coeff, expn, pts);
 
 	 //Calculate Reward
 	 amount = coeff * pts;
