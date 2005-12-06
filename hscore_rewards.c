@@ -227,6 +227,8 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		mm->RegCallback(CB_GOAL, goalCallback, arena);
 		mm->RegCallback(CB_KILL, killCallback, arena);
 
+		chat->SendArenaMessage(arena, "OMGWTFBBQ!!!");
+
 		return MM_OK;
 	}
 	else if (action == MM_DETACH)
