@@ -25,22 +25,26 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 	 */
 
 	 //Variable Declarations
-	 double amount, coeff, exp, pts;
-	 int reward;
+	 double amount, coeff, expn, pts;
+	 int reward, exp;
 	 Player *p;
 	 Link *link;
 
 	 //Read Settings
 	 coeff = (double)cfg->GetInt(arena->cfg, "Flag", "HSFlagCoeff", 200);
-	 exp = (double)cfg->GetInt(arena->cfg, "Flag", "HSFlagExp", 500) / 1000;
+	 expn = (double)cfg->GetInt(arena->cfg, "Flag", "HSFlagExp", 500) / 1000;
 	 pts = (double)(*points);
+
+	 chat->SendArenaMessage(arena, "coeff=%d expn=%d pts=%d", coeff, expn, pts);
 
 	 //Calculate Reward
 	 amount = coeff * pts;
-	 amount = pow(amount, exp);
+	 amount = pow(amount, expn);
 	 amount *= (double)arena->playing;
 	 reward = (int)amount;
 	 exp = (int)(amount / 8);
+
+	 chat->SendArenaMessage(arena, "reward=%d exp=%d ", reward, exp);
 
 	 //Distribute Wealth
     pd->Lock();
@@ -119,7 +123,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	//	amount /= (bounty + bonus);
 	//else
 	//	amount /= (killer->position.bounty + bonus);
-	
+
 	amount /= (killer->position.bounty + bonus);
 	amount *= coeff;
 	amount += min;
