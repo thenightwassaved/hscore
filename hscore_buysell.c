@@ -89,10 +89,18 @@ local void printShipList(Player *p)
 
 	for (int i = 0; i < 8; i++)
 	{
+		/* cfghelp: All:BuyPrice, arena, int, def: 0, mod: hscore_buysell
+		 * Cost for buying the ship hull. Zero means no purchace needed. */
 		int buyPrice = cfg->GetInt(p->arena->cfg, shipNames[i], "BuyPrice", 0);
+		/* cfghelp: All:SellPrice, arena, int, def: 0, mod: hscore_buysell
+		 * Money earned from selling the ship hull. */
 		int sellPrice = cfg->GetInt(p->arena->cfg, shipNames[i], "SellPrice", 0);
+		/* cfghelp: All:ExpRequired, arena, int, def: 0, mod: hscore_buysell
+		 * Experience required to buy the ship hull. */
 		int expRequired = cfg->GetInt(p->arena->cfg, shipNames[i], "ExpRequired", 0);
 
+		/* cfghelp: All:Description, arena, string, mod: hscore_buysell
+		 * Text to put in the ship description column. */
 		const char *description = cfg->GetStr(p->arena->cfg, shipNames[i], "Description");
 
 		if (description == NULL)

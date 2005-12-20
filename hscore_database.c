@@ -153,6 +153,8 @@ local ItemType * getItemTypeByID(int id)
 
 local const char * getArenaIdentifier(Arena *arena)
 {
+	/* cfghelp: Hyperspace:ArenaIdentifier, arena, string, mod: hscore_database
+	 * String to compare to the arena field in the MySQL. Defaults to the arena base name. */
 	const char *arenaIdent = cfg->GetStr(arena->cfg, "Hyperspace", "ArenaIdentifier");
 
 	if (arenaIdent == NULL)
