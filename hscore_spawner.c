@@ -397,7 +397,7 @@ local void playerActionCallback(Player *p, int action, Arena *arena)
 	}
 }
 
-local void itemCountChangedCallback(Player *p, Item *item, InvetoryEntry *entry, int newCount, int oldCount)
+local void itemCountChangedCallback(Player *p, Item *item, InventoryEntry *entry, int newCount, int oldCount)
 {
 	//check if it changed anything in clientset, and if it did, recompute and flag dirty
 

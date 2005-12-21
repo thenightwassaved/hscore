@@ -27,7 +27,7 @@ typedef struct PerArenaData
 
 #define CB_ITEM_COUNT_CHANGED "itemcount-1"
 //NOTE: *entry may be NULL if newCount is 0.
-typedef void (*ItemCountChanged)(Player *p, Item *item, InvetoryEntry *entry, int newCount, int oldCount);
+typedef void (*ItemCountChanged)(Player *p, Item *item, InventoryEntry *entry, int newCount, int oldCount);
 
 
 typedef struct Ihscoredatabase
