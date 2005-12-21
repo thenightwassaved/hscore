@@ -88,6 +88,9 @@ typedef struct Item
 	struct Item *ammo; //can be NULL, only for use by events.
 	int ammoID; //used for post processing ONLY
 
+	//if any of this item's properties change the clientset packet
+	int affectsSets;
+
 	int id; //MySQL use only
 } Item;
 

@@ -24,6 +24,12 @@ typedef struct PerArenaData
 	LinkedList categoryList;
 } PerArenaData;
 
+
+#define CB_ITEM_COUNT_CHANGED "itemcount-1"
+//NOTE: *entry may be NULL if newCount is 0.
+typedef void (*ItemCountChanged)(Player *p, Item *item, InvetoryEntry *entry, int newCount, int oldCount);
+
+
 typedef struct Ihscoredatabase
 {
 	INTERFACE_HEAD_DECL

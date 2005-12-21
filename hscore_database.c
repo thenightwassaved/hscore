@@ -261,6 +261,7 @@ local void LinkAmmo()
 "  `max` int(11) NOT NULL default '0'," \
 "  `delay_write` tinyint(4) NOT NULL default '0'," \
 "  `ammo` int(10) unsigned NOT NULL default '0'," \
+"  `affects_sets` tinyint(4) NOT NULL default '0'," \
 "  PRIMARY KEY  (`id`)" \
 ")"
 
@@ -474,6 +475,7 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 
 		item->delayStatusWrite = atoi(mysql->GetField(row, 13));	//delay_write
 		item->ammoID = atoi(mysql->GetField(row, 14));				//ammo
+		item->affectsSets = atoi(mysql->GetField(row, 15));			//affects_sets
 
 		//add the item to the list
 		lock();
@@ -1157,7 +1159,7 @@ local void LoadProperties()
 
 local void LoadItemList() //will call LoadProperties() and LoadEvents() when finished
 {
-	mysql->Query(loadItemsQueryCallback, NULL, 1, "SELECT id, name, short_description, long_description, buy_price, sell_price, exp_required, ships_allowed, type1, type2, type1_delta, type2_delta, max, delay_write, ammo FROM hs_items");
+	mysql->Query(loadItemsQueryCallback, NULL, 1, "SELECT id, name, short_description, long_description, buy_price, sell_price, exp_required, ships_allowed, type1, type2, type1_delta, type2_delta, max, delay_write, ammo, affects_sets FROM hs_items");
 }
 
 local void LoadItemTypeList() //will call LoadItemList() when finished loading
@@ -1476,7 +1478,8 @@ local void updateItemNoLock(Player *p, int ship, Item *item, int newCount, int n
 		{
 			if (newCount != 0)
 			{
-				if (entry->count == newCount && entry->data == newData)
+				int oldCount = entry->count;
+				if (oldCount == newCount && entry->data == newData)
 				{
 					lm->LogP(L_ERROR, "hscore_database", p, "asked to update item %s with no change", item->name);
 				}
@@ -1502,10 +1505,16 @@ local void updateItemNoLock(Player *p, int ship, Item *item, int newCount, int n
 						mysql->Query(NULL, NULL, 0, "REPLACE INTO hs_player_ship_items VALUES (#,#,#,#)", shipID, item->id, newCount, newData);
 					}
 				}
+
+				if (newCount != oldCount)
+				{
+					DO_CBS(CB_ITEM_COUNT_CHANGED, p->arena, ItemCountChanged, (p, item, entry, newCount, oldCount));
+				}
 			}
 			else
 			{
 				int shipID = playerData->hull[ship]->id;
+				int oldCount = entry->count;
 
 				if (shipID == -1)
 				{
@@ -1521,6 +1530,8 @@ local void updateItemNoLock(Player *p, int ship, Item *item, int newCount, int n
 
 				LLRemove(inventoryList, entry);
 				afree(entry);
+
+				DO_CBS(CB_ITEM_COUNT_CHANGED, p->arena, ItemCountChanged, (p, item, NULL, 0, oldCount));
 			}
 
 			return;
@@ -1552,6 +1563,9 @@ local void updateItemNoLock(Player *p, int ship, Item *item, int newCount, int n
 		entry->item = item;
 
 		LLAdd(inventoryList, entry);
+
+		//do item changed callback
+		DO_CBS(CB_ITEM_COUNT_CHANGED, p->arena, ItemCountChanged, (p, item, entry, newCount, 0));
 	}
 	else
 	{
