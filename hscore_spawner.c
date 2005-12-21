@@ -7,13 +7,13 @@
 #include "hscore_database.h"
 #include "hscore_shipnames.h"
 
-typedef struct PlayerData
+typedef struct PlayerDataStruct
 {
 	short underOurControl;
 	short dirty;
 	short spawned;
 	ticks_t lastDeath;
-} PlayerData;
+} PlayerDataStruct;
 
 typedef struct ShipOverrideKeys
 {
@@ -107,7 +107,7 @@ local ShipOverrideKeys shipOverrideKeys[8];
 
 local void spawnPlayer(Player *p)
 {
-	PlayerData *data = PPDATA(p, playerDataKey);
+	PlayerDataStruct *data = PPDATA(p, playerDataKey);
 	data->spawned = 1;
 
 
@@ -358,7 +358,7 @@ local void removeOverrides(Player *p)
 local void Pppk(Player *p, byte *p2, int len)
 {
 	Arena *arena = p->arena;
-	PlayerData *data = PPDATA(p, playerDataKey);
+	PlayerDataStruct *data = PPDATA(p, playerDataKey);
 
 	/* handle common errors */
 	if (!arena) return;
@@ -378,7 +378,7 @@ local void Pppk(Player *p, byte *p2, int len)
 
 local void playerActionCallback(Player *p, int action, Arena *arena)
 {
-	PlayerData *data = PPDATA(p, playerDataKey);
+	PlayerDataStruct *data = PPDATA(p, playerDataKey);
 
 	if (action == PA_ENTERARENA)
 	{
@@ -407,7 +407,7 @@ local void itemCountChangedCallback(Player *p, Item *item, InventoryEntry *entry
 
 local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty, int flags, int *pts, int *green)
 {
-	PlayerData *data = PPDATA(killed, playerDataKey);
+	PlayerDataStruct *data = PPDATA(killed, playerDataKey);
 	data->spawned = 0;
 	data->lastDeath = current_ticks();
 
@@ -450,7 +450,7 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 			return MM_FAIL;
 		}
 
-		playerDataKey = pd->AllocatePlayerData(sizeof(PlayerData));
+		playerDataKey = pd->AllocatePlayerData(sizeof(PlayerDataStruct));
 		if (playerDataKey == -1)
 		{
 			return MM_FAIL;
