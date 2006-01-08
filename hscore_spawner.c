@@ -112,16 +112,16 @@ local void spawnPlayer(Player *p)
 
 
 	//do needed prizing
-	Target *t;
-	t->type = T_PLAYER;
-	t->u.p = p;
+	Target t;
+	t.type = T_PLAYER;
+	t.u.p = p;
 
 	int bounce = items->getPropertySum(p, p->pkt.ship, "bounce");
-	if (bounce) game->GivePrize(t, 10, bounce);
+	if (bounce) game->GivePrize(&t, 10, bounce);
 	int prox = items->getPropertySum(p, p->pkt.ship, "prox");
-	if (prox) game->GivePrize(t, 16, prox);
+	if (prox) game->GivePrize(&t, 16, prox);
 	int multifire = items->getPropertySum(p, p->pkt.ship, "multifire");
-	if (multifire) game->GivePrize(t, 15, multifire);
+	if (multifire) game->GivePrize(&t, 15, multifire);
 
 }
 
@@ -465,6 +465,8 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 	else if (action == MM_UNLOAD)
 	{
 		net->RemovePacket(C2S_POSITION, Pppk);
+
+		//fix me, need to release pdk
 
 		mm->ReleaseInterface(lm);
 		mm->ReleaseInterface(pd);
