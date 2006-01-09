@@ -208,33 +208,33 @@ local void addOverrides(Player *p)
 	{
 		if (playerData->hull[i] != NULL)
 		{
-			int cloak = 2 * items->getPropertySum(p, p->pkt.ship, "cloak");
+			int cloak = 2 * items->getPropertySum(p, i, "cloak");
 			clientset->PlayerOverride(p, shipOverrideKeys[i].CloakStatus, cloak);
 
-			int stealth = 2 * items->getPropertySum(p, p->pkt.ship, "stealth");
+			int stealth = 2 * items->getPropertySum(p, i, "stealth");
 			clientset->PlayerOverride(p, shipOverrideKeys[i].StealthStatus, stealth);
 
-			int xradar = 2 * items->getPropertySum(p, p->pkt.ship, "xradar");
+			int xradar = 2 * items->getPropertySum(p, i, "xradar");
 			clientset->PlayerOverride(p, shipOverrideKeys[i].XRadarStatus, xradar);
 
-			int antiwarp = 2 * items->getPropertySum(p, p->pkt.ship, "antiwarp");
+			int antiwarp = 2 * items->getPropertySum(p, i, "antiwarp");
 			clientset->PlayerOverride(p, shipOverrideKeys[i].AntiWarpStatus, antiwarp);
 
-			int gunlevel = items->getPropertySum(p, p->pkt.ship, "gunlevel");
+			int gunlevel = items->getPropertySum(p, i, "gunlevel");
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialGuns, gunlevel);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].MaxGuns, gunlevel);
 
-			int bomblevel = items->getPropertySum(p, p->pkt.ship, "bomblevel");
+			int bomblevel = items->getPropertySum(p, i, "bomblevel");
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBombs, bomblevel);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].MaxBombs, bomblevel);
 
 
 			/*
-			int thrust = items->getPropertySum(p, p->pkt.ship, "thrust");
-			int speed = items->getPropertySum(p, p->pkt.ship, "speed");
-			int energy = items->getPropertySum(p, p->pkt.ship, "energy");
-			int recharge = items->getPropertySum(p, p->pkt.ship, "recharge");
-			int rotation = items->getPropertySum(p, p->pkt.ship, "rotation");
+			int thrust = items->getPropertySum(p, i, "thrust");
+			int speed = items->getPropertySum(p, i, "speed");
+			int energy = items->getPropertySum(p, i, "energy");
+			int recharge = items->getPropertySum(p, i, "recharge");
+			int rotation = items->getPropertySum(p, i, "rotation");
 			clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumRotation);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumThrust);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumSpeed);
@@ -251,34 +251,34 @@ local void addOverrides(Player *p)
 			clientset->PlayerOverride(p, shipOverrideKeys[i].UpgradeRecharge);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].UpgradeEnergy);*/
 
-			int shrapnel = items->getPropertySum(p, p->pkt.ship, "shrapnel");
+			int shrapnel = items->getPropertySum(p, i, "shrapnel");
 			clientset->PlayerOverride(p, shipOverrideKeys[i].ShrapnelMax, shrapnel);
 
-			int burst = items->getPropertySum(p, p->pkt.ship, "burst");
+			int burst = items->getPropertySum(p, i, "burst");
 			clientset->PlayerOverride(p, shipOverrideKeys[i].BurstMax, burst);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBurst, burst);
 
-			int repel = items->getPropertySum(p, p->pkt.ship, "repel");
+			int repel = items->getPropertySum(p, i, "repel");
 			clientset->PlayerOverride(p, shipOverrideKeys[i].RepelMax, repel);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRepel, repel);
 
-			int decoy = items->getPropertySum(p, p->pkt.ship, "decoy");
+			int decoy = items->getPropertySum(p, i, "decoy");
 			clientset->PlayerOverride(p, shipOverrideKeys[i].DecoyMax, decoy);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialDecoy, decoy);
 
-			int thor = items->getPropertySum(p, p->pkt.ship, "thor");
+			int thor = items->getPropertySum(p, i, "thor");
 			clientset->PlayerOverride(p, shipOverrideKeys[i].ThorMax, thor);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialThor, thor);
 
-			int brick = items->getPropertySum(p, p->pkt.ship, "brick");
+			int brick = items->getPropertySum(p, i, "brick");
 			clientset->PlayerOverride(p, shipOverrideKeys[i].BrickMax, brick);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBrick, brick);
 
-			int rocket = items->getPropertySum(p, p->pkt.ship, "rocket");
+			int rocket = items->getPropertySum(p, i, "rocket");
 			clientset->PlayerOverride(p, shipOverrideKeys[i].RocketMax, rocket);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRocket, rocket);
 
-			int portal = items->getPropertySum(p, p->pkt.ship, "portal");
+			int portal = items->getPropertySum(p, i, "portal");
 			clientset->PlayerOverride(p, shipOverrideKeys[i].PortalMax, portal);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialPortal, portal);
 		}
