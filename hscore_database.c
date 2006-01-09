@@ -672,6 +672,8 @@ local void loadPlayerShipItemsQueryCallback(int status, db_res *result, void *pa
 
 	playerData->shipsLoaded = 1;
 
+	DO_CBS(CB_SHIPS_LOADED, p->arena, ShipsLoaded, (p));
+
 	lm->LogP(L_DRIVEL, "hscore_database", p, "%i ship items were loaded from MySQL.", results);
 }
 

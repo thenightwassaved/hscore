@@ -385,16 +385,19 @@ local void playerActionCallback(Player *p, int action, Arena *arena)
 		data->underOurControl = 1;
 		data->spawned = 0;
 		//the player is entering the arena.
-
-		addOverrides(p);
-		//send the packet the first time
-		clientset->SendClientSettings(p);
 	}
 	else if (action == PA_LEAVEARENA)
 	{
 		data->underOurControl = 0;
 		removeOverrides(p);
 	}
+}
+
+local void shipsLoadedCallback(Player *p)
+{
+	addOverrides(p);
+	//send the packet the first time
+	clientset->SendClientSettings(p);
 }
 
 local void itemCountChangedCallback(Player *p, Item *item, InventoryEntry *entry, int newCount, int oldCount)
@@ -485,10 +488,12 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 		mm->RegCallback(CB_PLAYERACTION, playerActionCallback, arena);
 		mm->RegCallback(CB_KILL, killCallback, arena);
 		mm->RegCallback(CB_ITEM_COUNT_CHANGED, itemCountChangedCallback, arena);
+		mm->RegCallback(CB_SHIPS_LOADED, shipsLoadedCallback, arena);
 		return MM_OK;
 	}
 	else if (action == MM_DETACH)
 	{
+		mm->UnregCallback(CB_SHIPS_LOADED, shipsLoadedCallback, arena);
 		mm->UnregCallback(CB_PLAYERACTION, playerActionCallback, arena);
 		mm->UnregCallback(CB_KILL, killCallback, arena);
 		mm->UnregCallback(CB_ITEM_COUNT_CHANGED, itemCountChangedCallback, arena);

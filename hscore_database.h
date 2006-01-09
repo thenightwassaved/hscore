@@ -29,6 +29,8 @@ typedef struct PerArenaData
 //NOTE: *entry may be NULL if newCount is 0.
 typedef void (*ItemCountChanged)(Player *p, Item *item, InventoryEntry *entry, int newCount, int oldCount);
 
+#define CB_SHIPS_LOADED "shipsloaded-1"
+typedef void (*ShipsLoaded)(Player *p);
 
 typedef struct Ihscoredatabase
 {
