@@ -123,7 +123,7 @@ local void spawnPlayer(Player *p)
 	int multifire = items->getPropertySum(p, p->pkt.ship, "multifire");
 	if (multifire) game->GivePrize(&t, 15, multifire);
 
-	int shrapnel = items->getPropertySum(p, i, "shrapnel");
+	int shrapnel = items->getPropertySum(p, p->pkt.ship, "shrapnel");
 	if (shrapnel) game->GivePrize(&t, 19, multifire);
 }
 
@@ -205,7 +205,7 @@ local void loadOverrides()
 local void addOverrides(Player *p)
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
-	ConfigHandle *conf = p->arena->cfg;
+	ConfigHandle conf = p->arena->cfg;
 
 	for (int i = 0; i < 8; i++)
 	{
