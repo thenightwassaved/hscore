@@ -527,7 +527,7 @@ local void Pppk(Player *p, byte *p2, int len)
 	if (p->p_ship == SHIP_SPEC)
 		return;
 
-	if (data->spawned == 0 && current_ticks() + 100 > data->lastDeath) //player hasn't been spawned
+	if (data->spawned == 0 && current_ticks() > (data->lastDeath + 100)) //player hasn't been spawned
 	{
 		if (data->underOurControl == 1) //attached to the arena
 		{
@@ -605,7 +605,6 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		data->dirty = 0;
 		clientset->SendClientSettings(killed);
 	}
-
 }
 
 local void freqChangeCallback(Player *p, int newfreq)
