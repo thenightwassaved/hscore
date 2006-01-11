@@ -50,7 +50,7 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
     pd->Lock();
 	FOR_EACH_PLAYER(p)
 	{
-		if(p->p_freq == freq && p->p_ship != SHIP_SPEC)
+		if(p->arena == arena && p->p_freq == freq && p->p_ship != SHIP_SPEC)
 		{
 			money->giveMoney(p, reward, MONEY_TYPE_FLAG);
 			chat->SendMessage(p, "You received $%d and %d exp for a flag victory.", reward, exp);
