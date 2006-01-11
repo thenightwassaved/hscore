@@ -632,6 +632,7 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 	{
 		if(p->arena == arena && p->p_freq == freq && p->p_ship != SHIP_SPEC)
 		{
+			PlayerDataStruct *data = PPDATA(p, playerDataKey);
 			data->spawned = 0;
 		}
 	}
