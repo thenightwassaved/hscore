@@ -619,7 +619,7 @@ local void freqChangeCallback(Player *p, int newfreq)
 		if (data->dirty == 1)
 		{
 			data->dirty = 0;
-			clientset->SendClientSettings(killed);
+			clientset->SendClientSettings(p);
 		}
 	}
 }
@@ -633,7 +633,7 @@ local void shipChangeCallback(Player *p, int newship, int newfreq)
 	if (data->dirty == 1)
 	{
 		data->dirty = 0;
-		clientset->SendClientSettings(killed);
+		clientset->SendClientSettings(p);
 	}
 }
 
@@ -653,7 +653,7 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 			if (data->dirty == 1)
 			{
 				data->dirty = 0;
-				clientset->SendClientSettings(killed);
+				clientset->SendClientSettings(p);
 			}
 		}
 	}
