@@ -35,7 +35,7 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 	 expn = (double)cfg->GetInt(arena->cfg, "Flag", "HSFlagExp", 500) / 1000;
 	 pts = (double)(*points);
 
-	 chat->SendArenaMessage(arena, "coeff=%f expn=%f pts=%f", coeff, expn, pts);
+	 //chat->SendArenaMessage(arena, "coeff=%f expn=%f pts=%f", coeff, expn, pts);
 
 	 //Calculate Reward
 	 amount = coeff * pts;
@@ -53,6 +53,7 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 		if(p->arena == arena && p->p_freq == freq && p->p_ship != SHIP_SPEC)
 		{
 			money->giveMoney(p, reward, MONEY_TYPE_FLAG);
+			money->giveExp(p, exp);
 			chat->SendMessage(p, "You received $%d and %d exp for a flag victory.", reward, exp);
 		}
 	}
