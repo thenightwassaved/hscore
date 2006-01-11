@@ -615,6 +615,12 @@ local void freqChangeCallback(Player *p, int newfreq)
 	{
 		PlayerDataStruct *data = PPDATA(p, playerDataKey);
 		data->spawned = 0;
+
+		if (data->dirty == 1)
+		{
+			data->dirty = 0;
+			clientset->SendClientSettings(killed);
+		}
 	}
 }
 
@@ -623,6 +629,12 @@ local void shipChangeCallback(Player *p, int newship, int newfreq)
 	//they need a respawn whenever they change ships
 	PlayerDataStruct *data = PPDATA(p, playerDataKey);
 	data->spawned = 0;
+
+	if (data->dirty == 1)
+	{
+		data->dirty = 0;
+		clientset->SendClientSettings(killed);
+	}
 }
 
 local void flagWinCallback(Arena *arena, int freq, int *points)
@@ -637,6 +649,12 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 		{
 			PlayerDataStruct *data = PPDATA(p, playerDataKey);
 			data->spawned = 0;
+
+			if (data->dirty == 1)
+			{
+				data->dirty = 0;
+				clientset->SendClientSettings(killed);
+			}
 		}
 	}
 	pd->Unlock();
