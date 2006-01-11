@@ -410,7 +410,8 @@ local void addOverrides(Player *p)
 			if (rockettime) clientset->PlayerOverride(p, shipOverrideKeys[i].RocketTime, rockettime);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].RocketTime);
 
-			int initialbounty = items->getPropertySum(p, i, "initialbounty");
+			int initInitialBounty = cfg->GetInt(conf, shipname, "InitialBounty", 0);
+			int initialbounty = items->getPropertySum(p, i, "initialbounty") + initInitialBounty;
 			if (initialbounty) clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBounty, initialbounty);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialBounty);
 
@@ -418,7 +419,8 @@ local void addOverrides(Player *p)
 			if (damagefactor) clientset->PlayerOverride(p, shipOverrideKeys[i].DamageFactor, damagefactor);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].DamageFactor);
 
-			int attachbounty = items->getPropertySum(p, i, "attachbounty");
+			int initAttachBounty = cfg->GetInt(conf, shipname, "AttachBounty", 0);
+			int attachbounty = items->getPropertySum(p, i, "attachbounty") + initAttachBounty;
 			if (attachbounty) clientset->PlayerOverride(p, shipOverrideKeys[i].AttachBounty, attachbounty);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].AttachBounty);
 
@@ -430,7 +432,8 @@ local void addOverrides(Player *p)
 			if (soccerprox) clientset->PlayerOverride(p, shipOverrideKeys[i].SoccerBallProximity, soccerprox);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].SoccerBallProximity);
 
-			int maxmines = items->getPropertySum(p, i, "maxmines");
+			int initMaxMines = cfg->GetInt(conf, shipname, "MaxMines", 0);
+			int maxmines = items->getPropertySum(p, i, "maxmines") + initMaxMines;
 			if (maxmines) clientset->PlayerOverride(p, shipOverrideKeys[i].MaxMines, maxmines);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaxMines);
 		}
