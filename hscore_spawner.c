@@ -527,12 +527,15 @@ local void Pppk(Player *p, byte *p2, int len)
 	if (p->p_ship == SHIP_SPEC)
 		return;
 
-	if (data->spawned == 0 && current_ticks() > (data->lastDeath + 100)) //player hasn't been spawned
+	if (data->spawned == 0) //player hasn't been spawned
 	{
-		if (data->underOurControl == 1) //attached to the arena
+		int enterDelay = cfg->GetInt(conf, "Kill", "EnterDelay", 100);
+		if (current_ticks() > (data->lastDeath + enterDelay + 50)) //not still dead
 		{
-			chat->SendMessage(p, "respawned at %i", current_ticks());
-			spawnPlayer(p);
+			if (data->underOurControl == 1) //attached to the arena
+			{
+				spawnPlayer(p);
+			}
 		}
 	}
 }
@@ -599,8 +602,6 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	PlayerDataStruct *data = PPDATA(killed, playerDataKey);
 	data->spawned = 0;
 	data->lastDeath = current_ticks();
-
-	chat->SendMessage(killed, "You died at %i", data->lastDeath);
 
 	//if the dirty bit is set, then send new settings while they're dead
 	if (data->dirty == 1)
