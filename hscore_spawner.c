@@ -6,6 +6,7 @@
 #include "hscore_storeman.h"
 #include "hscore_database.h"
 #include "hscore_shipnames.h"
+#include "fg_wz.h"
 
 typedef struct PlayerDataStruct
 {
@@ -366,8 +367,8 @@ local void addOverrides(Player *p)
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].StealthEnergy);
 
 			int antienergy = items->getPropertySum(p, i, "antienergy");
-			if (antienergy) clientset->PlayerOverride(p, shipOverrideKeys[i].AnitwarpEnergy, antienergy);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].AnitwarpEnergy);
+			if (antienergy) clientset->PlayerOverride(p, shipOverrideKeys[i].AntiWarpEnergy, antienergy);
+			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].AntiWarpEnergy);
 
 			int xradarenergy = items->getPropertySum(p, i, "xradarenergy");
 			if (xradarenergy) clientset->PlayerOverride(p, shipOverrideKeys[i].XRadarEnergy, xradarenergy);
@@ -410,8 +411,8 @@ local void addOverrides(Player *p)
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].RocketTime);
 
 			int initialbounty = items->getPropertySum(p, i, "initialbounty");
-			if (initialbounty) clientset->PlayerOverride(p, shipOverrideKeys[i].InititalBounty, initialbounty);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].InititalBounty);
+			if (initialbounty) clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBounty, initialbounty);
+			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialBounty);
 
 			int damagefactor = items->getPropertySum(p, i, "damagefactor");
 			if (damagefactor) clientset->PlayerOverride(p, shipOverrideKeys[i].DamageFactor, damagefactor);
@@ -430,8 +431,8 @@ local void addOverrides(Player *p)
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].SoccerBallProximity);
 
 			int maxmines = items->getPropertySum(p, i, "maxmines");
-			if (maxmines) clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumMines, maxmines);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaximumMines);
+			if (maxmines) clientset->PlayerOverride(p, shipOverrideKeys[i].MaxMines, maxmines);
+			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaxMines);
 		}
 	}
 }
@@ -560,7 +561,7 @@ local void itemCountChangedCallback(Player *p, Item *item, InventoryEntry *entry
 {
 	//check if it changed anything in clientset, and if it did, recompute and flag dirty
 
-	PlayerDataStruct *data = PPDATA(killed, playerDataKey);
+	PlayerDataStruct *data = PPDATA(p, playerDataKey);
 
 	if (item->affectsSets)
 	{
@@ -582,7 +583,7 @@ local void itemCountChangedCallback(Player *p, Item *item, InventoryEntry *entry
 			{
 				addOverrides(p);
 				data->dirty = 1;
-				return
+				return;
 			}
 		}
 
@@ -607,8 +608,9 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 local void freqChangeCallback(Player *p, int newfreq)
 {
 	//check if they were in a safe zone. if not, then need a respawn
-	if (p->position.status & STATUS_SAFEZONE == 0) //not in safe
+	if ((p->position.status & STATUS_SAFEZONE) == 0) //not in safe
 	{
+		PlayerDataStruct *data = PPDATA(p, playerDataKey);
 		data->spawned = 0;
 	}
 }
@@ -616,16 +618,19 @@ local void freqChangeCallback(Player *p, int newfreq)
 local void shipChangeCallback(Player *p, int newship, int newfreq)
 {
 	//they need a respawn whenever they change ships
+	PlayerDataStruct *data = PPDATA(p, playerDataKey);
 	data->spawned = 0;
 }
 
 local void flagWinCallback(Arena *arena, int freq, int *points)
 {
 	//players on the winning freq need a respawn because of a continuum quirk
+	Link *link;
+	Player *p;
     pd->Lock();
 	FOR_EACH_PLAYER(p)
 	{
-		if(p->p_freq == freq && p->p_ship != SHIP_SPEC)
+		if(p->arena == arena && p->p_freq == freq && p->p_ship != SHIP_SPEC)
 		{
 			data->spawned = 0;
 		}
