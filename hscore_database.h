@@ -24,9 +24,9 @@ typedef struct PerArenaData
 	LinkedList categoryList;
 } PerArenaData;
 
-
 #define CB_ITEM_COUNT_CHANGED "itemcount-1"
 //NOTE: *entry may be NULL if newCount is 0.
+//called with lock held
 typedef void (*ItemCountChanged)(Player *p, Item *item, InventoryEntry *entry, int newCount, int oldCount);
 
 #define CB_SHIPS_LOADED "shipsloaded-1"
