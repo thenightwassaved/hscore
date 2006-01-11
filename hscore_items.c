@@ -299,19 +299,21 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					}
 
 					addItem(t, item, ship, count);
-
-					if (count > 0)
+					if (ship == t->p_ship)
 					{
-						for (int i = 0; i < count; i++)
+						if (count > 0)
 						{
-							triggerEventOnItem(t, item, ship, "add");
+							for (int i = 0; i < count; i++)
+							{
+								triggerEventOnItem(t, item, ship, "add");
+							}
 						}
-					}
-					else
-					{
-						for (int i = 0; i < -count; i++)
+						else
 						{
-							triggerEventOnItem(t, item, ship, "del");
+							for (int i = 0; i < -count; i++)
+							{
+								triggerEventOnItem(t, item, ship, "del");
+							}
 						}
 					}
 
