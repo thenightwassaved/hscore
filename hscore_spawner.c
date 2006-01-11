@@ -529,7 +529,7 @@ local void Pppk(Player *p, byte *p2, int len)
 
 	if (data->spawned == 0) //player hasn't been spawned
 	{
-		int enterDelay = cfg->GetInt(conf, "Kill", "EnterDelay", 100);
+		int enterDelay = cfg->GetInt(p->arena->cfg, "Kill", "EnterDelay", 100);
 		if (current_ticks() > (data->lastDeath + enterDelay + 50)) //not still dead
 		{
 			if (data->underOurControl == 1) //attached to the arena
