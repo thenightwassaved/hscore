@@ -102,39 +102,49 @@ local void goalCallback(Arena *arena, Player *scorer, int bid, int x, int y)
 local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty, int flags, int *pts, int *green)
 {
 	/*
+	 * --Old Formula--
 	 * money = coefficient * (killeeBty + bonus) / (killerBty + bonus)) + minimum
 	 * Defaults:
 	 * Coefficient = 50, bonus = 5, minimum = 1
+	 ****************************************************************************
+	 * --New Formula--
+	 * exp = coefficient * ( ln(killeeExp) / ln(killerExp ) + minimum
+	 * money = ( multiplier * exp ) + ( killerBty * bonus )
+	 * Defaults:
+	 * Coefficient = 10, minimum = 1, multiplier = 10, bonus = 1
 	 */
 
 	//Variable Declarations
-	double amount, coeff, bonus, min;
-	int reward, exp;
+	double amount, coeff, bonus, min, mult, kexp, dexp;
+	int hsbucks, exp;
 
 	//Read Settings
-	coeff = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillCoeff", 50);
+	coeff = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillCoeff", 10);
 	min   = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillMin",   1);
-	bonus = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillBonus", 5);
+	bonus = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillBonus", 1);
+	mult  = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillMult",  10);
+	
+	//Retrieve Experience
+	kexp = (double) getExp(killer);
+	dexp = (double) getExp(killed);
 
-	//Calculate Reward
-	amount  = (bounty + bonus);
-
-	//1-Bty Guard: was bad for those who actually were noobs :(
-	//if(killer->position.bounty == 1)
-	//	amount /= (bounty + bonus);
-	//else
-	//	amount /= (killer->position.bounty + bonus);
-
-	amount /= (killer->position.bounty + bonus);
+	//Calculate Earned Experience
+	amount = ln(dexp) / ln(kexp);
 	amount *= coeff;
 	amount += min;
-	reward  = (int)amount;
-	exp = (int)(amount / 10);
+	exp = (int) amount;
+
+	//Calculate Earned Money
+	hsbucks = (mult * exp);
+	hsbucks += (killer->position.bounty * bonus);
+	hsbucks /= (killer->position.bounty + bonus);
+	hsbucks *= coeff;
+	hsbucks += min;	
 
 	//Distribute Wealth
-	money->giveMoney(killer, amount, MONEY_TYPE_KILL);
+	money->giveMoney(killer, hsbucks, MONEY_TYPE_KILL);
 	money->giveExp(killer, exp);
-	chat->SendMessage(killer, "You received $%d and %d exp for killing %s (%d bounty).", reward, exp, killed->name, bounty);
+	chat->SendMessage(killer, "You received $%d and %d exp for killing %s.", hsbucks, exp, killed->name);
 }
 
 local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalplayers, int flagsowned)
@@ -228,7 +238,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		mm->RegCallback(CB_GOAL, goalCallback, arena);
 		mm->RegCallback(CB_KILL, killCallback, arena);
 
-		chat->SendArenaMessage(arena, "OMGWTFBBQ!!!");
+		//chat->SendArenaMessage(arena, "OMGWTFBBQ!!!");
 
 		return MM_OK;
 	}
