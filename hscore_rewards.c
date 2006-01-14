@@ -142,14 +142,14 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	hsbucks += (killer->position.bounty * bonus);		
 	
 	//Calculate Exp2
-	amount =  xp( -kexp / (dexp + 1));
+	amount =  exp( -kexp / (dexp + 1));
 	amount *= coeff;
 	amount += min;
 	exp2   =  (int)amount;
 
 	//Distribute Wealth
 	money->giveMoney(killer, hsbucks, MONEY_TYPE_KILL);
-	money->giveExp(killer, exp);
+	money->giveExp(killer, xp);
 	chat->SendMessage(killer, "You received $%d and %d exp (%d) for killing %s.", hsbucks, xp, exp2, killed->name);
 }
 
