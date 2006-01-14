@@ -5,6 +5,7 @@
 #include "hscore.h"
 #include "hscore_storeman.h"
 #include "hscore_database.h"
+#include "hscore_spawner.h"
 #include "hscore_shipnames.h"
 #include "fg_wz.h"
 
@@ -589,7 +590,7 @@ local void itemCountChangedCallback(Player *p, Item *item, InventoryEntry *entry
 		//resend the settings now
 		data->dirty = 0;
 		addOverrides(p);
-		clientset->SendClientSettings(killed);
+		clientset->SendClientSettings(p);
 	}
 	else //check if it changed anything in clientset, and if it did, recompute and flag dirty
 	{
@@ -632,7 +633,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	if (data->dirty == 1)
 	{
 		data->dirty = 0;
-		addOverrides(p);
+		addOverrides(killed);
 		clientset->SendClientSettings(killed);
 	}
 }
