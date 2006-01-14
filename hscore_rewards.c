@@ -108,15 +108,18 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	 * Coefficient = 50, bonus = 5, minimum = 1
 	 ****************************************************************************
 	 * --New Formula--
-	 * exp = coefficient * ( ln(killeeExp) / ln(killerExp ) + minimum
+	 * exp = coefficient * ( ln(killeeExp + 1) / ln(killerExp + 2) + minimum
 	 * money = ( multiplier * exp ) + ( killerBty * bonus )
 	 * Defaults:
 	 * Coefficient = 10, minimum = 1, multiplier = 10, bonus = 1
+	 *
+     * --New Formula 2--
+	 * exp = coefficient * e ^( -killerExp / (killeeExp + 1) )
 	 */
 
 	//Variable Declarations
 	double amount, coeff, bonus, min, mult, kexp, dexp;
-	int hsbucks, exp;
+	int hsbucks, exp, exp2;
 
 	//Read Settings
 	coeff = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillCoeff", 10);
@@ -129,7 +132,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	dexp = (double) getExp(killed);
 
 	//Calculate Earned Experience
-	amount = ln(dexp) / ln(kexp);
+	amount = ln(dexp + 1) / ln(kexp + 2);
 	amount *= coeff;
 	amount += min;
 	exp = (int) amount;
@@ -141,10 +144,16 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	hsbucks *= coeff;
 	hsbucks += min;	
 
+	//Calculate Exp2
+	amount =  exp( -kexp / (dexp + 1));
+	amount *= coeff;
+	amount += min;
+	exp2   =  (int)amount;
+
 	//Distribute Wealth
 	money->giveMoney(killer, hsbucks, MONEY_TYPE_KILL);
 	money->giveExp(killer, exp);
-	chat->SendMessage(killer, "You received $%d and %d exp for killing %s.", hsbucks, exp, killed->name);
+	chat->SendMessage(killer, "You received $%d and %d exp (%d) for killing %s.", hsbucks, exp, exp2, killed->name);
 }
 
 local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalplayers, int flagsowned)
