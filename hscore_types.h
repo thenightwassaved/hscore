@@ -32,10 +32,7 @@ typedef enum EventAction
 	ACTION_SHIP_RESET,
 
 	//calls a callback passing an eventid of event->data.
-	ACTION_CALLBACK,
-
-	//resends a settings packet
-	ACTION_RESEND_SETS
+	ACTION_CALLBACK
 } EventAction;
 
 typedef struct Event
@@ -94,6 +91,9 @@ typedef struct Item
 	//if any of this item's properties change the clientset packet
 	int affectsSets;
 
+	//if the settings packet should be resent immediatly following an item update
+	int resendSets;
+
 	int id; //MySQL use only
 } Item;
 
@@ -112,6 +112,7 @@ typedef struct ShipHull
 	//NOTE: no need for ship #, as it's defined by the array index (when loaded by hscore_database)
 
 	//if we compile a hashmap of properties, it can go in here.
+	HashTable *propertySums;
 
 	int id; //MySQL use only
 } ShipHull;

@@ -106,6 +106,9 @@ local int playerDataKey;
 
 local ShipOverrideKeys shipOverrideKeys[8];
 
+//interface function
+local void respawn(Player *p);
+
 local void spawnPlayer(Player *p)
 {
 	PlayerDataStruct *data = PPDATA(p, playerDataKey);
@@ -567,41 +570,55 @@ local void playerActionCallback(Player *p, int action, Arena *arena)
 
 local void shipsLoadedCallback(Player *p)
 {
+	PlayerDataStruct *data = PPDATA(p, playerDataKey);
+
 	addOverrides(p);
 	//send the packet the first time
 	clientset->SendClientSettings(p);
+
+	data->dirty = 0;
+
 }
 
 local void itemCountChangedCallback(Player *p, Item *item, InventoryEntry *entry, int newCount, int oldCount) //called with lock held
 {
-	//check if it changed anything in clientset, and if it did, recompute and flag dirty
-
 	PlayerDataStruct *data = PPDATA(p, playerDataKey);
 
-	if (item->affectsSets)
+	if (item->resendSets)
 	{
+		//resend the settings now
+		data->dirty = 0;
 		addOverrides(p);
-		data->dirty = 1;
-		return;
+		clientset->SendClientSettings(killed);
 	}
-
-	//if we didn't recompute, then check if the player has anything changeable that uses this item as ammo.
-	//if they do, recompute and flag dirty
-	Link *link;
-	for (link = LLGetHead(database->getItemList()); link; link = link->next)
+	else //check if it changed anything in clientset, and if it did, recompute and flag dirty
 	{
-		Item *linkItem = link->data;
-
-		if (linkItem->ammo == item)
+		if (item->affectsSets)
 		{
-			if (linkItem->affectsSets)
-			{
-				addOverrides(p);
-				data->dirty = 1;
-				return;
-			}
+			data->dirty = 1;
+			return;
 		}
 
+		//if we didn't recompute, then check if the player has anything changeable that uses this item as ammo.
+		//if they do, recompute and flag dirty
+		//NOTE: only need to do it if count was or is 0
+		if (oldCount == 0 || newCount == 0)
+		{
+			Link *link;
+			for (link = LLGetHead(database->getItemList()); link; link = link->next)
+			{
+				Item *linkItem = link->data;
+
+				if (linkItem->ammo == item)
+				{
+					if (linkItem->affectsSets)
+					{
+						data->dirty = 1;
+						return;
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -615,6 +632,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	if (data->dirty == 1)
 	{
 		data->dirty = 0;
+		addOverrides(p);
 		clientset->SendClientSettings(killed);
 	}
 }
@@ -670,6 +688,19 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 	}
 	pd->Unlock();
 }
+
+local void respawn(Player *p)
+{
+	//just a redirect, for now
+	spawnPlayer(p);
+}
+
+local Ihscorespawner interface =
+{
+	INTERFACE_HEAD_INIT(I_HSCORE_SPAWNER, "hscore_spawner")
+	respawn,
+};
+
 
 EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 {
@@ -734,6 +765,8 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 	}
 	else if (action == MM_ATTACH)
 	{
+		mm->RegInterface(&interface, ALLARENAS);
+
 		mm->RegCallback(CB_WARZONEWIN, flagWinCallback, arena);
 		mm->RegCallback(CB_SHIPS_LOADED, shipsLoadedCallback, arena);
 		mm->RegCallback(CB_SHIPCHANGE, shipChangeCallback, arena);
@@ -746,6 +779,11 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 	}
 	else if (action == MM_DETACH)
 	{
+		if (mm->UnregInterface(&interface, ALLARENAS))
+		{
+			return MM_FAIL;
+		}
+
 		mm->UnregCallback(CB_FREQCHANGE, freqChangeCallback, arena);
 		mm->UnregCallback(CB_ITEM_COUNT_CHANGED, itemCountChangedCallback, arena);
 		mm->UnregCallback(CB_KILL, killCallback, arena);

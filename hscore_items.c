@@ -524,7 +524,13 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 		t.u.p = p;
 
 		game->ShipReset(&t);
-		//FIXME: reprize
+
+		Ihscorespawner *spawner = mm->GetInterface(I_HSCORE_SPAWNER, p->arena);
+		if (spawner)
+		{
+			spawner->respawn(p);
+			mm->ReleaseInterface(spawner);
+		}
 	}
 	else if (action == ACTION_CALLBACK) //calls a callback passing an eventid of event->data.
 	{
@@ -726,6 +732,10 @@ local int getPropertySum(Player *p, int ship, const char *propString) //call wit
 		return 0;
 	}
 
+	//check if it's in the cache
+	//FIXME
+
+	//not in the cache, look it up
 	Link *link;
 	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
@@ -761,6 +771,10 @@ local int getPropertySum(Player *p, int ship, const char *propString) //call wit
 	}
 	database->unlock();
 
+	//cache it
+	//FIXME
+
+	//then return
 	return count;
 }
 

@@ -262,6 +262,7 @@ local void LinkAmmo()
 "  `delay_write` tinyint(4) NOT NULL default '0'," \
 "  `ammo` int(10) unsigned NOT NULL default '0'," \
 "  `affects_sets` tinyint(4) NOT NULL default '0'," \
+"  `resend_sets` tinyint(4) NOT NULL default '0'," \
 "  PRIMARY KEY  (`id`)" \
 ")"
 
@@ -476,6 +477,7 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 		item->delayStatusWrite = atoi(mysql->GetField(row, 13));	//delay_write
 		item->ammoID = atoi(mysql->GetField(row, 14));				//ammo
 		item->affectsSets = atoi(mysql->GetField(row, 15));			//affects_sets
+		item->resendSets = atoi(mysql->GetField(row, 16));			//resend_sets
 
 		//add the item to the list
 		lock();
@@ -965,6 +967,9 @@ local void UnloadPlayerShip(ShipHull *ship) //call with lock() held
 	LLEnum(&ship->inventoryEntryList, afree);
 	LLEmpty(&ship->inventoryEntryList);
 
+	HashEnum(ship->propertySums, hash_enum_afree, NULL);
+	HashFree(ship->propertySums);
+
 	afree(ship);
 }
 
@@ -1161,7 +1166,7 @@ local void LoadProperties()
 
 local void LoadItemList() //will call LoadProperties() and LoadEvents() when finished
 {
-	mysql->Query(loadItemsQueryCallback, NULL, 1, "SELECT id, name, short_description, long_description, buy_price, sell_price, exp_required, ships_allowed, type1, type2, type1_delta, type2_delta, max, delay_write, ammo, affects_sets FROM hs_items");
+	mysql->Query(loadItemsQueryCallback, NULL, 1, "SELECT id, name, short_description, long_description, buy_price, sell_price, exp_required, ships_allowed, type1, type2, type1_delta, type2_delta, max, delay_write, ammo, affects_sets, resend_sets FROM hs_items");
 }
 
 local void LoadItemTypeList() //will call LoadItemList() when finished loading
@@ -1581,19 +1586,19 @@ local void updateInventoryNoLock(Player *p, int ship, InventoryEntry *entry, int
 
 	if (ship < 0 || 7 < ship)
 	{
-		lm->LogP(L_ERROR, "hscore_database", p, "asked to update item on ship %i", ship);
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to update inventory on ship %i", ship);
 		return;
 	}
 
 	if (!areShipsLoaded(p))
 	{
-		lm->LogP(L_ERROR, "hscore_database", p, "asked to update item on unloaded ships");
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to update inventory on unloaded ships");
 		return;
 	}
 
 	if (playerData->hull[ship] == NULL)
 	{
-		lm->LogP(L_ERROR, "hscore_database", p, "asked to update item on unowned ship %i", ship);
+		lm->LogP(L_ERROR, "hscore_database", p, "asked to update inventory on unowned ship %i", ship);
 		return;
 	}
 
@@ -1607,6 +1612,7 @@ local void updateInventoryNoLock(Player *p, int ship, InventoryEntry *entry, int
 		}
 		else
 		{
+			int oldCount = entry->count;
 			entry->count = newCount;
 			entry->data = newData;
 
@@ -1626,11 +1632,19 @@ local void updateInventoryNoLock(Player *p, int ship, InventoryEntry *entry, int
 
 				mysql->Query(NULL, NULL, 0, "REPLACE INTO hs_player_ship_items VALUES (#,#,#,#)", shipID, entry->item->id, newCount, newData);
 			}
+
+			if (newCount != oldCount)
+			{
+				DO_CBS(CB_ITEM_COUNT_CHANGED, p->arena, ItemCountChanged, (p, entry->item, entry, newCount, oldCount));
+			}
 		}
 	}
 	else
 	{
 		int shipID = playerData->hull[ship]->id;
+
+		Item *item = entry->item; //save it for later
+		int oldCount = entry->count; //save it for later
 
 		if (shipID == -1)
 		{
@@ -1646,6 +1660,8 @@ local void updateInventoryNoLock(Player *p, int ship, InventoryEntry *entry, int
 
 		LLRemove(inventoryList, entry);
 		afree(entry);
+
+		DO_CBS(CB_ITEM_COUNT_CHANGED, p->arena, ItemCountChanged, (p, item, NULL, 0, oldCount));
 	}
 }
 
@@ -1676,6 +1692,7 @@ local void addShip(Player *p, int ship) //the ships id may not be valid until la
 	ShipHull *hull = amalloc(sizeof(*hull));
 
 	LLInit(&hull->inventoryEntryList);
+	hull->propertySums = HashAlloc();
 	hull->id = -1;
 
 	playerData->hull[ship] = hull;
