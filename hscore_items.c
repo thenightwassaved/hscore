@@ -5,6 +5,7 @@
 #include "hscore.h"
 #include "hscore_database.h"
 #include "hscore_shipnames.h"
+#include "hscore_spawner.h"
 
 //modules
 local Imodman *mm;
