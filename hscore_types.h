@@ -32,7 +32,10 @@ typedef enum EventAction
 	ACTION_SHIP_RESET,
 
 	//calls a callback passing an eventid of event->data.
-	ACTION_CALLBACK
+	ACTION_CALLBACK,
+
+	//resends a settings packet
+	ACTION_RESEND_SETS
 } EventAction;
 
 typedef struct Event

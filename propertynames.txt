@@ -69,3 +69,7 @@ soccertime
 soccerprox
 
 maxmines
+
+
+gravspeed
+grav

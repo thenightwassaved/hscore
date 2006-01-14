@@ -125,7 +125,7 @@ local void spawnPlayer(Player *p)
 	if (multifire) game->GivePrize(&t, 15, multifire);
 
 	int shrapnel = items->getPropertySum(p, p->pkt.ship, "shrapnel");
-	if (shrapnel) game->GivePrize(&t, 19, multifire);
+	if (shrapnel) game->GivePrize(&t, 19, shrapnel);
 }
 
 local void loadOverrides()
@@ -436,6 +436,14 @@ local void addOverrides(Player *p)
 			int maxmines = items->getPropertySum(p, i, "maxmines") + initMaxMines;
 			if (maxmines) clientset->PlayerOverride(p, shipOverrideKeys[i].MaxMines, maxmines);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaxMines);
+
+			int gravspeed = items->getPropertySum(p, i, "gravspeed");
+			if (gravspeed) clientset->PlayerOverride(p, shipOverrideKeys[i].GravityTopSpeed, gravspeed);
+			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].GravityTopSpeed);
+
+			int grav = items->getPropertySum(p, i, "grav");
+			if (grav) clientset->PlayerOverride(p, shipOverrideKeys[i].Gravity, grav);
+			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].Gravity);
 		}
 	}
 }
