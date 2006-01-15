@@ -705,6 +705,7 @@ local void loadPlayerShipsQueryCallback(int status, db_res *result, void *passed
 			ShipHull *hull = amalloc(sizeof(*hull));
 
 			LLInit(&hull->inventoryEntryList);
+			hull->propertySums = HashAlloc();
 
 			hull->id = id;
 
