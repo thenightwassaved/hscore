@@ -218,17 +218,21 @@ local void addOverrides(Player *p)
 		{
 			char *shipname = shipNames[i];
 
-			int cloak = 2 * items->getPropertySum(p, i, "cloak");
-			clientset->PlayerOverride(p, shipOverrideKeys[i].CloakStatus, cloak);
+			int cloak = items->getPropertySum(p, i, "cloak");
+			if (cloak) clientset->PlayerOverride(p, shipOverrideKeys[i].CloakStatus, 2);
+			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].CloakStatus);
 
-			int stealth = 2 * items->getPropertySum(p, i, "stealth");
-			clientset->PlayerOverride(p, shipOverrideKeys[i].StealthStatus, stealth);
+			int stealth = items->getPropertySum(p, i, "stealth");
+			if (stealth) clientset->PlayerOverride(p, shipOverrideKeys[i].StealthStatus, 2);
+			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].StealthStatus);
 
-			int xradar = 2 * items->getPropertySum(p, i, "xradar");
-			clientset->PlayerOverride(p, shipOverrideKeys[i].XRadarStatus, xradar);
+			int xradar = items->getPropertySum(p, i, "xradar");
+			if (xradar) clientset->PlayerOverride(p, shipOverrideKeys[i].XRadarStatus, 2);
+			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].XRadarStatus);
 
-			int antiwarp = 2 * items->getPropertySum(p, i, "antiwarp");
-			clientset->PlayerOverride(p, shipOverrideKeys[i].AntiWarpStatus, antiwarp);
+			int antiwarp = items->getPropertySum(p, i, "antiwarp");
+			if (antiwarp) clientset->PlayerOverride(p, shipOverrideKeys[i].AntiWarpStatus, 2);
+			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].AntiWarpStatus);
 
 
 
