@@ -694,7 +694,7 @@ local void respawn(Player *p)
 {
 	//a simple redirect won't work because of locking issues.
 	//instead rig them for respawn on next position packet
-	PlayerDataStruct *data = PPDATA(killed, playerDataKey);
+	PlayerDataStruct *data = PPDATA(p, playerDataKey);
 	data->spawned = 0;
 	data->lastDeath = 0;
 }
