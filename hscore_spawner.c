@@ -692,8 +692,11 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 
 local void respawn(Player *p)
 {
-	//just a redirect, for now
-	spawnPlayer(p);
+	//a simple redirect won't work because of locking issues.
+	//instead rig them for respawn on next position packet
+	PlayerDataStruct *data = PPDATA(killed, playerDataKey);
+	data->spawned = 0;
+	data->lastDeath = 0;
 }
 
 local Ihscorespawner interface =
