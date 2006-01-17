@@ -44,7 +44,24 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 	 reward = (int)amount;
 	 exp = (int)(amount / 8);
 
-	 chat->SendArenaMessage(arena, "reward=%d exp=%d ", reward, exp);
+
+	Iteamnames *teamnames = mm->GetInterface(I_TEAMNAMES, arena);
+	if (teamnames)
+	{
+		const char *name = getFreqTeamName(freq, arena);
+		if (name != NULL)
+		{
+			chat->SendArenaMessage(arena, "%s won flag game. Reward: $%d (%d exp)", name, reward, exp);
+		}
+		else
+		{
+			chat->SendArenaMessage(arena, "Unidentified team won flag game. Reward: $%d (%d exp)", reward, exp);
+		}
+	}
+	else
+	{
+		chat->SendArenaMessage(arena, "Reward: $%d (%d exp)", reward, exp);
+	}
 
 	 //Distribute Wealth
     pd->Lock();
@@ -117,40 +134,64 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	 * exp = coefficient * e ^( -killerExp / (killeeExp + 1) )
 	 */
 
-	//Variable Declarations
-	double amount, coeff, bonus, min, mult, kexp, dexp;
-	int hsbucks, xp, exp2;
+	if(killee->p_freq == killed->p_freq)
+	{
+		chat->SendMessage(killer, "No reward for teamkill of %s.", killed->name);
+	}
+	else
+	{
+		//Variable Declarations
+		double amount, coeff, bonus, min, mult, kexp, dexp;
+		int hsbucks, xp, exp2;
 
-	//Read Settings
-	coeff = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillCoeff", 10);
-	min   = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillMin",   1);
-	bonus = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillBonus", 1);
-	mult  = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillMult",  10);
-	
-	//Retrieve Experience
-	kexp = (double) money->getExp(killer);
-	dexp = (double) money->getExp(killed);
+		//Read Settings
+		coeff = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillCoeff", 10);
+		min   = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillMin",   1);
+		bonus = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillBonus", 1);
+		mult  = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillMult",  10);
 
-	//Calculate Earned Experience
-	amount = log(dexp + 1) / log(kexp + 2);
-	amount *= coeff;
-	amount += min;
-	xp = (int) amount;
+		//Retrieve Experience
+		kexp = (double) money->getExp(killer);
+		dexp = (double) money->getExp(killed);
 
-	//Calculate Earned Money
-	hsbucks = (mult * xp);
-	hsbucks += (killer->position.bounty * bonus);		
-	
-	//Calculate Exp2
-	amount =  exp( -kexp / (dexp + 1));
-	amount *= coeff;
-	amount += min;
-	exp2   =  (int)amount;
+		//Calculate Earned Experience
+		amount = log(dexp + 1) / log(kexp + 2);
+		amount *= coeff;
+		amount += min;
+		xp = (int) amount;
 
-	//Distribute Wealth
-	money->giveMoney(killer, hsbucks, MONEY_TYPE_KILL);
-	money->giveExp(killer, xp);
-	chat->SendMessage(killer, "You received $%d and %d exp (%d) for killing %s.", hsbucks, xp, exp2, killed->name);
+		//Calculate Earned Money
+		hsbucks = (mult * xp);
+		hsbucks += (killer->position.bounty * bonus);
+
+		//Calculate Exp2
+		amount =  exp( -kexp / (dexp + 1));
+		amount *= coeff;
+		amount += min;
+		exp2   =  (int)amount;
+
+		//Distribute Wealth
+		money->giveMoney(killer, hsbucks, MONEY_TYPE_KILL);
+		money->giveExp(killer, xp);
+		chat->SendMessage(killer, "You received $%d and %d exp (%d) for killing %s.", hsbucks, xp, exp2, killed->name);
+
+		//give money to teammates
+		/*Player *p;
+		pd->Lock();
+		FOR_EACH_PLAYER(p)
+		{
+			if(p->p_freq == killer->p_freq && p->p_ship != SHIP_SPEC && p != killer && !(p->position.status & STATUS_SAFEZONE))
+			{
+				double distance =
+				money->giveMoney(p, reward, MONEY_TYPE_KILL);
+				money->giveExp(p, exp);
+
+				//check if they received more than %30. if they did, message them. otherwise, don't bother.
+				chat->SendMessage(p, "You received $%d and %d exp for a team goal.", reward, exp);
+			}
+		}
+		pd->Unlock();*/
+	}
 }
 
 local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalplayers, int flagsowned)
