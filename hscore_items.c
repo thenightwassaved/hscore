@@ -53,11 +53,12 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 		return;
 	}
 
+	//FIXME: add ammo and max
 
 	chat->SendMessage(p, "+------------------+");
 	chat->SendMessage(p, "| %-16s |", item->name);
-	chat->SendMessage(p, "+-----------+------+-----+--------+----------+------------------+-------+------------------+-------+");
-	chat->SendMessage(p, "| Buy Price | Sell Price | Exp    | Ships    | Item Type 1      | Usage | Item Type 2      | Usage |");
+	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+-----------------+-------+-----------------+-------+");
+	chat->SendMessage(p, "| Buy Price | Sell Price | Exp   | Ships    | Max | Item Type 1     | Usage | Item Type 2     | Usage |");
 
 	//calculate ship mask
 	char shipMask[] = "12345678";
@@ -73,15 +74,15 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 	char *itemType1 = (item->type1) ? item->type1->name : "<none>";
 	char *itemType2 = (item->type2) ? item->type2->name : "<none>";
 
-	chat->SendMessage(p, "| $%-8i | $%-9i | %-6i | %s | %-16s | %-5i | %-16s | %-5i |", item->buyPrice, item->sellPrice, item->expRequired, shipMask, itemType1, item->typeDelta1, itemType2, item->typeDelta2);
-	chat->SendMessage(p, "+-----------+------------+--------+----------+------------------+-------+------------------+-------+");
+	chat->SendMessage(p, "| $%-8i | $%-9i | %-5i | %s | %-3i | %-15s | %-5i | %-15s | %-5i |", item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, itemType1, item->typeDelta1, itemType2, item->typeDelta2);
+	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+-----------------+-------+-----------------+-------+");
 
 	//print description
 	char buf[256];
 	const char *temp = NULL;
 	while (strsplit(item->longDesc, "ß", buf, 256, &temp))
 	{
-		chat->SendMessage(p, "| %-96s |", buf);
+		chat->SendMessage(p, "| %-99s |", buf);
 	}
 
 	database->lock();
@@ -89,7 +90,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 	if (link)
 	{
 		//print item properties
-		chat->SendMessage(p, "+------------------+----------------+--------------------------------------------------------------+");
+		chat->SendMessage(p, "+------------------+----------------+-----------------------------------------------------------------+");
 		chat->SendMessage(p, "| Property Name    | Property Value |");
 		chat->SendMessage(p, "+------------------+----------------+");
 		while (link)

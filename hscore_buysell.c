@@ -54,9 +54,9 @@ local void printCategoryItems(Player *p, Category *category) //call with lock he
 
 	chat->SendMessage(p, "+----------------------------------+");
 	chat->SendMessage(p, "| %-32s |", category->name);
-	chat->SendMessage(p, "+------------------+-----------+---+--------+--------+----------+----------------------------------+");
-	chat->SendMessage(p, "| Item Name        | Buy Price | Sell Price | Exp    | Ships    | Item Description                 |");
-	chat->SendMessage(p, "+------------------+-----------+------------+--------+----------+----------------------------------+");
+	chat->SendMessage(p, "+------------------+-----------+---+--------+-------+----------+-----+----------------------------------+");
+	chat->SendMessage(p, "| Item Name        | Buy Price | Sell Price | Exp   | Ships    | Max | Item Description                 |");
+	chat->SendMessage(p, "+------------------+-----------+------------+-------+----------+-----+----------------------------------+");
 
 	if (!category->hidden || capman->HasCapability(p, SEE_HIDDEN_CATEGORIES))
 	{
@@ -74,7 +74,7 @@ local void printCategoryItems(Player *p, Category *category) //call with lock he
 				}
 			}
 
-			chat->SendMessage(p, "| %-16s | %-9i | %-10i | %-6i | %-8s | %-32s |", item->name, item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->shortDesc);
+			chat->SendMessage(p, "| %-16s | %-9i | %-10i | %-5i | %-8s | %-3i | %-32s |", item->name, item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, item->shortDesc);
 		}
 	}
 

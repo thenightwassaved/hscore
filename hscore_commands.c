@@ -170,7 +170,13 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 			}
 			database->unlock();
 
-			chat->SendMessage(p, "+------------------+-------+------------+------------------+-------+------------------+-------+");
+			chat->SendMessage(p, "+------------------+-------+--------+---+------------------+-------+------------------+-------+");
+			chat->SendMessage(p, "| Property Name    | Property Value |");
+			chat->SendMessage(p, "+------------------+----------------+");
+
+			//fixme: add property sums
+
+			chat->SendMessage(p, "+------------------+----------------+");
 		}
 		else
 		{
