@@ -11,7 +11,7 @@
 
 /* cfghelp: Team:InitalSpec, arena, bool, def: 0
  * If players entering the arena are always assigned to spectator mode. */
-#define INITIALSPEC(ch) cfg->GetInt(ch, "Team", "InitalSpec", 0)
+#define INITIALSPEC(ch) cfg->GetInt(ch, "Team", "InitialSpec", 0)
 
 /* cfghelp: Team:IncludeSpectators, arena, bool, def: 0
  * Whether to include spectators when enforcing maximum freq sizes. */
