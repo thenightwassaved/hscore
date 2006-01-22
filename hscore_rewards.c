@@ -6,6 +6,7 @@
 #include "fg_wz.h"
 #include "hscore.h"
 #include <math.h>
+#include "hscore_teamnames.h"
 
 //modules
 local Imodman *mm;
@@ -134,7 +135,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	 * exp = coefficient * e ^( -killerExp / (killeeExp + 1) )
 	 */
 
-	if(killee->p_freq == killed->p_freq)
+	if(killer->p_freq == killed->p_freq)
 	{
 		chat->SendMessage(killer, "No reward for teamkill of %s.", killed->name);
 	}
@@ -177,6 +178,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 
 		//give money to teammates
 		Player *p;
+		Link *link;
 		double teammateRewardCoeff = (double)cfg->GetInt(arena->cfg, "Kill", "HSTeammateReward", 500); //50%
 		double distanceFalloff = (double)cfg->GetInt(arena->cfg, "Kill", "HSDistFalloff", 1200); //pixels
 		double maxReward = (double)(hsbucks) * teammateRewardCoeff / 1000.0;
