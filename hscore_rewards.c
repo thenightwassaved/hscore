@@ -176,21 +176,31 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		chat->SendMessage(killer, "You received $%d and %d exp (%d) for killing %s.", hsbucks, xp, exp2, killed->name);
 
 		//give money to teammates
-		/*Player *p;
+		Player *p;
+		double teammateRewardCoeff = (double)cfg->GetInt(arena->cfg, "Kill", "HSTeammateReward", 500); //50%
+		double distanceFalloff = (double)cfg->GetInt(arena->cfg, "Kill", "HSDistFalloff", 1200); //pixels
+		double maxReward = (double)(hsbucks) * teammateRewardCoeff / 1000.0;
 		pd->Lock();
 		FOR_EACH_PLAYER(p)
 		{
 			if(p->p_freq == killer->p_freq && p->p_ship != SHIP_SPEC && p != killer && !(p->position.status & STATUS_SAFEZONE))
 			{
-				double distance =
+				int xdelta = (p->position.x - killer->position.x);
+				int ydelta = (p->position.y - killer->position.y);
+				double distPercentage = ((double)(xdelta * xdelta + ydelta * ydelta)) / distanceFalloff;
+
+				int reward = (int)(maxReward * exp(-distPercentage));
+
 				money->giveMoney(p, reward, MONEY_TYPE_KILL);
-				money->giveExp(p, exp);
 
 				//check if they received more than %30. if they did, message them. otherwise, don't bother.
-				chat->SendMessage(p, "You received $%d and %d exp for a team goal.", reward, exp);
+				if (reward > (int)(0.30 * maxReward))
+				{
+					chat->SendMessage(p, "You received $%d for %s's kill.", reward, killer->name);
+				}
 			}
 		}
-		pd->Unlock();*/
+		pd->Unlock();
 	}
 }
 
