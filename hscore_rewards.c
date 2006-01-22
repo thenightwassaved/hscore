@@ -72,7 +72,8 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 		{
 			money->giveMoney(p, reward, MONEY_TYPE_FLAG);
 			money->giveExp(p, exp);
-			chat->SendMessage(p, "You received $%d and %d exp for a flag victory.", reward, exp);
+			//no need to send message, as the team announcement works just fine
+			//chat->SendMessage(p, "You received $%d and %d exp for a flag victory.", reward, exp);
 		}
 	}
 	pd->Unlock();
