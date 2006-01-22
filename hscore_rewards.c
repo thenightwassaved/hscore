@@ -49,7 +49,7 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 	Iteamnames *teamnames = mm->GetInterface(I_TEAMNAMES, arena);
 	if (teamnames)
 	{
-		const char *name = getFreqTeamName(freq, arena);
+		const char *name = teamnames->getFreqTeamName(freq, arena);
 		if (name != NULL)
 		{
 			chat->SendArenaMessage(arena, "%s won flag game. Reward: $%d (%d exp)", name, reward, exp);
