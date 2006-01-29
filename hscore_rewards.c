@@ -181,7 +181,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		Player *p;
 		Link *link;
 		double teammateRewardCoeff = (double)cfg->GetInt(arena->cfg, "Kill", "HSTeammateReward", 500); //50%
-		double distanceFalloff = (double)cfg->GetInt(arena->cfg, "Kill", "HSDistFalloff", 1200); //pixels
+		double distanceFalloff = (double)cfg->GetInt(arena->cfg, "Kill", "HSDistFalloff", 1440000); //pixels^2
 		double maxReward = (double)(hsbucks) * teammateRewardCoeff / 1000.0;
 		pd->Lock();
 		FOR_EACH_PLAYER(p)
@@ -199,7 +199,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 				//check if they received more than %30. if they did, message them. otherwise, don't bother.
 				//if (reward > (int)(0.30 * maxReward))
 				//{
-					chat->SendMessage(p, "You received $%d for %s's kill. (%d, %d, %f, %d)", reward, killer->name, xdelta, ydelta, distPercentage, maxReward);
+					chat->SendMessage(p, "You received $%d for %s's kill. (%d, %d, %f, %f)", reward, killer->name, xdelta, ydelta, distPercentage, maxReward);
 				//}
 			}
 		}
