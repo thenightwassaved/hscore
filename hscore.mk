@@ -4,7 +4,7 @@ hscore_mods = hscore_buysell hscore_commands hscore_database \
 	hscore_moneystub hscore_itemsstub hscore_teamnames \
 	hscore_prizer
 
-hscore_libs = $(MYSQL_LDFLAGS)
+hscore_libs = $(MYSQL_LDFLAGS) -lm
 
 $(eval $(call dl_template,hscore))
 
