@@ -199,7 +199,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 				//check if they received more than %30. if they did, message them. otherwise, don't bother.
 				//if (reward > (int)(0.30 * maxReward))
 				//{
-					chat->SendMessage(p, "You received $%d for %s's kill.", reward, killer->name);
+					chat->SendMessage(p, "You received $%d for %s's kill. (%d, %d, %f, %d)", reward, killer->name, xdelta, ydelta, distPercentage, maxReward);
 				//}
 			}
 		}
