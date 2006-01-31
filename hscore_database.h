@@ -32,7 +32,7 @@ typedef void (*ItemCountChanged)(Player *p, Item *item, InventoryEntry *entry, i
 #define CB_SHIPS_LOADED "shipsloaded-1"
 typedef void (*ShipsLoaded)(Player *p);
 
-#define CD_SHIP_ADDED "shipadded-1"
+#define CB_SHIP_ADDED "shipadded-1"
 typedef void (*ShipAdded)(Player *p, int ship);
 
 typedef struct Ihscoredatabase
