@@ -447,18 +447,34 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 	}
 	else if (action == ACTION_REMOVE_ITEM) //removes event->data amount of the items from the ship's inventory
 	{
-		for (int i = 0; i < event->data; i++)
+		if (entry != NULL)
 		{
-			internalTriggerEventOnItem(p, entry->item, p->p_ship, "del"); //fixme, this could be improved greatly (the loop)
+			removed = addItem(p, entry->item, p->p_ship, -event->data); //remove before "del"
+
+			for (int i = 0; i < event->data; i++)
+			{
+				internalTriggerEventOnItem(p, entry->item, p->p_ship, "del"); //fixme, this could be improved greatly (the loop)
+			}
+
 		}
-		removed = addItem(p, entry->item, p->p_ship, -event->data);
+		else
+		{
+			lm->LogP(L_ERROR, "hscore_items", p, "Item tried to run event %d with null entry.", action);
+		}
 	}
 	else if (action == ACTION_REMOVE_ITEM_AMMO) //removes event->data amount of the item's ammo type from inventory
 	{
-		removed = addItem(p, entry->item->ammo, p->p_ship, -event->data);
-		for (int i = 0; i < event->data; i++)
+		if (entry != NULL)
 		{
-			internalTriggerEventOnItem(p, entry->item->ammo, p->p_ship, "del"); //fixme, this could be improved greatly (the loop)
+			removed = addItem(p, entry->item->ammo, p->p_ship, -event->data);
+			for (int i = 0; i < event->data; i++)
+			{
+				internalTriggerEventOnItem(p, entry->item->ammo, p->p_ship, "del"); //fixme, this could be improved greatly (the loop)
+			}
+		}
+		else
+		{
+			lm->LogP(L_ERROR, "hscore_items", p, "Item tried to run event %d with null entry.", action);
 		}
 	}
 	else if (action == ACTION_PRIZE) //sends prize #event->data to the player
@@ -479,40 +495,61 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 	}
 	else if (action == ACTION_SET_INVENTORY_DATA) //sets the item's inventory data to event->data.
 	{
-		database->updateInventoryNoLock(p, p->p_ship, entry, entry->count, event->data);
+		if (entry != NULL)
+		{
+			database->updateInventoryNoLock(p, p->p_ship, entry, entry->count, event->data);
+		}
+		else
+		{
+			lm->LogP(L_ERROR, "hscore_items", p, "Item tried to run event %d with null entry.", action);
+		}
 	}
 	else if (action == 	ACTION_INCREMENT_INVENTORY_DATA) //does a ++ on inventory data.
 	{
-		database->updateInventoryNoLock(p, p->p_ship, entry, entry->count, entry->data + 1);
+		if (entry != NULL)
+		{
+			database->updateInventoryNoLock(p, p->p_ship, entry, entry->count, entry->data + 1);
+		}
+		else
+		{
+			lm->LogP(L_ERROR, "hscore_items", p, "Item tried to run event %d with null entry.", action);
+		}
 	}
 	else if (action == ACTION_DECREMENT_INVENTORY_DATA) //does a -- on inventory data. A "datazero" event may be generated as a result.
 	{
-		int newData = entry->data - 1;
-		if (newData < 0)
+		if (entry != NULL)
 		{
-			newData = 0;
-		}
-
-		database->updateInventoryNoLock(p, p->p_ship, entry, entry->count, newData);
-
-		if (newData == 0)
-		{
-			Link *eventLink = LLGetHead(&entry->item->eventList);
-			while (eventLink != NULL)
+			int newData = entry->data - 1;
+			if (newData < 0)
 			{
-				Event *eventToCheck = eventLink->data;
-				eventLink = eventLink->next; //doEvent may destroy entry
+				newData = 0;
+			}
 
-				if (strcmp(eventToCheck->event, "datazero") == 0)
+			database->updateInventoryNoLock(p, p->p_ship, entry, entry->count, newData);
+
+			if (newData == 0)
+			{
+				Link *eventLink = LLGetHead(&entry->item->eventList);
+				while (eventLink != NULL)
 				{
-					//fixme: note that only one event tag will be executed, because I don't know how to check if the item was deleted to exit the loop
-					removed = doEvent(p, entry, eventToCheck);
-					if (removed)
+					Event *eventToCheck = eventLink->data;
+					eventLink = eventLink->next; //doEvent may destroy entry
+
+					if (strcmp(eventToCheck->event, "datazero") == 0)
 					{
-						break;
+						//fixme: note that only one event tag will be executed, because I don't know how to check if the item was deleted to exit the loop
+						removed = doEvent(p, entry, eventToCheck);
+						if (removed)
+						{
+							break;
+						}
 					}
 				}
 			}
+		}
+		else
+		{
+			lm->LogP(L_ERROR, "hscore_items", p, "Item tried to run event %d with null entry.", action);
 		}
 	}
 	else if (action == ACTION_SPEC) //Specs the player.
@@ -884,6 +921,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 		return;
 	}
 
+	int foundEntry = 0;
 
 	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
@@ -896,6 +934,8 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 
 		if (item == triggerItem)
 		{
+			foundEntry = 1;
+
 			Link *eventLink;
 			for (eventLink = LLGetHead(&item->eventList); eventLink; eventLink = eventLink->next)
 			{
@@ -909,6 +949,28 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 					{
 						break;
 					}
+				}
+			}
+
+			break; //found the item, stop looping
+		}
+	}
+
+	//check if we didn't find the item
+	if (!foundItem)
+	{
+		Link *eventLink;
+		for (eventLink = LLGetHead(&triggerItem->eventList); eventLink; eventLink = eventLink->next)
+		{
+			Event *event = eventLink->data;
+
+			if (strcmp(event->event, eventName) == 0)
+			{
+				//fixme: note that only one event tag will be executed, because I don't know how to check if the item was deleted to exit the loop
+				int removed = doEvent(p, entry, event); //might delete current node
+				if (removed)
+				{
+					break;
 				}
 			}
 		}

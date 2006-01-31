@@ -246,12 +246,13 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 
 			//trigger before it's sold!
 			items->triggerEventOnItem(p, item, ship, "sell");
+
+			items->addItem(p, item, ship, -count); //change the count BEFORE the "del" event
+
 			for (int i = 0; i < count; i++)
 			{
 				items->triggerEventOnItem(p, item, ship, "del");
 			}
-
-			items->addItem(p, item, ship, -count);
 
 			money->giveMoney(p, item->sellPrice * count, MONEY_TYPE_BUYSELL);
 
@@ -293,7 +294,7 @@ local void buyShip(Player *p, int ship)
 					{
 						database->addShip(p, ship);
 
-						//FIXME: add some way of giving intial items
+						//database will call the ship_added callback for init items
 
 						money->giveMoney(p, -buyPrice, MONEY_TYPE_BUYSELL);
 
@@ -643,6 +644,11 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 	}
 }
 
+local void shipAddedCallback(Player *p, int ship)
+{
+	//FIXME, add initial items
+}
+
 EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 {
 	if (action == MM_LOAD)
@@ -692,12 +698,16 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 		cmd->AddCommand("buy", buyCommand, arena, buyHelp);
 		cmd->AddCommand("sell", sellCommand, arena, sellHelp);
 
+		mm->RegCallback(CB_SHIP_ADDED, shipAddedCallback, arena);
+
 		return MM_OK;
 	}
 	else if (action == MM_DETACH)
 	{
 		cmd->RemoveCommand("buy", buyCommand, arena);
 		cmd->RemoveCommand("sell", sellCommand, arena);
+
+		mm->UnregCallback(CB_SHIP_ADDED, shipAddedCallback, arena);
 
 		return MM_OK;
 	}
