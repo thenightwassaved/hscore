@@ -921,7 +921,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 		return;
 	}
 
-	int foundEntry = 0;
+	int foundItem = 0;
 
 	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
@@ -934,7 +934,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 
 		if (item == triggerItem)
 		{
-			foundEntry = 1;
+			foundItem = 1;
 
 			Link *eventLink;
 			for (eventLink = LLGetHead(&item->eventList); eventLink; eventLink = eventLink->next)
@@ -967,7 +967,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 			if (strcmp(event->event, eventName) == 0)
 			{
 				//fixme: note that only one event tag will be executed, because I don't know how to check if the item was deleted to exit the loop
-				int removed = doEvent(p, entry, event); //might delete current node
+				int removed = doEvent(p, NULL, event); //might delete current node
 				if (removed)
 				{
 					break;
