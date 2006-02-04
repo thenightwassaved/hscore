@@ -655,12 +655,12 @@ local void shipAddedCallback(Player *p, int ship)
 		while (strsplit(initItem, ",", word, sizeof(word), &tmp))
 		{
 			//items should be in the format "item name" or "item name:count"
-			const char *colonLoc = strchr(word, ':');
-			if (colonLoc = NULL)
+			char *colonLoc = strchr(word, ':');
+			if (colonLoc == NULL)
 			{
 				//no count included
 				//word should be just "item name"
-				Item *item = getItemByName(word, p->arena);
+				Item *item = items->getItemByName(word, p->arena);
 				if (item != NULL)
 				{
 					addItem(p, item, ship, 1);
@@ -682,10 +682,10 @@ local void shipAddedCallback(Player *p, int ship)
 					int count = atoi(colonLoc);
 					if (count > 0)
 					{
-						Item *item = getItemByName(word, p->arena);
+						Item *item = items->getItemByName(word, p->arena);
 						if (item != NULL)
 						{
-							addItem(p, item, ship, count);
+							items->addItem(p, item, ship, count);
 						}
 						else
 						{
