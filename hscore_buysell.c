@@ -646,7 +646,64 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 
 local void shipAddedCallback(Player *p, int ship)
 {
-	//FIXME, add initial items
+	const char *initItem = cfg->GetStr(p->arena->cfg, shipNames[ship], "InitItems");
+
+	if (initItem != NULL) //only bother if there are items to add
+	{
+		const char *tmp = NULL;
+		char word[64];
+		while (strsplit(initItem, ",", word, sizeof(word), &tmp))
+		{
+			//items should be in the format "item name" or "item name:count"
+			const char *colonLoc = strchr(word, ':');
+			if (colonLoc = NULL)
+			{
+				//no count included
+				//word should be just "item name"
+				Item *item = getItemByName(word, p->arena);
+				if (item != NULL)
+				{
+					addItem(p, item, ship, 1);
+				}
+				else
+				{
+					lm->LogP(L_ERROR, "hscore_buysell", p, "bad item %s", word);
+				}
+			}
+			else
+			{
+				//null terminate the item name
+				*colonLoc = '\0';
+
+				//make sure a count follows the colon
+				colonLoc++;
+				if (*colonLoc != '\0')
+				{
+					int count = atoi(colonLoc);
+					if (count > 0)
+					{
+						Item *item = getItemByName(word, p->arena);
+						if (item != NULL)
+						{
+							addItem(p, item, ship, count);
+						}
+						else
+						{
+							lm->LogP(L_ERROR, "hscore_buysell", p, "bad item %s", word);
+						}
+					}
+					else
+					{
+						lm->LogP(L_ERROR, "hscore_buysell", p, "initial count of %d for %s", count, word);
+					}
+				}
+				else
+				{
+					lm->LogP(L_ERROR, "hscore_buysell", p, "colon on item %s not followed by a string", word);
+				}
+			}
+		}
+	}
 }
 
 EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
