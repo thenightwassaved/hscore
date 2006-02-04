@@ -449,11 +449,14 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 	{
 		if (entry != NULL)
 		{
-			removed = addItem(p, entry->item, p->p_ship, -event->data); //remove before "del"
+			//save item pointer
+			Item *item = entry->item;
+
+			removed = addItem(p, item, p->p_ship, -event->data); //remove before "del"
 
 			for (int i = 0; i < event->data; i++)
 			{
-				internalTriggerEventOnItem(p, entry->item, p->p_ship, "del"); //fixme, this could be improved greatly (the loop)
+				internalTriggerEventOnItem(p, item, p->p_ship, "del"); //fixme, this could be improved greatly (the loop)
 			}
 
 		}
