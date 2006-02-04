@@ -663,7 +663,7 @@ local void shipAddedCallback(Player *p, int ship)
 				Item *item = items->getItemByName(word, p->arena);
 				if (item != NULL)
 				{
-					addItem(p, item, ship, 1);
+					items->addItem(p, item, ship, 1);
 				}
 				else
 				{
