@@ -78,7 +78,7 @@ local void printCategoryItems(Player *p, Category *category) //call with lock he
 		}
 	}
 
-	chat->SendMessage(p, "+------------------+-----------+------------+--------+----------+----------------------------------+");
+	chat->SendMessage(p, "+------------------+-----------+------------+-------+----------+-----+----------------------------------+");
 }
 
 local void printShipList(Player *p)
