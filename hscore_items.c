@@ -1112,6 +1112,8 @@ local int zeroCacheEntry(const char *key, void *val, void *clos)
 {
 	int *cacheEntry = val;
 	*cacheEntry = 0;
+
+	return 0;
 }
 
 local void recaclulateEntireCache(Player *p, int ship)
