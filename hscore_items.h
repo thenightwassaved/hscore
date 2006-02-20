@@ -1,7 +1,7 @@
 #ifndef HSCORE_ITEMS_H
 #define HSCORE_ITEMS_H
 
-#define I_HSCORE_ITEMS "hscore_items-5"
+#define I_HSCORE_ITEMS "hscore_items-6"
 
 //callback
 #define CB_EVENT_ACTION "eventaction"
@@ -27,7 +27,7 @@ typedef struct Ihscoreitems
 
 	int (*hasItemsLeftOnShip)(Player *p, int ship);
 
-	void recaclulateEntireCache(Player *p, int ship); //call with lock held
+	void (*recaclulateEntireCache)(Player *p, int ship); //call with lock held
 } Ihscoreitems;
 
 #endif //HSCORE_ITEMS_H
