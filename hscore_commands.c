@@ -185,7 +185,7 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 			chat->SendMessage(p, "| Property Name    | Property Value |");
 			chat->SendMessage(p, "+------------------+----------------+");
 
-			HashEnum(&playerData->hull[ship]->propertySums, printCacheEntry, p);
+			HashEnum(playerData->hull[ship]->propertySums, printCacheEntry, p);
 
 			chat->SendMessage(p, "+------------------+----------------+");
 		}

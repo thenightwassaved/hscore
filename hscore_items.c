@@ -1123,19 +1123,19 @@ local void recaclulateEntireCache(Player *p, int ship)
 	if (!database->areShipsLoaded(p))
 	{
 		lm->LogP(L_ERROR, "hscore_items", p, "asked to recalc entire cache for a player with unloaded ships");
-		return 0;
+		return;
 	}
 
 	if (ship < 0 || 7 < ship)
 	{
 		lm->LogP(L_ERROR, "hscore_items", p, "asked to recalc entire cache on ship %i", ship);
-		return 0;
+		return;
 	}
 
 	if (playerData->hull[ship] == NULL)
 	{
 		lm->LogP(L_ERROR, "hscore_items", p, "asked to recalc entire cache on unowned ship %i", ship);
-		return 0;
+		return;
 	}
 
 	HashTable *table = playerData->hull[ship]->propertySums;
@@ -1180,7 +1180,7 @@ local void recaclulateEntireCache(Player *p, int ship)
 				//no cache entry; create one
 				propertySum = amalloc(sizeof(*propertySum));
 				*propertySum = propDifference;
-				HashAdd(playerData->hull[ship]->propertySums, propString, propertySum);
+				HashAdd(playerData->hull[ship]->propertySums, prop->name, propertySum);
 			}
 		}
 	}
