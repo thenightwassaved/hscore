@@ -74,6 +74,15 @@ local void shipsCommand(const char *command, const char *params, Player *p, cons
 	}
 }
 
+local int printCacheEntry(const char *key, void *val, void *clos)
+{
+	int *cacheEntry = val;
+	Player *p = clos;
+
+	chat->SendMessage(p, "| %-16s | %14i |", key, val);
+}
+
+
 local helptext_t shipStatusHelp =
 "Targets: none or player\n"
 "Args: [ship number]\n"
@@ -174,7 +183,7 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 			chat->SendMessage(p, "| Property Name    | Property Value |");
 			chat->SendMessage(p, "+------------------+----------------+");
 
-			//fixme: add property sums
+			HashEnum(&playerData->hull[ship]->propertySums, printCacheEntry, p);
 
 			chat->SendMessage(p, "+------------------+----------------+");
 		}

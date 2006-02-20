@@ -73,3 +73,6 @@ maxmines
 
 gravspeed
 grav
+
+attach
+summon

@@ -26,6 +26,8 @@ typedef struct Ihscoreitems
 	int (*getFreeItemTypeSpots)(Player *p, ItemType *type, int ship);
 
 	int (*hasItemsLeftOnShip)(Player *p, int ship);
+
+	void recaclulateEntireCache(Player *p, int ship); //call with lock held
 } Ihscoreitems;
 
 #endif //HSCORE_ITEMS_H

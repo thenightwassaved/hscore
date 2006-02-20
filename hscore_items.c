@@ -706,6 +706,39 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 		internalTriggerEventOnItem(p, item, ship, "init");
 	}
 
+	if (amount != 0)
+	{
+		if (item->ammo != NULL)
+		{
+			int ammoCount = internalGetItemCount(p, item->ammo, ship);
+
+			if (ammoCount > 0) //has ammo
+			{
+				//needs cache recacluation
+				Link *propLink;
+				for (propLink = LLGetHead(&item->propertyList); propLink; propLink = propLink->next)
+				{
+					Property *prop = propLink->data;
+
+					//cache it
+					int *propertySum = (int*)HashGetOne(playerData->hull[ship]->propertySums, prop->name);
+					if (propertySum != NULL)
+					{
+						int propDifference = prop->value * amount;
+						*propertySum += propDifference;
+					}
+					else
+					{
+						//not in cache already
+
+						//it's too much work to generate the entire entry only to update it.
+						//instead we'll just leave it out of the cache, and it can be fully generated when needed
+					}
+				}
+			}
+		}
+	}
+
 	if (count == 0)
 	{
 		return 1;
@@ -774,8 +807,15 @@ local int getPropertySum(Player *p, int ship, const char *propString) //call wit
 		return 0;
 	}
 
+	database->lock();
+
 	//check if it's in the cache
-	//FIXME
+	int *propertySum = (int*)HashGetOne(playerData->hull[ship]->propertySums, propString);
+	if (propertySum != NULL)
+	{
+		database->unlock();
+		return *propertySum;
+	}
 
 	//not in the cache, look it up
 	Link *link;
@@ -783,7 +823,6 @@ local int getPropertySum(Player *p, int ship, const char *propString) //call wit
 
 	int count = 0;
 
-	database->lock();
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
 		InventoryEntry *entry = link->data;
@@ -814,7 +853,9 @@ local int getPropertySum(Player *p, int ship, const char *propString) //call wit
 	database->unlock();
 
 	//cache it
-	//FIXME
+	propertySum = amalloc(sizeof(*propertySum));
+	*propertySum = count;
+	HashAdd(playerData->hull[ship]->propertySums, propString, propertySum);
 
 	//then return
 	return count;
@@ -1067,6 +1108,82 @@ local int hasItemsLeftOnShip(Player *p, int ship) //lock doesn't matter
 	}
 }
 
+local int zeroCacheEntry(const char *key, void *val, void *clos)
+{
+	int *cacheEntry = val;
+	*cacheEntry = 0;
+}
+
+local void recaclulateEntireCache(Player *p, int ship)
+{
+	PerPlayerData *playerData = database->getPerPlayerData(p);
+
+	if (!database->areShipsLoaded(p))
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to recalc entire cache for a player with unloaded ships");
+		return 0;
+	}
+
+	if (ship < 0 || 7 < ship)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to recalc entire cache on ship %i", ship);
+		return 0;
+	}
+
+	if (playerData->hull[ship] == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to recalc entire cache on unowned ship %i", ship);
+		return 0;
+	}
+
+	HashTable *table = playerData->hull[ship]->propertySums;
+
+	//first, set all cache entries to zero, so we can keep the 0 entries
+	HashEnum(table, zeroCacheEntry, NULL);
+
+	//then iterate every property and update the cache with it
+	Link *link;
+	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+
+	for (link = LLGetHead(inventoryList); link; link = link->next)
+	{
+		InventoryEntry *entry = link->data;
+		Item *item = entry->item;
+
+		if (item->ammo != NULL)
+		{
+			int itemCount = internalGetItemCount(p, item->ammo, ship);
+
+			if (itemCount <= 0)
+			{
+				continue; //out of ammo, ignore the item.
+			}
+		}
+
+		Link *propLink;
+		for (propLink = LLGetHead(&item->propertyList); propLink; propLink = propLink->next)
+		{
+			Property *prop = propLink->data;
+
+			int propDifference = prop->value * entry->count;
+
+			//get it out of the cache
+			int *propertySum = (int*)HashGetOne(table, prop->name);
+			if (propertySum != NULL)
+			{
+				*propertySum += propDifference;
+			}
+			else
+			{
+				//no cache entry; create one
+				propertySum = amalloc(sizeof(*propertySum));
+				*propertySum = propDifference;
+				HashAdd(playerData->hull[ship]->propertySums, propString, propertySum);
+			}
+		}
+	}
+}
+
 local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty, int flags, int *pts, int *green)
 {
 	triggerEvent(killer, killer->p_ship, "kill");
@@ -1078,6 +1195,7 @@ local Ihscoreitems interface =
 	INTERFACE_HEAD_INIT(I_HSCORE_ITEMS, "hscore_items")
 	getItemCount, addItem, getItemByName, getPropertySum,
 	triggerEvent, triggerEventOnItem, getFreeItemTypeSpots, hasItemsLeftOnShip,
+	recaclulateEntireCache,
 };
 
 EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
