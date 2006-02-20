@@ -79,7 +79,10 @@ local int printCacheEntry(const char *key, void *val, void *clos)
 	int *cacheEntry = val;
 	Player *p = clos;
 
-	chat->SendMessage(p, "| %-16s | %14i |", key, *cacheEntry);
+	if (if cacheEntry != NULL && *cacheEntry != 0)
+	{
+		chat->SendMessage(p, "| %-16s | %14i |", key, *cacheEntry);
+	}
 
 	return 0;
 }

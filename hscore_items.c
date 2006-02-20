@@ -708,32 +708,38 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 
 	if (amount != 0)
 	{
+		int doRecalc = 1;
 		if (item->ammo != NULL)
 		{
 			int ammoCount = internalGetItemCount(p, item->ammo, ship);
 
-			if (ammoCount > 0) //has ammo
+			if (ammoCount <= 0) //has ammo
 			{
-				//needs cache recacluation
-				Link *propLink;
-				for (propLink = LLGetHead(&item->propertyList); propLink; propLink = propLink->next)
+				doRecalc = 0;
+			}
+		}
+
+		//needs cache recacluation
+		if (doRecalc)
+		{
+			Link *propLink;
+			for (propLink = LLGetHead(&item->propertyList); propLink; propLink = propLink->next)
+			{
+				Property *prop = propLink->data;
+
+				//cache it
+				int *propertySum = (int*)HashGetOne(playerData->hull[ship]->propertySums, prop->name);
+				if (propertySum != NULL)
 				{
-					Property *prop = propLink->data;
+					int propDifference = prop->value * amount;
+					*propertySum += propDifference;
+				}
+				else
+				{
+					//not in cache already
 
-					//cache it
-					int *propertySum = (int*)HashGetOne(playerData->hull[ship]->propertySums, prop->name);
-					if (propertySum != NULL)
-					{
-						int propDifference = prop->value * amount;
-						*propertySum += propDifference;
-					}
-					else
-					{
-						//not in cache already
-
-						//it's too much work to generate the entire entry only to update it.
-						//instead we'll just leave it out of the cache, and it can be fully generated when needed
-					}
+					//it's too much work to generate the entire entry only to update it.
+					//instead we'll just leave it out of the cache, and it can be fully generated when needed
 				}
 			}
 		}
