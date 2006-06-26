@@ -671,7 +671,7 @@ local helptext_t giveHelp =
 "Targets: player\n"
 "Args: <amount> [message]\n"
 "Gives the target player the specified amount from your own account.\n"
-"NOTE: You will not be able to give if it would leave you with less than"
+"NOTE: You will not be able to give if it would leave you with less than\n"
 "the minimum required give balance.\n";
 
 local void giveCommand(const char *command, const char *params, Player *p, const Target *target)

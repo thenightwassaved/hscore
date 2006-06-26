@@ -699,17 +699,10 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 		count = 0; //no negative counts make sense
 	}
 
-	database->updateItemNoLock(p, ship, item, count, data);
-
-	if (doInit)
-	{
-		internalTriggerEventOnItem(p, item, ship, "init");
-	}
-
 	if (amount != 0)
 	{
 		int doRecalc = 1;
-		if (item->ammo != NULL)
+		/*if (item->ammo != NULL) //FIXME: wrong. just wrong
 		{
 			int ammoCount = internalGetItemCount(p, item->ammo, ship);
 
@@ -717,7 +710,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 			{
 				doRecalc = 0;
 			}
-		}
+		}*/
 
 		//needs cache recacluation
 		if (doRecalc)
@@ -743,6 +736,13 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 				}
 			}
 		}
+	}
+
+	database->updateItemNoLock(p, ship, item, count, data);
+
+	if (doInit)
+	{
+		internalTriggerEventOnItem(p, item, ship, "init");
 	}
 
 	if (count == 0)
