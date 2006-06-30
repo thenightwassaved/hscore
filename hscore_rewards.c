@@ -186,7 +186,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		pd->Lock();
 		FOR_EACH_PLAYER(p)
 		{
-			if(p->p_freq == killer->p_freq && p->p_ship != SHIP_SPEC && p != killer && !(p->position.status & STATUS_SAFEZONE))
+			if(p->arena == killer->arena && p->p_freq == killer->p_freq && p->p_ship != SHIP_SPEC && p != killer && !(p->position.status & STATUS_SAFEZONE))
 			{
 				int xdelta = (p->position.x - killer->position.x);
 				int ydelta = (p->position.y - killer->position.y);
