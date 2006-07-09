@@ -440,8 +440,9 @@ local void addOverrides(Player *p)
 			if (soccerprox) clientset->PlayerOverride(p, shipOverrideKeys[i].SoccerBallProximity, soccerprox);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].SoccerBallProximity);
 
-			int initMaxMines = cfg->GetInt(conf, shipname, "MaxMines", 0);
-			int maxmines = items->getPropertySum(p, i, "maxmines") + initMaxMines;
+			//int initMaxMines = cfg->GetInt(conf, shipname, "MaxMines", 0);
+			//int maxmines = items->getPropertySum(p, i, "maxmines") + initMaxMines;
+			int maxmines = items->getPropertySum(p, i, "maxmines");
 			if (maxmines) clientset->PlayerOverride(p, shipOverrideKeys[i].MaxMines, maxmines);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaxMines);
 
