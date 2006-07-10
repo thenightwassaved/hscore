@@ -886,6 +886,8 @@ local Iteamnames teamnames_int =
 	getPlayerTeamName
 };
 
+EXPORT const char info_hscore_teamnames[] = "v1.0 Dr Brain <drbrain@gmail.com>";
+
 EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 {
 	if (action == MM_LOAD)

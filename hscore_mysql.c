@@ -244,6 +244,7 @@ local Ihscoremysql my_int =
 	GetRowCount, GetRow, GetField
 };
 
+EXPORT const char info_hscore_mysql[] = "v1.0 Grelminar, modified by Dr Brain";
 
 EXPORT int MM_hscore_mysql(int action, Imodman *mm, Arena *arena)
 {

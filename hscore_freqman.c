@@ -370,6 +370,8 @@ local Ifreqman fm_int =
 	Initial, Ship, Freq
 };
 
+EXPORT const char info_hscore_freqman[] = "v1.0 Dr Brain <drbrain@gmail.com>";
+
 EXPORT int MM_hscore_freqman(int action, Imodman *mm_, Arena *arena)
 {
 	if (action == MM_LOAD)

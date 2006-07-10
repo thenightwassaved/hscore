@@ -277,6 +277,8 @@ local Iperiodicpoints periodicInterface =
 	getPeriodicPoints
 };
 
+EXPORT const char info_hscore_rewards[] = "v1.1 D1st0rt";
+
 EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 {
 	if (action == MM_LOAD)

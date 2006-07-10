@@ -219,6 +219,8 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 	}
 }
 
+EXPORT const char info_hscore_commands[] = "v1.0 Dr Brain <drbrain@gmail.com>";
+
 EXPORT int MM_hscore_commands(int action, Imodman *_mm, Arena *arena)
 {
 	if (action == MM_LOAD)

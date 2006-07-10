@@ -188,6 +188,8 @@ local Ihscorestoreman interface =
 	canBuyItem, canSellItem, buyingItem, sellingItem,
 };
 
+EXPORT const char info_hscore_storeman[] = "v1.0 Dr Brain <drbrain@gmail.com>";
+
 EXPORT int MM_hscore_storeman(int action, Imodman *_mm, Arena *arena)
 {
 	if (action == MM_LOAD)

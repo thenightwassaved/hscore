@@ -710,6 +710,7 @@ local Ihscorespawner interface =
 	respawn,
 };
 
+EXPORT const char info_hscore_spawner[] = "v1.0 Dr Brain <drbrain@gmail.com>";
 
 EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 {

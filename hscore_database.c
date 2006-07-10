@@ -1770,6 +1770,8 @@ local Ihscoredatabase interface =
 	addShip, removeShip, getPerPlayerData,
 };
 
+EXPORT const char info_hscore_database[] = "v1.0 Dr Brain <drbrain@gmail.com>";
+
 EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 {
 	if (action == MM_LOAD)

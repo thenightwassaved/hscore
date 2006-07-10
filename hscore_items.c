@@ -1206,6 +1206,8 @@ local Ihscoreitems interface =
 	recaclulateEntireCache,
 };
 
+EXPORT const char info_hscore_items[] = "v1.0 Dr Brain <drbrain@gmail.com>";
+
 EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 {
 	if (action == MM_LOAD)

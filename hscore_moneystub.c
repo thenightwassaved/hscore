@@ -59,6 +59,8 @@ local Ihscoremoney interface =
 	giveExp, setExp, getExp,
 };
 
+EXPORT const char info_hscore_moneystub[] = "v1.0 Dr Brain <drbrain@gmail.com>";
+
 EXPORT int MM_hscore_moneystub(int action, Imodman *_mm, Arena *arena)
 {
 	if (action == MM_LOAD)

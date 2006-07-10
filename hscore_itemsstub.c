@@ -95,6 +95,8 @@ local Ihscoreitems interface =
 	triggerEvent, triggerEventOnItem, getFreeItemTypeSpots, hasItemsLeftOnShip,
 };
 
+EXPORT const char info_hscore_itemstub[] = "v1.0 Dr Brain <drbrain@gmail.com>";
+
 EXPORT int MM_hscore_itemsstub(int action, Imodman *_mm, Arena *arena)
 {
 	if (action == MM_LOAD)

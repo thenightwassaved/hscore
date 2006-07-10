@@ -125,6 +125,8 @@ local void Pppk(Player *p, byte *p2, int len)
 	}
 }
 
+EXPORT const char info_hscore_prizer[] = "v1.0 D1st0rt";
+
 EXPORT int MM_hscore_prizer(int action, Imodman *_mm, Arena *arena)
 {
 	if(action == MM_LOAD)
