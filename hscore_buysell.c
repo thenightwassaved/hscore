@@ -646,6 +646,9 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 
 local void shipAddedCallback(Player *p, int ship)
 {
+	/* cfghelp: All:InitItem, arena, string, mod: hscore_buysell
+	 * Comma seperated list of items to add when the ship is bought. 
+	 * There should be no spaces between the commas ("item1,item2",...).*/
 	const char *initItem = cfg->GetStr(p->arena->cfg, shipNames[ship], "InitItems");
 
 	if (initItem != NULL) //only bother if there are items to add

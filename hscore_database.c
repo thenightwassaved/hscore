@@ -550,11 +550,15 @@ local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *pass
 	if (results == 0)
 	{
 		//insert a new player into MySQL and then get it
-	    int initialMoney = cfg->GetInt(GLOBAL, "hyperspace", "initialmoney", 1000);
-	    int initialExp = cfg->GetInt(GLOBAL, "hyperspace", "initialexp", 0);
-	    mysql->Query(NULL, NULL, 0, "INSERT INTO hs_players VALUES (NULL, ?, #, #, 0, 0, 0, 0, 0, 0, 0)", p->name, initialMoney, initialExp);
-		LoadPlayerGlobals(p);
-		return;
+		/* cfghelp: Hyperspace:InitialMoney, global, int, mod: hscore_database
+		 * The amount of money that is given to a new player. */
+		int initialMoney = cfg->GetInt(GLOBAL, "hyperspace", "initialmoney", 1000);
+		/* cfghelp: Hyperspace:InitialExp, global, int, mod: hscore_database
+		 * The amount of exp that is given to a new player. */
+		int initialExp = cfg->GetInt(GLOBAL, "hyperspace", "initialexp", 0);
+		mysql->Query(NULL, NULL, 0, "INSERT INTO hs_players VALUES (NULL, ?, #, #, 0, 0, 0, 0, 0, 0, 0)", p->name, initialMoney, initialExp);
+			LoadPlayerGlobals(p);
+			return;
 	}
 
 	if (results > 1)

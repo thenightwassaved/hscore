@@ -702,8 +702,14 @@ local void giveCommand(const char *command, const char *params, Player *p, const
 		{
 			if (database->isLoaded(t))
 			{
+				/* cfghelp: Hyperspace:MinMoney, global, int, def: 1000, mod: hscore_money
+				* The amount of money that must be left behind when using ?give. */				
 				int minMoney = cfg->GetInt(GLOBAL, "hyperspace", "minmoney", 1000);
+				/* cfghelp: Hyperspace:MinGive, global, int, def: 1, mod: hscore_money
+				* The smallest amount that can be transferred using ?give. */
 				int minGive = cfg->GetInt(GLOBAL, "hyperspace", "mingive", 1);
+				/* cfghelp: Hyperspace:MaxGive, global, int, def: 100000000, mod: hscore_money
+				* The largest amount that can be transferred using ?give. */
 				int maxGive = cfg->GetInt(GLOBAL, "hyperspace", "maxgive", 100000000);
 
 				if (getMoney(p) - amount >= minMoney)

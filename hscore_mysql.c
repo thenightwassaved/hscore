@@ -259,16 +259,16 @@ EXPORT int MM_hscore_mysql(int action, Imodman *mm, Arena *arena)
 		connected = 0;
 		MPInit(&dbq);
 
-		/* cfghelp: hyperspace:hostname, global, string, mod: hscore_mysql
+		/* cfghelp: Hyperspace:Hostname, global, string, mod: hscore_mysql
 		 * The name of the mysql server. */
 		host = cfg->GetStr(GLOBAL, "hyperspace", "hostname");
-		/* cfghelp: hyperspace:user, global, string, mod: hscore_mysql
+		/* cfghelp: Hyperspace:User, global, string, mod: hscore_mysql
 		 * The mysql user to log in to the server as. */
 		user = cfg->GetStr(GLOBAL, "hyperspace", "user");
-		/* cfghelp: hyperspace:password, global, string, mod: hscore_mysql
+		/* cfghelp: Hyperspace:Password, global, string, mod: hscore_mysql
 		 * The password to log in to the mysql server as. */
 		pw = cfg->GetStr(GLOBAL, "hyperspace", "password");
-		/* cfghelp: hyperspace:database, global, string, mod: hscore_mysql
+		/* cfghelp: Hyperspace:Database, global, string, mod: hscore_mysql
 		 * The database on the mysql server to use. */
 		dbname = cfg->GetStr(GLOBAL, "hyperspace", "database");
 

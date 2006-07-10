@@ -25,25 +25,29 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 	 * coefficient = 200, exponent = 0.5
 	 */
 
-	 //Variable Declarations
-	 double amount, coeff, expn, pts;
-	 int reward, exp;
-	 Player *p;
-	 Link *link;
+	//Variable Declarations
+	double amount, coeff, expn, pts;
+	int reward, exp;
+	Player *p;
+	Link *link;
 
-	 //Read Settings
-	 coeff = (double)cfg->GetInt(arena->cfg, "Flag", "HSFlagCoeff", 200);
-	 expn = (double)cfg->GetInt(arena->cfg, "Flag", "HSFlagExp", 500) / 1000;
-	 pts = (double)(*points);
+	//Read Settings
+	/* cfghelp: Hyperspace:FlagCoeff, arena, int, def: 200, mod: hscore_rewards
+	 * The flag reward coefficient. */	 
+	coeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "FlagCoeff", 200);
+	/* cfghelp: Hyperspace:FlagExponent, arena, int, def: 50, mod: hscore_rewards
+	 * The exponent to raise the reward to. 500=0.5. */	 
+	expn = (double)cfg->GetInt(arena->cfg, "Hyperspace", "FlagExponent", 500) / 1000;
+	pts = (double)(*points);
 
-	 //chat->SendArenaMessage(arena, "coeff=%f expn=%f pts=%f", coeff, expn, pts);
+	//chat->SendArenaMessage(arena, "coeff=%f expn=%f pts=%f", coeff, expn, pts);
 
-	 //Calculate Reward
-	 amount = coeff * pts;
-	 amount = pow(amount, expn);
-	 amount *= (double)arena->playing;
-	 reward = (int)amount;
-	 exp = (int)(amount / 8);
+	//Calculate Reward
+	amount = coeff * pts;
+	amount = pow(amount, expn);
+	amount *= (double)arena->playing;
+	reward = (int)amount;
+	exp = (int)(amount / 8);
 
 
 	Iteamnames *teamnames = mm->GetInterface(I_TEAMNAMES, arena);
@@ -94,8 +98,12 @@ local void goalCallback(Arena *arena, Player *scorer, int bid, int x, int y)
 	Link *link;
 
 	//Read Settings
-	coeff = (double)cfg->GetInt(arena->cfg, "Soccer", "HSGoalCoeff", 500);
-	min   = (double)cfg->GetInt(arena->cfg, "Soccer", "HSGoalMin",   300);
+	/* cfghelp: Hyperspace:GoalCoeff, arena, int, def: 500, mod: hscore_rewards
+	 * The goal reward coefficient. */
+	coeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "GoalCoeff", 500);
+	/* cfghelp: Hyperspace:GoalMin, arena, int, def: 300, mod: hscore_rewards
+	 * The amount to add to the goal reward. */
+	min   = (double)cfg->GetInt(arena->cfg, "Hyperspace", "GoalMin",   300);
 
 	//Calculate Reward
 	amount = pow((double)arena->playing, 0.5);
@@ -132,7 +140,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	 * Defaults:
 	 * Coefficient = 10, minimum = 1, multiplier = 10, bonus = 1
 	 *
-     * --New Formula 2--
+	 * --New Formula 2--
 	 * exp = coefficient * e ^( -killerExp / (killeeExp + 1) )
 	 */
 
@@ -147,10 +155,15 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		int hsbucks, xp, exp2;
 
 		//Read Settings
-		coeff = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillCoeff", 10);
-		min   = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillMin",   1);
-		bonus = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillBonus", 1);
-		mult  = (double)cfg->GetInt(arena->cfg, "Kill", "HSKillMult",  10);
+		/* cfghelp: Hyperspace:KillCoeff, arena, int, def: 10, mod: hscore_rewards
+		 * Kill reward coefficient. */
+		coeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "KillCoeff", 10);
+		/* cfghelp: Hyperspace:KillMin, arena, int, def: 1, mod: hscore_rewards
+		 * Amount added to exp. */
+		min   = (double)cfg->GetInt(arena->cfg, "Hyperspace", "KillMin",   1);
+		/* cfghelp: Hyperspace:KillMult, arena, int, def: 10, mod: hscore_rewards
+		 * Multiply exp reward by this to get money reward. */
+		mult  = (double)cfg->GetInt(arena->cfg, "Hyperspace", "KillMult",  10);
 
 		//Retrieve Experience
 		kexp = (double) money->getExp(killer);
@@ -180,8 +193,13 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		//give money to teammates
 		Player *p;
 		Link *link;
-		double teammateRewardCoeff = (double)cfg->GetInt(arena->cfg, "Kill", "HSTeammateReward", 500); //50%
-		double distanceFalloff = (double)cfg->GetInt(arena->cfg, "Kill", "HSDistFalloff", 1440000); //pixels^2
+		/* cfghelp: Hyperspace:TeammateReward, arena, int, def: 500, mod: hscore_rewards
+		 * The percentage (max) that a teammate can receive from a kill.
+		 * 500 = 50%*/
+		double teammateRewardCoeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "TeammateReward", 500); //50%
+		/* cfghelp: Hyperspace:DistFalloff, arena, int, def: 1440000, mod: hscore_rewards
+		 * Distance falloff divisor in pixels^2. */
+		double distanceFalloff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "DistFalloff", 1440000); //pixels^2
 		double maxReward = (double)(hsbucks) * teammateRewardCoeff / 1000.0;
 		pd->Lock();
 		FOR_EACH_PLAYER(p)
@@ -215,16 +233,20 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 	 * flagcoeff = 200, teamcoeff = 1
 	 */
 
-	 //Variable Declarations
+	//Variable Declarations
 	double amount, fcoeff, tcoeff;
 	int reward, exp;
 	Player *p;
 	Link *link;
 
 
-	 //Read Settings
-	fcoeff = (double)cfg->GetInt(arena->cfg, "Periodic", "HSFlagCoeff", 200);
-	tcoeff = (double)cfg->GetInt(arena->cfg, "Periodic", "HSTeamCoeff", 200);
+	//Read Settings
+	/* cfghelp: Hyperspace:PeriodicCoeff, arena, int, def: 200, mod: hscore_rewards
+	 * Periodic Flag Coefficient. */
+	fcoeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "PeriodicCoeff", 200);
+	/* cfghelp: Hyperspace:PeriodicCoeff, arena, int, def: 200, mod: hscore_rewards
+	 * Periodic Team Coefficient. */
+	tcoeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "PeriodicTeamCoeff", 200);
 
 
 	//Calculate reward
