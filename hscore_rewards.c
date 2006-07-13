@@ -151,7 +151,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	else
 	{
 		//Variable Declarations
-		double amount, coeff, bonus, min, mult, kexp, dexp;
+		double amount, coeff, bountymult, min, mult, kexp, dexp;
 		int hsbucks, xp, exp2;
 
 		//Read Settings
@@ -164,6 +164,9 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		/* cfghelp: Hyperspace:KillMult, arena, int, def: 10, mod: hscore_rewards
 		 * Multiply exp reward by this to get money reward. */
 		mult  = (double)cfg->GetInt(arena->cfg, "Hyperspace", "KillMult",  10);
+		/* cfghelp: Hyperspace:BountyMult, arena, int, def: 1, mod: hscore_rewards
+		 * Amount to multiply by killer's bounty to add to the money reward. */
+		bountymult  = (double)cfg->GetInt(arena->cfg, "Hyperspace", "BountyMult",  1);
 
 		//Retrieve Experience
 		kexp = (double) money->getExp(killer);
@@ -177,7 +180,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 
 		//Calculate Earned Money
 		hsbucks = (mult * xp);
-		hsbucks += (killer->position.bounty * bonus);
+		hsbucks += (killer->position.bounty * bountymult);
 
 		//Calculate Exp2
 		amount =  exp( -kexp / (dexp + 1));
