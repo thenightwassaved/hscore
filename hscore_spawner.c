@@ -237,10 +237,12 @@ local void addOverrides(Player *p)
 
 
 			int gunlevel = items->getPropertySum(p, i, "gunlevel");
-			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialGuns, gunlevel);
+			if (gunlevel) clientset->PlayerOverride(p, shipOverrideKeys[i].InitialGuns, gunlevel);
+			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialGuns);
 
 			int bomblevel = items->getPropertySum(p, i, "bomblevel");
-			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBombs, bomblevel);
+			if (bomblevel) clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBombs, bomblevel);
+			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialBombs);
 
 
 
@@ -310,25 +312,32 @@ local void addOverrides(Player *p)
 				clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialRotation);
 			}
 
-			int burst = items->getPropertySum(p, i, "burst");
+			int initBurst = cfg->GetInt(conf, shipname, "InitialBurst", 0);
+			int burst = items->getPropertySum(p, i, "burst") + initBurst;
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBurst, burst);
 
-			int repel = items->getPropertySum(p, i, "repel");
+			int initRepel = cfg->GetInt(conf, shipname, "InitialRepel", 0);
+			int repel = items->getPropertySum(p, i, "repel") + initRepel;
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRepel, repel);
 
-			int decoy = items->getPropertySum(p, i, "decoy");
+			int initDecoy = cfg->GetInt(conf, shipname, "InitialDecoy", 0);
+			int decoy = items->getPropertySum(p, i, "decoy") + initDecoy;
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialDecoy, decoy);
 
-			int thor = items->getPropertySum(p, i, "thor");
+			int initThor = cfg->GetInt(conf, shipname, "InitialThor", 0);
+			int thor = items->getPropertySum(p, i, "thor") + initThor;
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialThor, thor);
 
-			int brick = items->getPropertySum(p, i, "brick");
+			int initBrick = cfg->GetInt(conf, shipname, "InitialBrick", 0);
+			int brick = items->getPropertySum(p, i, "brick") + initBrick;
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBrick, brick);
 
-			int rocket = items->getPropertySum(p, i, "rocket");
+			int initRocket = cfg->GetInt(conf, shipname, "InitialRocket", 0);
+			int rocket = items->getPropertySum(p, i, "rocket") + initRocket;
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRocket, rocket);
 
-			int portal = items->getPropertySum(p, i, "portal");
+			int initPortal = cfg->GetInt(conf, shipname, "InitialPortal", 0);
+			int portal = items->getPropertySum(p, i, "portal") + initPortal;
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialPortal, portal);
 
 
