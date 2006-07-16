@@ -1,3 +1,5 @@
+
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -182,8 +184,9 @@ local void LinkAmmo()
 
 		if (item->ammoID != 0)
 		{
+			Item *ammo;
 			unlock();
-			Item *ammo = getItemByID(item->ammoID);
+			ammo = getItemByID(item->ammoID);
 			lock();
 			item->ammo = ammo;
 
@@ -343,6 +346,7 @@ local void initTables()
 
 local void loadPropertiesQueryCallback(int status, db_res *result, void *passedData)
 {
+	Link *link;
 	int results;
 	db_row *row;
 
@@ -359,34 +363,62 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 		lm->Log(L_WARN, "<hscore_database> No properties returned from MySQL query.");
 	}
 
+	
+	lock();
+	for (link = LLGetHead(&itemList); link; link = link->next)
+	{
+		Item *i = link->data;
+		LLEnum(&i->propertyList, afree);
+		LLEmpty(&i->propertyList);
+	}
+	
+	
 	while ((row = mysql->GetRow(result)))
 	{
 		int itemID = atoi(mysql->GetField(row, 0));					//item_id
-		Item *item = getItemByID(itemID);
+		Item *item;
+		unlock();
+		item = getItemByID(itemID);
+		lock();
 
 		if (item != NULL)
 		{
-			Property *property = amalloc(sizeof(*property));
+			Property *property = NULL;
+			/*for (link = LLGetHead(&item->propertyList); link; link = link->next)
+			{
+				if (!strcmp(link->data->name, mysql->GetField(row, 1)))
+				{
+					property = link->data;
+					break;
+				}
+			}*/
 
-			astrncpy(property->name, mysql->GetField(row, 1), 16);	//name
+			//if the property doesn't exist in this item yet, create it. otherwise, just change the value.
+			if (!property)
+			{
+				property = amalloc(sizeof(*property));
+				astrncpy(property->name, mysql->GetField(row, 1), 16);
+				LLAdd(&item->propertyList, property);
+			}
+			
 			property->value = atoi(mysql->GetField(row, 2));		//value
-
-			//add the item type to the list
-			lock();
-			LLAdd(&item->propertyList, property);
-			unlock();
+			
 		}
 		else
 		{
 			lm->Log(L_ERROR, "<hscore_database> property looking for item ID %i.", itemID);
 		}
 	}
+	unlock();
+
 
 	lm->Log(L_DRIVEL, "<hscore_database> %i properties were loaded from MySQL.", results);
+	
 }
 
 local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 {
+	Link *link;
 	int results;
 	db_row *row;
 
@@ -402,34 +434,60 @@ local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 	{
 		lm->Log(L_WARN, "<hscore_database> No events returned from MySQL query.");
 	}
+	
+	lock();
+	for (link = LLGetHead(&itemList); link; link = link->next)
+	{
+		Item *i = link->data;
+		LLEnum(&i->eventList, afree);
+		LLEmpty(&i->eventList);
+	}
 
 	while ((row = mysql->GetRow(result)))
 	{
 		int itemID = atoi(mysql->GetField(row, 0));					//item_id
-		Item *item = getItemByID(itemID);
+		Item *item;
+		unlock();
+		item = getItemByID(itemID);
+		lock();
 
 		if (item != NULL)
 		{
-			Event *event = amalloc(sizeof(*event));
+			Event *event = NULL;
+			/*for (link = LLGetHead(&item->eventList); link; link = link->next)
+			{
+				if (!strcmp(link->data->event, mysql->GetField(row, 1)))
+				{
+					event = link->data;
+					break;
+				}
+			}*/
 
-			astrncpy(event->event, mysql->GetField(row, 1), 16);	//event
+			//if the event doesn't exist in this item yet, create it. otherwise, just change the values.
+			if (!event)
+			{
+				event = amalloc(sizeof(*event));
+				astrncpy(event->event, mysql->GetField(row, 1), 16);
+				LLAdd(&item->eventList, event);
+			}
+			
+
+			
 			event->action = atoi(mysql->GetField(row, 2));			//action
 			event->data = atoi(mysql->GetField(row, 3));			//data
 			astrncpy(event->message, mysql->GetField(row, 4), 200);	//message
 
-
-			//add the item type to the list
-			lock();
-			LLAdd(&item->eventList, event);
-			unlock();
+			
 		}
 		else
 		{
 			lm->Log(L_ERROR, "<hscore_database> event looking for item ID %i.", itemID);
 		}
 	}
+	unlock();
 
 	lm->Log(L_DRIVEL, "<hscore_database> %i events were loaded from MySQL.", results);
+	
 }
 
 local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
@@ -452,12 +510,31 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 
 	while ((row = mysql->GetRow(result)))
 	{
-		Item *item = amalloc(sizeof(*item));
+		Link *link;
+		Item *item = NULL;
+		int id = atoi(mysql->GetField(row, 0));
 
-		LLInit(&item->propertyList);
-		LLInit(&item->eventList);
+		lock();
+		for (link = LLGetHead(&itemList); link; link = link->next)
+		{
+			Item *i = link->data;
+			if (i->id == id)
+			{
+				item = i;
+				break;
+			}
+		}
 
-		item->id = atoi(mysql->GetField(row, 0)); 					//id
+		//if the Item doesn't exist yet, create it. otherwise, just change the values.
+		if (!item)
+		{
+			item = amalloc(sizeof(*item));
+			LLInit(&item->propertyList);
+			LLInit(&item->eventList);
+			item->id = id;
+			LLAdd(&itemList, item);
+		}
+
 		astrncpy(item->name, mysql->GetField(row, 1), 16);			//name
 		astrncpy(item->shortDesc, mysql->GetField(row, 2), 32);		//short_description
 		astrncpy(item->longDesc, mysql->GetField(row, 3), 200);		//long_description
@@ -479,10 +556,8 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 		item->affectsSets = atoi(mysql->GetField(row, 15));			//affects_sets
 		item->resendSets = atoi(mysql->GetField(row, 16));			//resend_sets
 
-		//add the item to the list
-		lock();
-		LLAdd(&itemList, item);
 		unlock();
+
 	}
 
 	lm->Log(L_DRIVEL, "<hscore_database> %i items were loaded from MySQL.", results);
@@ -493,6 +568,7 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 
 	//process the ammo ids
 	LinkAmmo();
+	
 }
 
 local void loadItemTypesQueryCallback(int status, db_res *result, void *passedData)
@@ -515,20 +591,37 @@ local void loadItemTypesQueryCallback(int status, db_res *result, void *passedDa
 
 	while ((row = mysql->GetRow(result)))
 	{
-		ItemType *itemType = amalloc(sizeof(*itemType));
-
-		itemType->id = atoi(mysql->GetField(row, 0));			//id
+		int id = atoi(mysql->GetField(row, 0));
+		Link *link;
+		ItemType *itemType = NULL;
+		lock();
+		for (link = LLGetHead(&itemTypeList); link; link = link->next)
+		{
+			ItemType *it = link->data;
+			if (it->id == id)
+			{
+				itemType = it;
+				break;
+			}
+		}
+		
+		//if the ItemType doesn't exist yet, create it, otherwise just change the values
+		if (!itemType)
+		{
+			itemType = amalloc(sizeof(*itemType));
+			itemType->id = id;
+			LLAdd(&itemTypeList, itemType);
+		}
+		
 		astrncpy(itemType->name, mysql->GetField(row, 1), 32);	//name
 		itemType->max = atoi(mysql->GetField(row, 2));			//max
 
-		//add the item type to the list
-		lock();
-		LLAdd(&itemTypeList, itemType);
 		unlock();
 	}
 
 	lm->Log(L_DRIVEL, "<hscore_database> %i item types were loaded from MySQL.", results);
 	LoadItemList(); //now that all the item types are in, load the items.
+	
 }
 
 local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *passedData)
@@ -588,6 +681,9 @@ local void loadShipIDQueryCallback(int status, db_res *result, void *passedData)
 {
 	int results;
 	db_row *row;
+	int id;
+	int ship;
+	ShipHull *hull;
 
 	Player *p = passedData;
 	PerPlayerData *playerData = getPerPlayerData(p);
@@ -613,11 +709,11 @@ local void loadShipIDQueryCallback(int status, db_res *result, void *passedData)
 
 	row = mysql->GetRow(result);
 
-	int id = atoi(mysql->GetField(row, 0));
-	int ship = atoi(mysql->GetField(row, 1));
+	id = atoi(mysql->GetField(row, 0));
+	ship = atoi(mysql->GetField(row, 1));
 
 
-	ShipHull *hull = playerData->hull[ship];
+	hull = playerData->hull[ship];
 
 	hull->id = id;
 
@@ -814,23 +910,43 @@ local void loadArenaStoresQueryCallback(int status, db_res *result, void *passed
 
 	while ((row = mysql->GetRow(result)))
 	{
-		Store *store = amalloc(sizeof(*store));
+		Store *store = NULL;
+		Link *link;
+		int id = atoi(mysql->GetField(row, 0));
+		lock();
+		for (link = LLGetHead(&arenaData->storeList); link; link = link->next)
+		{
+			Store *s = link->data;
+			if (s->id == id)
+			{
+				store = s;
+				break;
+			}
+		}
 
-		LLInit(&store->itemList);
+		//if the Store does not exist in this arena yet, create it. otherwise just modify the values, and reset the item lists.
+		if (!store)
+		{
+			store = amalloc(sizeof(*store));
+			LLInit(&store->itemList);
+			store->id = id;
+			LLAdd(&arenaData->storeList, store);
+		}
+		else
+		{
+			LLEmpty(&store->itemList);
+		}
 
-		store->id = atoi(mysql->GetField(row, 0));					//id
 		astrncpy(store->name, mysql->GetField(row, 1), 32);			//name
 		astrncpy(store->description, mysql->GetField(row, 2), 200);	//description
 		astrncpy(store->region, mysql->GetField(row, 3), 16);		//region
 
-		//add the item type to the list
-		lock();
-		LLAdd(&arenaData->storeList, store);
 		unlock();
 	}
 
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i stores were loaded from MySQL.", results);
 	LoadStoreItems(arena); //now that all the stores are in, load the items into them.
+	
 }
 
 local void loadCategoryItemsQueryCallback(int status, db_res *result, void *passedData)
@@ -913,23 +1029,43 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 
 	while ((row = mysql->GetRow(result)))
 	{
-		Category *category = amalloc(sizeof(*category));
+		Category *category = NULL;
+		Link *link;
+		int id = atoi(mysql->GetField(row, 0));
+		lock();
+		for (link = LLGetHead(&arenaData->categoryList); link; link = link->next)
+		{
+			Category *c = link->data;
+			if (c->id == id)
+			{
+				category = c;
+				break;
+			}
+		}
+		
+		//if the Category doesn't exist, create it, otherwise just change the values and reset the lists
+		if (!category)
+		{
+			category = amalloc(sizeof(*category));
+			LLInit(&category->itemList);
+			category->id = id;
+			LLAdd(&arenaData->categoryList, category);
+		}
+		else
+		{
+			LLEmpty(&category->itemList);
+		}
 
-		LLInit(&category->itemList);
-
-		category->id = atoi(mysql->GetField(row, 0));					//id
 		astrncpy(category->name, mysql->GetField(row, 1), 32);			//name
 		astrncpy(category->description, mysql->GetField(row, 2), 64);	//description
 		category->hidden = atoi(mysql->GetField(row, 3));				//hidden
 
-		//add the item type to the list
-		lock();
-		LLAdd(&arenaData->categoryList, category);
 		unlock();
 	}
 
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i categories were loaded from MySQL.", results);
 	LoadCategoryItems(arena); //now that all the stores are in, load the items into them.
+	
 }
 
 //+------------------+
@@ -941,11 +1077,12 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 local void InitPerPlayerData(Player *p) //called before data is touched
 {
 	PerPlayerData *playerData = getPerPlayerData(p);
+	int i;
 
 	playerData->loaded = 0;
 	playerData->shipsLoaded = 0;
 
-	for (int i = 0; i < 8; i++)
+	for (i = 0; i < 8; i++)
 	{
 		playerData->hull[i] = NULL;
 	}
@@ -988,12 +1125,13 @@ local void UnloadPlayerShip(ShipHull *ship) //call with lock() held
 local void UnloadPlayerShips(Player *p) //called to free any allocated data
 {
 	PerPlayerData *playerData = getPerPlayerData(p);
+	int i;
 
 	lock();
 
 	playerData->shipsLoaded = 0;
 
-	for (int i = 0; i < 8; i++)
+	for (i = 0; i < 8; i++)
 	{
 		if (playerData->hull[i] != NULL)
 		{
@@ -1226,9 +1364,10 @@ local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST 
 
 	if (areShipsLoaded(p))
 	{
+		int i;
 		lock();
 
-		for (int i = 0; i < 8; i++)
+		for (i = 0; i < 8; i++)
 		{
 			if (playerData->hull[i] != NULL)
 			{
@@ -1294,11 +1433,33 @@ local helptext_t reloadItemsHelp =
 "Targets: none\n"
 "Args: none\n"
 "This command will reload all current and new items from the database.\n"
+"It will also reload all arenas stores and categories.\n"
 "NOTE: This command will *NOT* remove items no longer in the database.\n";
 
 local void reloadItemsCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	//FIXME
+	
+	
+	
+	Link *link;
+	Arena *a;
+	chat->SendMessage(p, "Reloading items...");
+	LoadItemTypeList();
+	chat->SendMessage(p, "...Got items.");
+	aman->Lock();
+	FOR_EACH_ARENA(a)
+	{
+		LoadStoreList(a);
+		LoadCategoryList(a);
+		chat->SendMessage(p, "...Reloaded stores/categories in arena '%s'", a->name);
+	}
+	aman->Unlock();
+	chat->SendMessage(p, "...Item reload callback");
+	DO_CBS(CB_HS_ITEMRELOAD, ALLARENAS, HSItemReload, ());
+
+	chat->SendMessage(p, "Done.");
+	
+	
 }
 
 local helptext_t storeAllHelp =
@@ -1467,6 +1628,8 @@ local void updateItem(Player *p, int ship, Item *item, int newCount, int newData
 local void updateItemNoLock(Player *p, int ship, Item *item, int newCount, int newData)
 {
 	PerPlayerData *playerData = getPerPlayerData(p);
+	Link *link;
+	LinkedList *inventoryList;
 
 	if (ship < 0 || 7 < ship)
 	{
@@ -1486,8 +1649,7 @@ local void updateItemNoLock(Player *p, int ship, Item *item, int newCount, int n
 		return;
 	}
 
-	Link *link;
-	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+	inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
@@ -1561,6 +1723,7 @@ local void updateItemNoLock(Player *p, int ship, Item *item, int newCount, int n
 
 	if (newCount != 0)
 	{
+		InventoryEntry *entry;
 		int shipID = playerData->hull[ship]->id;
 
 		if (shipID == -1)
@@ -1575,7 +1738,7 @@ local void updateItemNoLock(Player *p, int ship, Item *item, int newCount, int n
 
 		mysql->Query(NULL, NULL, 0, "REPLACE INTO hs_player_ship_items VALUES (#,#,#,#)", shipID, item->id, newCount, newData);
 
-		InventoryEntry *entry = amalloc(sizeof(*entry));
+		entry = amalloc(sizeof(*entry));
 
 		entry->count = newCount;
 		entry->data = newData;
@@ -1595,6 +1758,7 @@ local void updateItemNoLock(Player *p, int ship, Item *item, int newCount, int n
 local void updateInventoryNoLock(Player *p, int ship, InventoryEntry *entry, int newCount, int newData)
 {
 	PerPlayerData *playerData = getPerPlayerData(p);
+	LinkedList *inventoryList;
 
 	if (ship < 0 || 7 < ship)
 	{
@@ -1614,7 +1778,7 @@ local void updateInventoryNoLock(Player *p, int ship, InventoryEntry *entry, int
 		return;
 	}
 
-	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+	inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
 	if (newCount != 0)
 	{
@@ -1680,6 +1844,7 @@ local void updateInventoryNoLock(Player *p, int ship, InventoryEntry *entry, int
 local void addShip(Player *p, int ship) //the ships id may not be valid until later
 {
 	PerPlayerData *playerData = getPerPlayerData(p);
+	ShipHull *hull;
 
 	if (ship < 0 || 7 < ship)
 	{
@@ -1701,7 +1866,7 @@ local void addShip(Player *p, int ship) //the ships id may not be valid until la
 
 	lock();
 
-	ShipHull *hull = amalloc(sizeof(*hull));
+	hull = amalloc(sizeof(*hull));
 
 	LLInit(&hull->inventoryEntryList);
 	hull->propertySums = HashAlloc();
@@ -1718,6 +1883,7 @@ local void addShip(Player *p, int ship) //the ships id may not be valid until la
 local void removeShip(Player *p, int ship)
 {
 	PerPlayerData *playerData = getPerPlayerData(p);
+	int shipID;
 
 	if (ship < 0 || 7 < ship)
 	{
@@ -1737,7 +1903,7 @@ local void removeShip(Player *p, int ship)
 		return;
 	}
 
-	int shipID = playerData->hull[ship]->id;
+	shipID = playerData->hull[ship]->id;
 
 	if (shipID == -1)
 	{
@@ -1774,6 +1940,7 @@ EXPORT const char info_hscore_database[] = "v1.0 Dr Brain <drbrain@gmail.com>";
 
 EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 {
+	
 	if (action == MM_LOAD)
 	{
 		mm = _mm;
@@ -1877,4 +2044,5 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 		return MM_OK;
 	}
 	return MM_FAIL;
+	
 }

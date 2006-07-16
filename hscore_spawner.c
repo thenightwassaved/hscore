@@ -1,3 +1,5 @@
+
+
 #include <string.h>
 
 #include "asss.h"
@@ -113,28 +115,30 @@ local void respawn(Player *p);
 local void spawnPlayer(Player *p)
 {
 	PlayerDataStruct *data = PPDATA(p, playerDataKey);
+	Target t;
+	int bounce, prox, multifire, shrapnel;
 	data->spawned = 1;
 
 
 	//do needed prizing
-	Target t;
 	t.type = T_PLAYER;
 	t.u.p = p;
 
-	int bounce = items->getPropertySum(p, p->pkt.ship, "bounce");
+	bounce = items->getPropertySum(p, p->pkt.ship, "bounce");
 	if (bounce) game->GivePrize(&t, 10, bounce);
-	int prox = items->getPropertySum(p, p->pkt.ship, "prox");
+	prox = items->getPropertySum(p, p->pkt.ship, "prox");
 	if (prox) game->GivePrize(&t, 16, prox);
-	int multifire = items->getPropertySum(p, p->pkt.ship, "multifire");
+	multifire = items->getPropertySum(p, p->pkt.ship, "multifire");
 	if (multifire) game->GivePrize(&t, 15, multifire);
 
-	int shrapnel = items->getPropertySum(p, p->pkt.ship, "shrapnel");
+	shrapnel = items->getPropertySum(p, p->pkt.ship, "shrapnel");
 	if (shrapnel) game->GivePrize(&t, 19, shrapnel);
 }
 
 local void loadOverrides()
 {
-	for (int i = 0; i < 8; i++)
+	int i;
+	for (i = 0; i < 8; i++)
 	{
 		shipOverrideKeys[i].ShrapnelMax = clientset->GetOverrideKey(shipNames[i], "ShrapnelMax");
 		shipOverrideKeys[i].ShrapnelRate = clientset->GetOverrideKey(shipNames[i], "ShrapnelRate");
@@ -211,8 +215,8 @@ local void addOverrides(Player *p)
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
 	ConfigHandle conf = p->arena->cfg;
-
-	for (int i = 0; i < 8; i++)
+	int i;
+	for (i = 0; i < 8; i++)
 	{
 		if (playerData->hull[i] != NULL)
 		{
@@ -361,6 +365,7 @@ local void addOverrides(Player *p)
 
 			int bombenergy = items->getPropertySum(p, i, "bombenergy");
 			if (bombenergy) clientset->PlayerOverride(p, shipOverrideKeys[i].BombFireEnergy, bombenergy);
+
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].BombFireEnergy);
 
 			int bombenergyup = items->getPropertySum(p, i, "bombenergyup");
@@ -713,6 +718,27 @@ local void respawn(Player *p)
 	data->lastDeath = 0;
 }
 
+local void HSItemReloadCallback(void)
+{
+	Player *p;
+	Link *link;
+	pd->Lock();
+	FOR_EACH_PLAYER(p)
+	{
+		int i;
+		PerPlayerData *playerData = database->getPerPlayerData(p);
+		for (i = 0; i < SHIP_SPEC; ++i)
+		{
+			database->lock();
+			HashEnum(playerData->hull[i]->propertySums, hash_enum_afree, 0);
+			data->unlock();
+		}
+		addOverrides(p);
+		clientset->SendClientSettings(p);
+	}
+	pd->Unlock();
+}
+
 local Ihscorespawner interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_SPAWNER, "hscore_spawner")
@@ -762,10 +788,14 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 
 		loadOverrides();
 
+		mm->RegCallback(CB_HS_ITEMRELOAD, HSItemReloadCallback, ALLARENAS);
+
 		return MM_OK;
 	}
 	else if (action == MM_UNLOAD)
 	{
+		mm->UnregCallback(CB_HS_ITEMRELOAD, HSItemReloadCallback, ALLARENAS);
+
 		net->RemovePacket(C2S_POSITION, Pppk);
 
 		pd->FreePlayerData(playerDataKey);

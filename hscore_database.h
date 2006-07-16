@@ -1,3 +1,5 @@
+
+
 #ifndef HSCORE_DATABASE_H
 #define HSCORE_DATABASE_H
 
@@ -28,6 +30,13 @@ typedef struct PerArenaData
 //NOTE: *entry may be NULL if newCount is 0.
 //called with lock held
 typedef void (*ItemCountChanged)(Player *p, Item *item, InventoryEntry *entry, int newCount, int oldCount);
+
+
+
+#define CB_HS_ITEMRELOAD "hs-itemreload-1"
+typedef void (*HSItemReload)(void);
+
+
 
 #define CB_SHIPS_LOADED "shipsloaded-1"
 typedef void (*ShipsLoaded)(Player *p);
