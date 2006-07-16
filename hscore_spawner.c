@@ -731,7 +731,7 @@ local void HSItemReloadCallback(void)
 		{
 			database->lock();
 			HashEnum(playerData->hull[i]->propertySums, hash_enum_afree, 0);
-			data->unlock();
+			database->unlock();
 		}
 		addOverrides(p);
 		clientset->SendClientSettings(p);
