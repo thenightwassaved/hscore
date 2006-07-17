@@ -725,14 +725,6 @@ local void HSItemReloadCallback(void)
 	pd->Lock();
 	FOR_EACH_PLAYER(p)
 	{
-		int i;
-		PerPlayerData *playerData = database->getPerPlayerData(p);
-		for (i = 0; i < SHIP_SPEC; ++i)
-		{
-			database->lock();
-			HashEnum(playerData->hull[i]->propertySums, hash_enum_afree, 0);
-			database->unlock();
-		}
 		addOverrides(p);
 		clientset->SendClientSettings(p);
 	}

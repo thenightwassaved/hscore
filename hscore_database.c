@@ -20,6 +20,7 @@ local Iplayerdata *pd;
 local Imainloop *ml;
 
 //local prototypes
+local int hash_enum_remove(const char *key, void *val, void *d);
 local PerArenaData * getPerArenaData(Arena *arena);
 local Item * getItemByID(int id);
 local Item * getItemByIDNoLock(int id);
@@ -90,6 +91,16 @@ local LinkedList itemTypeList;
 
 //mutex
 local pthread_mutex_t itemMutex = PTHREAD_MUTEX_INITIALIZER;
+
+//+-------------------------+
+//|                         |
+//| Miscellaneous Functions |
+//|                         |
+//+-------------------------+
+local int hash_enum_remove(const char *key, void *val, void *d)
+{
+	return 1;
+}
 
 //+-------------------------+
 //|                         |
@@ -388,8 +399,10 @@ local void initTables()
 
 local void loadPropertiesQueryCallback(int status, db_res *result, void *passedData)
 {
+	Player *p;
 	Link *link;
 	int results;
+	int x;
 	db_row *row;
 
 	if (status != 0 || result == NULL)
@@ -407,6 +420,7 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 
 	
 	lock();
+
 	for (link = LLGetHead(&itemList); link; link = link->next)
 	{
 		Item *i = link->data;
@@ -414,14 +428,23 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 		LLEmpty(&i->propertyList);
 	}
 	
-	
+	pd->Lock();
+	FOR_EACH_PLAYER(p)
+	{
+		PerPlayerData *playerData = getPerPlayerData(p);
+		for (x = 0; x < 8; ++x)
+		{
+			HashEnum(playerData->hull[x]->propertySums, hash_enum_afree, 0);
+			HashEnum(playerData->hull[x]->propertySums, hash_enum_remove, 0);
+		}
+	}
+	pd->Unlock();
+
 	while ((row = mysql->GetRow(result)))
 	{
 		int itemID = atoi(mysql->GetField(row, 0));					//item_id
 		Item *item;
-		//unlock();
-		//item = getItemByID(itemID);
-		//lock();
+
 		item = getItemByIDNoLock(itemID);
 
 		if (item != NULL)
@@ -454,6 +477,7 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 	}
 	unlock();
 
+	DO_CBS(CB_HS_ITEMRELOAD, ALLARENAS, HSItemReload, ());
 
 	lm->Log(L_DRIVEL, "<hscore_database> %i properties were loaded from MySQL.", results);
 	
@@ -1482,28 +1506,23 @@ local helptext_t reloadItemsHelp =
 
 local void reloadItemsCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	
-	
-	
 	Link *link;
 	Arena *a;
 	chat->SendMessage(p, "Reloading items...");
+	
 	LoadItemTypeList();
-	chat->SendMessage(p, "...Got items.");
+	chat->SendMessage(p, "...Ran items queries.");
+
 	aman->Lock();
 	FOR_EACH_ARENA(a)
 	{
 		LoadStoreList(a);
 		LoadCategoryList(a);
-		chat->SendMessage(p, "...Reloaded stores/categories in arena '%s'", a->name);
+		chat->SendMessage(p, "...Ran stores/categories queries for arena '%s'", a->name);
 	}
 	aman->Unlock();
-	chat->SendMessage(p, "...Item reload callback");
-	DO_CBS(CB_HS_ITEMRELOAD, ALLARENAS, HSItemReload, ());
 
-	chat->SendMessage(p, "Done.");
-	
-	
+	chat->SendMessage(p, "Ran all queries.");
 }
 
 local helptext_t storeAllHelp =
