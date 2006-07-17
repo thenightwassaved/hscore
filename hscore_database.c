@@ -22,6 +22,7 @@ local Imainloop *ml;
 //local prototypes
 local PerArenaData * getPerArenaData(Arena *arena);
 local Item * getItemByID(int id);
+local Item * getItemByIDNoLock(int id);
 local ItemType * getItemTypeByID(int id);
 local const char * getArenaIdentifier(Arena *arena);
 local void LinkAmmo();
@@ -126,6 +127,25 @@ local Item * getItemByID(int id)
 	return returnValue;
 }
 
+local Item * getItemByIDNoLock(int id)
+{
+	Link *link;
+	Item *returnValue = NULL;
+
+	for (link = LLGetHead(&itemList); link; link = link->next)
+	{
+		Item *item = link->data;
+
+		if (item->id == id)
+		{
+			returnValue = item;
+			break;
+		}
+	}
+
+	return returnValue;
+}
+
 local ItemType * getItemTypeByID(int id)
 {
 	Link *link;
@@ -185,9 +205,11 @@ local void LinkAmmo()
 		if (item->ammoID != 0)
 		{
 			Item *ammo;
-			unlock();
-			ammo = getItemByID(item->ammoID);
-			lock();
+			//unlock();
+			//ammo = getItemByID(item->ammoID);
+			//lock();
+			ammo = getItemByIDNoLock(item->ammoID);
+
 			item->ammo = ammo;
 
 			if (item->ammo == NULL)
@@ -377,9 +399,10 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 	{
 		int itemID = atoi(mysql->GetField(row, 0));					//item_id
 		Item *item;
-		unlock();
-		item = getItemByID(itemID);
-		lock();
+		//unlock();
+		//item = getItemByID(itemID);
+		//lock();
+		item = getItemByIDNoLock(itemID);
 
 		if (item != NULL)
 		{
@@ -447,9 +470,10 @@ local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 	{
 		int itemID = atoi(mysql->GetField(row, 0));					//item_id
 		Item *item;
-		unlock();
-		item = getItemByID(itemID);
-		lock();
+		//unlock();
+		//item = getItemByID(itemID);
+		//lock();
+		item = getItemByIDNoLock(itemID);
 
 		if (item != NULL)
 		{
