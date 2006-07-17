@@ -24,6 +24,7 @@ local PerArenaData * getPerArenaData(Arena *arena);
 local Item * getItemByID(int id);
 local Item * getItemByIDNoLock(int id);
 local ItemType * getItemTypeByID(int id);
+local ItemType * getItemTypeByIDNoLock(int id);
 local const char * getArenaIdentifier(Arena *arena);
 local void LinkAmmo();
 local void loadPropertiesQueryCallback(int status, db_res *result, void *passedData);
@@ -163,6 +164,25 @@ local ItemType * getItemTypeByID(int id)
 		}
 	}
 	unlock();
+
+	return returnValue;
+}
+
+local ItemType * getItemTypeByIDNoLock(int id)
+{
+	Link *link;
+	ItemType *returnValue = NULL;
+
+	for (link = LLGetHead(&itemTypeList); link; link = link->next)
+	{
+		ItemType *itemType = link->data;
+
+		if (itemType->id == id)
+		{
+			returnValue = itemType;
+			break;
+		}
+	}
 
 	return returnValue;
 }
@@ -567,8 +587,8 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 		item->expRequired = atoi(mysql->GetField(row, 6));			//exp_required
 		item->shipsAllowed = atoi(mysql->GetField(row, 7));			//ships_allowed
 
-		item->type1 = getItemTypeByID(atoi(mysql->GetField(row, 8)));	//type1
-		item->type2 = getItemTypeByID(atoi(mysql->GetField(row, 9)));	//type2
+		item->type1 = getItemTypeByIDNoLock(atoi(mysql->GetField(row, 8)));	//type1
+		item->type2 = getItemTypeByIDNoLock(atoi(mysql->GetField(row, 9)));	//type2
 
 		item->typeDelta1 = atoi(mysql->GetField(row, 10));			//type1_delta
 		item->typeDelta2 = atoi(mysql->GetField(row, 11));			//type2_delta
