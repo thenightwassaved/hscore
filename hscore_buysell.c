@@ -51,6 +51,9 @@ local void printAllCategories(Player *p)
 local void printCategoryItems(Player *p, Category *category) //call with lock held
 {
 	Link *link;
+	Link plink = {NULL, p};
+	LinkedList lst = { &plink, &plink };	
+	char messageType;
 
 	chat->SendMessage(p, "+----------------------------------+");
 	chat->SendMessage(p, "| %-32s |", category->name);
@@ -73,8 +76,24 @@ local void printCategoryItems(Player *p, Category *category) //call with lock he
 					shipMask[i] = ' ';
 				}
 			}
-
-			chat->SendMessage(p, "| %-16s | %-9i | %-10i | %-5i | %-8s | %-3i | %-32s |", item->name, item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, item->shortDesc);
+			
+			if (money->getMoney(p) >= item->buyPrice && money->getExp(p) >= item->expRequired)
+			{
+				messageType =  MSG_SYSOPWARNING;
+			}
+			else
+			{
+				if (p->p_ship != SHIP_SPEC && (item->shipsAllowed >> p->p_ship) & 0x1)
+				{
+					messageType = MSG_SYSOPWARNING;
+				}
+				else
+				{
+					messageType = MSG_ARENA;
+				}
+			}
+			
+			chat->SendAnyMessage(&lst, messageType, 0, NULL, "| %-16s | %-9i | %-10i | %-5i | %-8s | %-3i | %-32s |", item->name, item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, item->shortDesc);
 		}
 	}
 
@@ -83,6 +102,10 @@ local void printCategoryItems(Player *p, Category *category) //call with lock he
 
 local void printShipList(Player *p)
 {
+	Link plink = {NULL, p};
+	LinkedList lst = { &plink, &plink };
+	char messageType; 
+
 	chat->SendMessage(p, "+-----------+-----------+------------+--------+----------------------------------------------------+");
 	chat->SendMessage(p, "| Ship Name | Buy Price | Sell Price | Exp    | Ship Description                                   |");
 	chat->SendMessage(p, "+-----------+-----------+------------+--------+----------------------------------------------------+");
@@ -112,8 +135,17 @@ local void printShipList(Player *p)
 		{
 			continue; //dont list the ship unless it can be bought.
 		}
-
-		chat->SendMessage(p, "| %-9s | $%-8i | $%-9i | %-6i | %-50s |", shipNames[i], buyPrice, sellPrice, expRequired, description);
+		
+		if(money->getMoney(p) >= buyPrice && money->getExp(p) >= expRequired)
+		{
+			messageType = MSG_SYSOPWARNING;
+		}
+		else
+		{
+			messageType = MSG_ARENA;
+		}
+		
+		chat->SendAnyMessage(&lst, messageType, 0, NULL, "| %-9s | $%-8i | $%-9i | %-6i | %-50s |", shipNames[i], buyPrice, sellPrice, expRequired, description);		
 	}
 
 
