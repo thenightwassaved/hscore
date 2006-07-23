@@ -37,23 +37,23 @@ typedef enum EventAction
 
 typedef struct Event
 {
-	char event[16]; //something like "death" or "datazero"
+	char event[17]; //something like "death" or "datazero"
 	EventAction action;
 
 	int data; //action dependent
 
-	char message[200]; //if == to "" then nothing will be sent.
+	char message[201]; //if == to "" then nothing will be sent.
 } Event;
 
 typedef struct Property
 {
-	char name[16];
+	char name[17];
 	int value;
 } Property;
 
 typedef struct ItemType
 {
-	char name[32];
+	char name[33];
 	int max; //maximum total of this item type on a ship before ?buy denies purchace
 
 	int id; //MySQL use only
@@ -61,9 +61,9 @@ typedef struct ItemType
 
 typedef struct Item
 {
-	char name[16];
-	char shortDesc[32]; //displayed inline in the ?buy menu
-	char longDesc[200]; //displayed as part of ?iteminfo
+	char name[17];
+	char shortDesc[33]; //displayed inline in the ?buy menu
+	char longDesc[201]; //displayed as part of ?iteminfo
 	int buyPrice;
 	int sellPrice;
 
@@ -119,8 +119,8 @@ typedef struct ShipHull
 
 typedef struct Category
 {
-	char name[32]; //displayed on ?buy
-	char description[64]; //displayed inline on the ?buy menu
+	char name[33]; //displayed on ?buy
+	char description[65]; //displayed inline on the ?buy menu
 
 	LinkedList itemList; //a list of member items that are displayed
 
@@ -131,9 +131,9 @@ typedef struct Category
 
 typedef struct Store
 {
-	char name[32]; //displayed in ?buysell location errors
-	char description[200]; //displayed in ?storeinfo
-	char region[16]; //region that defines the store
+	char name[33]; //displayed in ?buysell location errors
+	char description[201]; //displayed in ?storeinfo
+	char region[17]; //region that defines the store
 
 	LinkedList itemList; //a list of items that can be purchaced here
 

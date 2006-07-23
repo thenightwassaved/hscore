@@ -463,7 +463,7 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 			if (!property)
 			{
 				property = amalloc(sizeof(*property));
-				astrncpy(property->name, mysql->GetField(row, 1), 16);
+				astrncpy(property->name, mysql->GetField(row, 1), 17);
 				LLAdd(&item->propertyList, property);
 			}
 			
@@ -535,7 +535,7 @@ local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 			if (!event)
 			{
 				event = amalloc(sizeof(*event));
-				astrncpy(event->event, mysql->GetField(row, 1), 16);
+				astrncpy(event->event, mysql->GetField(row, 1), 17);
 				LLAdd(&item->eventList, event);
 			}
 			
@@ -543,7 +543,7 @@ local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 			
 			event->action = atoi(mysql->GetField(row, 2));			//action
 			event->data = atoi(mysql->GetField(row, 3));			//data
-			astrncpy(event->message, mysql->GetField(row, 4), 200);	//message
+			astrncpy(event->message, mysql->GetField(row, 4), 201);	//message
 
 			
 		}
@@ -603,9 +603,9 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 			LLAdd(&itemList, item);
 		}
 
-		astrncpy(item->name, mysql->GetField(row, 1), 16);			//name
-		astrncpy(item->shortDesc, mysql->GetField(row, 2), 32);		//short_description
-		astrncpy(item->longDesc, mysql->GetField(row, 3), 200);		//long_description
+		astrncpy(item->name, mysql->GetField(row, 1), 17);			//name
+		astrncpy(item->shortDesc, mysql->GetField(row, 2), 33);		//short_description
+		astrncpy(item->longDesc, mysql->GetField(row, 3), 201);		//long_description
 		item->buyPrice = atoi(mysql->GetField(row, 4));				//buy_price
 		item->sellPrice = atoi(mysql->GetField(row, 5));			//sell_price
 		item->expRequired = atoi(mysql->GetField(row, 6));			//exp_required
@@ -681,7 +681,7 @@ local void loadItemTypesQueryCallback(int status, db_res *result, void *passedDa
 			LLAdd(&itemTypeList, itemType);
 		}
 		
-		astrncpy(itemType->name, mysql->GetField(row, 1), 32);	//name
+		astrncpy(itemType->name, mysql->GetField(row, 1), 33);	//name
 		itemType->max = atoi(mysql->GetField(row, 2));			//max
 
 		unlock();
@@ -1005,9 +1005,9 @@ local void loadArenaStoresQueryCallback(int status, db_res *result, void *passed
 			LLEmpty(&store->itemList);
 		}
 
-		astrncpy(store->name, mysql->GetField(row, 1), 32);			//name
-		astrncpy(store->description, mysql->GetField(row, 2), 200);	//description
-		astrncpy(store->region, mysql->GetField(row, 3), 16);		//region
+		astrncpy(store->name, mysql->GetField(row, 1), 33);			//name
+		astrncpy(store->description, mysql->GetField(row, 2), 201);	//description
+		astrncpy(store->region, mysql->GetField(row, 3), 17);		//region
 
 		unlock();
 	}
@@ -1124,8 +1124,8 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 			LLEmpty(&category->itemList);
 		}
 
-		astrncpy(category->name, mysql->GetField(row, 1), 32);			//name
-		astrncpy(category->description, mysql->GetField(row, 2), 64);	//description
+		astrncpy(category->name, mysql->GetField(row, 1), 33);			//name
+		astrncpy(category->description, mysql->GetField(row, 2), 65);	//description
 		category->hidden = atoi(mysql->GetField(row, 3));				//hidden
 
 		unlock();
