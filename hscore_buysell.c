@@ -77,19 +77,19 @@ local void printCategoryItems(Player *p, Category *category) //call with lock he
 				}
 			}
 			
-			if (money->getMoney(p) >= item->buyPrice && money->getExp(p) >= item->expRequired)
+			if (money->getMoney(p) < item->buyPrice && money->getExp(p) < item->expRequired)
 			{
 				messageType =  MSG_SYSOPWARNING;
 			}
 			else
 			{
-				if (p->p_ship != SHIP_SPEC && (item->shipsAllowed >> p->p_ship) & 0x1)
+				if (p->p_ship == SHIP_SPEC && (item->shipsAllowed >> p->p_ship) & 0x1)
 				{
-					messageType = MSG_SYSOPWARNING;
+					messageType = MSG_ARENA;
 				}
 				else
 				{
-					messageType = MSG_ARENA;
+					messageType = MSG_SYSOPWARNING;
 				}
 			}
 			
@@ -138,11 +138,11 @@ local void printShipList(Player *p)
 		
 		if(money->getMoney(p) >= buyPrice && money->getExp(p) >= expRequired)
 		{
-			messageType = MSG_SYSOPWARNING;
+			messageType = MSG_ARENA;
 		}
 		else
 		{
-			messageType = MSG_ARENA;
+			messageType = MSG_SYSOPWARNING;
 		}
 		
 		chat->SendAnyMessage(&lst, messageType, 0, NULL, "| %-9s | $%-8i | $%-9i | %-6i | %-50s |", shipNames[i], buyPrice, sellPrice, expRequired, description);		
