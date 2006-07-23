@@ -77,13 +77,13 @@ local void printCategoryItems(Player *p, Category *category) //call with lock he
 				}
 			}
 			
-			if (money->getMoney(p) < item->buyPrice && money->getExp(p) < item->expRequired)
+			if (money->getMoney(p) < item->buyPrice || money->getExp(p) < item->expRequired)
 			{
 				messageType =  MSG_SYSOPWARNING;
 			}
 			else
 			{
-				if (p->p_ship == SHIP_SPEC && (item->shipsAllowed >> p->p_ship) & 0x1)
+				if (p->p_ship == SHIP_SPEC || (item->shipsAllowed >> p->p_ship) & 0x1)
 				{
 					messageType = MSG_ARENA;
 				}
