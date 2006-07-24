@@ -434,6 +434,9 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 		PerPlayerData *playerData = getPerPlayerData(p);
 		for (x = 0; x < 8; ++x)
 		{
+			if (!playerData->hull[x])
+				continue;
+
 			HashEnum(playerData->hull[x]->propertySums, hash_enum_afree, 0);
 			HashEnum(playerData->hull[x]->propertySums, hash_enum_remove, 0);
 		}
