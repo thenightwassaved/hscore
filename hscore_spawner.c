@@ -116,7 +116,7 @@ local void spawnPlayer(Player *p)
 {
 	PlayerDataStruct *data = PPDATA(p, playerDataKey);
 	Target t;
-	int bounce, prox, multifire, shrapnel;
+	int bounce, prox, multifire, shrapnel, energyviewing;
 	data->spawned = 1;
 
 
@@ -133,6 +133,11 @@ local void spawnPlayer(Player *p)
 
 	shrapnel = items->getPropertySum(p, p->pkt.ship, "shrapnel");
 	if (shrapnel) game->GivePrize(&t, 19, shrapnel);
+	
+	//set energy viewing
+	energyViewing = items->getPropertySum(p, p->pkt.ship, "energyviewing");
+	if (energyviewing) game->SetPlayerEnergyViewing(p, SEE_ALL);
+	else game->ResetPlayerEnergyViewing(p);
 }
 
 local void loadOverrides()

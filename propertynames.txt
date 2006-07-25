@@ -76,3 +76,5 @@ grav
 
 attach
 summon
+
+energyviewing
