@@ -136,7 +136,7 @@ local void spawnPlayer(Player *p)
 	
 	//set energy viewing
 	energyViewing = items->getPropertySum(p, p->pkt.ship, "energyviewing");
-	if (energyviewing) game->SetPlayerEnergyViewing(p, ENERGY_SEE_ALL);
+	if (energyViewing) game->SetPlayerEnergyViewing(p, ENERGY_SEE_ALL);
 	else game->ResetPlayerEnergyViewing(p);
 }
 
