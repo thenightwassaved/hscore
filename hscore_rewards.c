@@ -169,7 +169,11 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		bountymult  = (double)cfg->GetInt(arena->cfg, "Hyperspace", "BountyMult",  1);
 
 		//Retrieve Experience
-		kexp = (double) money->getExp(killer);
+		if (killer->type != T_FAKE)
+			kexp = (double) money->getExp(killer);
+		else
+			kexp = 10000;
+
 		dexp = (double) money->getExp(killed);
 
 		//Calculate Earned Experience
