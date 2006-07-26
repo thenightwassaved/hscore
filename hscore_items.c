@@ -39,13 +39,21 @@ local helptext_t itemInfoHelp =
 
 local void itemInfoCommand(const char *command, const char *params, Player *p, const Target *target)
 {
+	Item *item;
+	char shipMask[] = "12345678";
+	int i;
+	char *itemType1, *itemType2;
+	char buf[256];
+	const char *temp = NULL;
+	Link *link;
+
 	if (*params == '\0')
 	{
 		chat->SendMessage(p, "Please use the ?buy menu to look up items.");
 		return;
 	}
 
-	Item *item = getItemByName(params, p->arena);
+	item = getItemByName(params, p->arena);
 
 	if (item == NULL)
 	{
@@ -61,8 +69,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 	chat->SendMessage(p, "| Buy Price | Sell Price | Exp   | Ships    | Max | Item Type 1     | Usage | Item Type 2     | Usage |");
 
 	//calculate ship mask
-	char shipMask[] = "12345678";
-	for (int i = 0; i < 8; i++)
+	for (i = 0; i < 8; i++)
 	{
 		if (!((item->shipsAllowed >> i) & 0x1))
 		{
@@ -71,22 +78,20 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 	}
 
 	//get item type strings
-	char *itemType1 = (item->type1) ? item->type1->name : "<none>";
-	char *itemType2 = (item->type2) ? item->type2->name : "<none>";
+	itemType1 = (item->type1) ? item->type1->name : "<none>";
+	itemType2 = (item->type2) ? item->type2->name : "<none>";
 
 	chat->SendMessage(p, "| $%-8i | $%-9i | %-5i | %s | %-3i | %-15s | %-5i | %-15s | %-5i |", item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, itemType1, item->typeDelta1, itemType2, item->typeDelta2);
 	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+-----------------+-------+-----------------+-------+");
 
 	//print description
-	char buf[256];
-	const char *temp = NULL;
 	while (strsplit(item->longDesc, "ß", buf, 256, &temp))
 	{
 		chat->SendMessage(p, "| %-99s |", buf);
 	}
 
 	database->lock();
-	Link *link = LLGetHead(&item->propertyList);
+	link = LLGetHead(&item->propertyList);
 	if (link)
 	{
 		//print item properties
@@ -124,6 +129,8 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 	int count = 1;
 	int ship = 0;
 	const char *itemName;
+	Item *item;
+	int newItemCount;
 
 	char *next; //for strtol
 
@@ -251,7 +258,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 	}
 
 	//verify item
-	Item *item = getItemByName(itemName, p->arena);
+	item = getItemByName(itemName, p->arena);
 	if (item == NULL)
 	{
 		chat->SendMessage(p, "Grantitem: No item %s in this arena.", itemName);
@@ -279,7 +286,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					}
 				}
 
-				int newItemCount = getItemCount(t, item, ship) + count;
+				newItemCount = getItemCount(t, item, ship) + count;
 				if (item->max == 0 || newItemCount <= item->max)
 				{
 					if (item->type1 != NULL)
@@ -305,14 +312,16 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					{
 						if (count > 0)
 						{
-							for (int i = 0; i < count; i++)
+							int i;
+							for (i = 0; i < count; i++)
 							{
 								triggerEventOnItem(t, item, ship, "add");
 							}
 						}
 						else
 						{
-							for (int i = 0; i < -count; i++)
+							int i;
+							for (i = 0; i < -count; i++)
 							{
 								triggerEventOnItem(t, item, ship, "del");
 							}
@@ -350,6 +359,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 		{
 			LinkedList set = LL_INITIALIZER;
 			Link *link;
+			int playerCount;
 			pd->TargetToSet(target, &set);
 
 			for (link = LLGetHead(&set); link; link = link->next)
@@ -416,7 +426,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 				}
 			}
 
-			int playerCount = LLCount(&set);
+			playerCount = LLCount(&set);
 
 			LLEmpty(&set);
 
@@ -451,10 +461,11 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 		{
 			//save item pointer
 			Item *item = entry->item;
+			int i;
 
 			removed = addItem(p, item, p->p_ship, -event->data); //remove before "del"
 
-			for (int i = 0; i < event->data; i++)
+			for (i = 0; i < event->data; i++)
 			{
 				internalTriggerEventOnItem(p, item, p->p_ship, "del"); //fixme, this could be improved greatly (the loop)
 			}
@@ -469,8 +480,9 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 	{
 		if (entry != NULL)
 		{
+			int i;
 			removed = addItem(p, entry->item->ammo, p->p_ship, -event->data);
-			for (int i = 0; i < event->data; i++)
+			for (i = 0; i < event->data; i++)
 			{
 				internalTriggerEventOnItem(p, entry->item->ammo, p->p_ship, "del"); //fixme, this could be improved greatly (the loop)
 			}
@@ -484,13 +496,14 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 	{
 		int prize = event->data % 100;
 		int count = abs(event->data / 100);
+		Target t;
 
 		if (count == 0)
 		{
 			count = 1;
 		}
 
-		Target t;
+
 		t.type = T_PLAYER;
 		t.u.p = p;
 
@@ -562,12 +575,13 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 	else if (action == ACTION_SHIP_RESET) //sends a shipreset packet and reprizes all items (antideath, really)
 	{
 		Target t;
+		Ihscorespawner *spawner;
 		t.type = T_PLAYER;
 		t.u.p = p;
 
 		game->ShipReset(&t);
 
-		Ihscorespawner *spawner = mm->GetInterface(I_HSCORE_SPAWNER, p->arena);
+		spawner = mm->GetInterface(I_HSCORE_SPAWNER, p->arena);
 		if (spawner)
 		{
 			spawner->respawn(p);
@@ -588,8 +602,9 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 
 local int getItemCount(Player *p, Item *item, int ship)
 {
+	int count;
 	database->lock();
-	int count = internalGetItemCount(p, item, ship);
+	count = internalGetItemCount(p, item, ship);
 	database->unlock();
 	return count;
 }
@@ -597,6 +612,8 @@ local int getItemCount(Player *p, Item *item, int ship)
 local int internalGetItemCount(Player *p, Item *item, int ship) //call with lock held
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
+	Link *link;
+	LinkedList *inventoryList;
 
 	if (item == NULL)
 	{
@@ -622,8 +639,7 @@ local int internalGetItemCount(Player *p, Item *item, int ship) //call with lock
 		return 0;
 	}
 
-	Link *link;
-	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+	inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
@@ -641,6 +657,11 @@ local int internalGetItemCount(Player *p, Item *item, int ship) //call with lock
 local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
+	Link *link;
+	LinkedList *inventoryList;
+	int data = 0;
+	int count = 0;
+	int doInit = 0;
 
 	if (item == NULL)
 	{
@@ -666,11 +687,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 		return 0;
 	}
 
-	Link *link;
-	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
-
-	int data = 0;
-	int count = 0;
+	inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
@@ -684,7 +701,6 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 		}
 	}
 
-	int doInit = 0;
 	if (count == 0 && amount != 0)
 	{
 		//we need to do an init event.
@@ -787,6 +803,10 @@ local Item * getItemByName(const char *name, Arena *arena) //call with no lock
 local int getPropertySum(Player *p, int ship, const char *propString) //call with no lock
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
+	int *propertySum;
+	Link *link;
+	LinkedList *inventoryList;
+	int count = 0;
 
 	if (propString == NULL)
 	{
@@ -816,7 +836,7 @@ local int getPropertySum(Player *p, int ship, const char *propString) //call wit
 	database->lock();
 
 	//check if it's in the cache
-	int *propertySum = (int*)HashGetOne(playerData->hull[ship]->propertySums, propString);
+	propertySum = (int*)HashGetOne(playerData->hull[ship]->propertySums, propString);
 	if (propertySum != NULL)
 	{
 		database->unlock();
@@ -824,13 +844,13 @@ local int getPropertySum(Player *p, int ship, const char *propString) //call wit
 	}
 
 	//not in the cache, look it up
-	Link *link;
-	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+	inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
-	int count = 0;
 
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
+		Link *propLink;
+
 		InventoryEntry *entry = link->data;
 		Item *item = entry->item;
 
@@ -844,7 +864,6 @@ local int getPropertySum(Player *p, int ship, const char *propString) //call wit
 			}
 		}
 
-		Link *propLink;
 		for (propLink = LLGetHead(&item->propertyList); propLink; propLink = propLink->next)
 		{
 			Property *prop = propLink->data;
@@ -877,6 +896,11 @@ local void triggerEvent(Player *p, int ship, const char *eventName)
 local void internalTriggerEvent(Player *p, int ship, const char *eventName) //called with lock held
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
+	LinkedList *inventoryList;
+	Link *link;
+
+	if (p->type == T_FAKE)
+		return;
 
 	if (eventName == NULL)
 	{
@@ -903,16 +927,16 @@ local void internalTriggerEvent(Player *p, int ship, const char *eventName) //ca
 	}
 
 
-	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+	inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
-	Link *link = LLGetHead(inventoryList);
+	link = LLGetHead(inventoryList);
 	while (link != NULL)
 	{
+		Link *eventLink;
 		InventoryEntry *entry = link->data;
 		Item *item = entry->item;
 		link = link->next; //the current node may be destroyed by doEvent.
 
-		Link *eventLink;
 		for (eventLink = LLGetHead(&item->eventList); eventLink; eventLink = eventLink->next)
 		{
 			Event *event = eventLink->data;
@@ -940,6 +964,9 @@ local void triggerEventOnItem(Player *p, Item *triggerItem, int ship, const char
 local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, const char *eventName) //lock must be held
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
+	int foundItem = 0;
+	LinkedList *inventoryList;
+	Link *link;
 
 	if (eventName == NULL)
 	{
@@ -971,11 +998,9 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 		return;
 	}
 
-	int foundItem = 0;
+	inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
-	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
-
-	Link *link = LLGetHead(inventoryList);
+	link = LLGetHead(inventoryList);
 	while (link != NULL)
 	{
 		InventoryEntry *entry = link->data;
@@ -984,9 +1009,9 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 
 		if (item == triggerItem)
 		{
+			Link *eventLink;
 			foundItem = 1;
 
-			Link *eventLink;
 			for (eventLink = LLGetHead(&item->eventList); eventLink; eventLink = eventLink->next)
 			{
 				Event *event = eventLink->data;
@@ -1030,6 +1055,9 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship) //call with no lock
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
+	Link *link;
+	LinkedList *inventoryList;
+	int count;
 
 	if (type == NULL)
 	{
@@ -1055,10 +1083,9 @@ local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship) //call with 
 		return 0;
 	}
 
-	Link *link;
-	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+	inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
-	int count = type->max;
+	count = type->max;
 
 	database->lock();
 	for (link = LLGetHead(inventoryList); link; link = link->next)
@@ -1083,6 +1110,7 @@ local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship) //call with 
 local int hasItemsLeftOnShip(Player *p, int ship) //lock doesn't matter
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
+	LinkedList *inventoryList;
 
 	if (!database->areShipsLoaded(p))
 	{
@@ -1102,7 +1130,7 @@ local int hasItemsLeftOnShip(Player *p, int ship) //lock doesn't matter
 		return 0;
 	}
 
-	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+	inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
 	if (LLGetHead(inventoryList) == NULL)
 	{
@@ -1125,6 +1153,9 @@ local int zeroCacheEntry(const char *key, void *val, void *clos)
 local void recaclulateEntireCache(Player *p, int ship)
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
+	HashTable *table;
+	Link *link;
+	LinkedList *inventoryList;
 
 	if (!database->areShipsLoaded(p))
 	{
@@ -1144,19 +1175,19 @@ local void recaclulateEntireCache(Player *p, int ship)
 		return;
 	}
 
-	HashTable *table = playerData->hull[ship]->propertySums;
+	table = playerData->hull[ship]->propertySums;
 
 	//first, set all cache entries to zero, so we can keep the 0 entries
 	HashEnum(table, zeroCacheEntry, NULL);
 
 	//then iterate every property and update the cache with it
-	Link *link;
-	LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+	inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
 		InventoryEntry *entry = link->data;
 		Item *item = entry->item;
+		Link *propLink;
 
 		if (item->ammo != NULL)
 		{
@@ -1168,7 +1199,6 @@ local void recaclulateEntireCache(Player *p, int ship)
 			}
 		}
 
-		Link *propLink;
 		for (propLink = LLGetHead(&item->propertyList); propLink; propLink = propLink->next)
 		{
 			Property *prop = propLink->data;
