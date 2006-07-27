@@ -50,11 +50,12 @@ local void moneyCommand(const char *command, const char *params, Player *p, cons
 		{
 			if (strstr(params, "-d")) //wants details
 			{
+				int i;
 				int total = 0;
 
 				chat->SendMessage(p, "Player %s: money: %i, exp: %i", t->name, getMoney(t), getExp(t));
 
-				for (int i = 0; i < MONEY_TYPE_COUNT; i++)
+				for (i = 0; i < MONEY_TYPE_COUNT; i++)
 				{
 					chat->SendMessage(p, "%s money: $%i", moneyTypeNames[i], getMoneyType(t, i));
 					total += getMoneyType(t, i);
@@ -98,6 +99,7 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 	int quiet = 0;
 	char *next;
 	char *message;
+	int amount;
 
 	while (params != NULL) //get the flags
 	{
@@ -127,7 +129,7 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 		return;
 	}
 
-	int amount = strtol(params, &next, 0);
+	amount = strtol(params, &next, 0);
 
 	if (next == params)
 	{
@@ -189,6 +191,7 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 		{
 			LinkedList set = LL_INITIALIZER;
 			Link *link;
+			int count;
 			pd->TargetToSet(target, &set);
 
 			for (link = LLGetHead(&set); link; link = link->next)
@@ -217,7 +220,7 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 				}
 			}
 
-			int count = LLCount(&set);
+			count = LLCount(&set);
 
 			LLEmpty(&set);
 
@@ -243,6 +246,7 @@ local void grantExpCommand(const char *command, const char *params, Player *p, c
 	int quiet = 0;
 	char *next;
 	char *message;
+	int amount;
 
 	while (params != NULL) //get the flags
 	{
@@ -272,7 +276,7 @@ local void grantExpCommand(const char *command, const char *params, Player *p, c
 		return;
 	}
 
-	int amount = strtol(params, &next, 0);
+	amount = strtol(params, &next, 0);
 
 	if (next == params)
 	{
@@ -334,6 +338,7 @@ local void grantExpCommand(const char *command, const char *params, Player *p, c
 		{
 			LinkedList set = LL_INITIALIZER;
 			Link *link;
+			int count;
 			pd->TargetToSet(target, &set);
 
 			for (link = LLGetHead(&set); link; link = link->next)
@@ -362,7 +367,7 @@ local void grantExpCommand(const char *command, const char *params, Player *p, c
 				}
 			}
 
-			int count = LLCount(&set);
+			count = LLCount(&set);
 
 			LLEmpty(&set);
 
@@ -389,6 +394,7 @@ local void setMoneyCommand(const char *command, const char *params, Player *p, c
 	int quiet = 0;
 	char *next;
 	char *message;
+	int amount;
 
 	while (params != NULL) //get the flags
 	{
@@ -418,7 +424,7 @@ local void setMoneyCommand(const char *command, const char *params, Player *p, c
 		return;
 	}
 
-	int amount = strtol(params, &next, 0);
+	amount = strtol(params, &next, 0);
 
 	if (next == params)
 	{
@@ -480,6 +486,7 @@ local void setMoneyCommand(const char *command, const char *params, Player *p, c
 		{
 			LinkedList set = LL_INITIALIZER;
 			Link *link;
+			int count;
 			pd->TargetToSet(target, &set);
 
 			for (link = LLGetHead(&set); link; link = link->next)
@@ -508,7 +515,7 @@ local void setMoneyCommand(const char *command, const char *params, Player *p, c
 				}
 			}
 
-			int count = LLCount(&set);
+			count = LLCount(&set);
 
 			LLEmpty(&set);
 
@@ -535,6 +542,7 @@ local void setExpCommand(const char *command, const char *params, Player *p, con
 	int quiet = 0;
 	char *next;
 	char *message;
+	int amount;
 
 	while (params != NULL) //get the flags
 	{
@@ -564,7 +572,7 @@ local void setExpCommand(const char *command, const char *params, Player *p, con
 		return;
 	}
 
-	int amount = strtol(params, &next, 0);
+	amount = strtol(params, &next, 0);
 
 	if (next == params)
 	{
@@ -626,6 +634,7 @@ local void setExpCommand(const char *command, const char *params, Player *p, con
 		{
 			LinkedList set = LL_INITIALIZER;
 			Link *link;
+			int count;
 			pd->TargetToSet(target, &set);
 
 			for (link = LLGetHead(&set); link; link = link->next)
@@ -654,7 +663,7 @@ local void setExpCommand(const char *command, const char *params, Player *p, con
 				}
 			}
 
-			int count = LLCount(&set);
+			count = LLCount(&set);
 
 			LLEmpty(&set);
 
@@ -880,7 +889,8 @@ local int getMoneyType(Player *p, MoneyType type)
 
 local void giveExp(Player *p, int amount)
 {
-	if (database->isLoaded(p))
+	//fake players never have data loaded, use their default zeroed values for this
+	if (database->isLoaded(p) || (p->type == T_FAKE))
 	{
 		PerPlayerData *playerData = database->getPerPlayerData(p);
 
@@ -899,7 +909,8 @@ local void setExp(Player *p, int amount)
 
 local int getExp(Player *p)
 {
-	if (database->isLoaded(p))
+	//fake players never have data loaded, use their default zeroed values for this
+	if (database->isLoaded(p) || (p->type == T_FAKE))
 	{
 		PerPlayerData *playerData = database->getPerPlayerData(p);
 
