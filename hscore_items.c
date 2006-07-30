@@ -109,7 +109,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 	else
 	{
 		//no item properties
-		chat->SendMessage(p, "+--------------------------------------------------------------------------------------------------+");
+		chat->SendMessage(p, "+-----------------------------------------------------------------------------------------------------+");
 	}
 	database->unlock();
 }
