@@ -241,7 +241,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		int disableExpRewards  = cfg->GetInt(arena->cfg, "Hyperspace", "DisableExpRewards",  0);
 
 		//Calculate Earned Money
-		int exp = calculateExpReward(killer, killed);
+		int experience = calculateExpReward(killer, killed);
 		int baseMoney = calculateBaseMoneyReward(killer, killed);
 		int bonusMoney = calculateBonusMoneyReward(killer, killed);
 
@@ -253,11 +253,11 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		//Distribute Wealth
 		if (!disableExpRewards)
 		{
-			money->giveExp(killer, exp);
+			money->giveExp(killer, experience);
 			
 			if (disableMoneyRewards)
 			{
-				chat->SendMessage(killer, "You received %d exp for killing %s.", exp, killed->name);
+				chat->SendMessage(killer, "You received %d exp for killing %s.", experience, killed->name);
 			}
 		}
 		
@@ -271,7 +271,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 			}			
 			else
 			{
-				chat->SendMessage(killer, "You received %d money and %d exp for killing %s.", baseMoney + bonusMoney, exp, killed->name);
+				chat->SendMessage(killer, "You received %d money and %d exp for killing %s.", baseMoney + bonusMoney, experience, killed->name);
 			}
 		
 			//give money to teammates
