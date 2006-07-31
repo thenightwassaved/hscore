@@ -19,63 +19,66 @@ local Ihscoremoney *money;
 //This is assuming we're using fg_wz.py
 local void flagWinCallback(Arena *arena, int freq, int *points)
 {
-	/*
-	 * money = (coefficient * jackpot)^exponent * pop
-	 * Defaults:
-	 * coefficient = 200, exponent = 0.5
-	 */
-
-	//Variable Declarations
-	double amount, coeff, expn, pts;
-	int reward, exp;
-	Player *p;
+	int players = 0, onfreq = 0, points, exp;
+	Player *i;
 	Link *link;
+	Ijackpot *jackpot;
+	Iteamnames *teamnames;
 
-	//Read Settings
-	/* cfghelp: Hyperspace:FlagCoeff, arena, int, def: 200, mod: hscore_rewards
-	 * The flag reward coefficient. */	 
-	coeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "FlagCoeff", 200);
-	/* cfghelp: Hyperspace:FlagExponent, arena, int, def: 50, mod: hscore_rewards
-	 * The exponent to raise the reward to. 500=0.5. */	 
-	expn = (double)cfg->GetInt(arena->cfg, "Hyperspace", "FlagExponent", 500) / 1000;
-	pts = (double)(*points);
+	pd->Lock();
+	FOR_EACH_PLAYER(i)
+		if (i->status == S_PLAYING &&
+			i->arena == arena &&
+			i->p_ship != SHIP_SPEC &&
+			IS_HUMAN(i))
+		{
+			players++;
+			if (i->p_freq == freq)
+				onfreq++;
+		}
+	pd->Unlock();
 
-	//chat->SendArenaMessage(arena, "coeff=%f expn=%f pts=%f", coeff, expn, pts);
+	jackpot = mm->GetInterface(I_JACKPOT, arena);
+	if (jackpot)
+	{
+		points = jackpot->GetJP(arena);
+		mm->ReleaseInterface(jackpot);
+	}
+	
+	exp = (players - onfreq);
 
-	//Calculate Reward
-	amount = coeff * pts;
-	amount = pow(amount, expn);
-	amount *= (double)arena->playing;
-	reward = (int)amount;
-	exp = (int)(amount / 8);
+	/* cfghelp: Flag:SplitPoints, arena, bool, def: 0
+	 * Whether to split a flag reward between the members of a freq or
+	 * give them each the full amount. */
+	if (onfreq > 0 && cfg->GetInt(arena->cfg, "Flag", "SplitPoints", 0))
+		points /= onfreq;
 
-
-	Iteamnames *teamnames = mm->GetInterface(I_TEAMNAMES, arena);
+	teamnames = mm->GetInterface(I_TEAMNAMES, arena);
 	if (teamnames)
 	{
 		const char *name = teamnames->getFreqTeamName(freq, arena);
 		if (name != NULL)
 		{
-			chat->SendArenaMessage(arena, "%s won flag game. Reward: $%d (%d exp)", name, reward, exp);
+			chat->SendArenaMessage(arena, "%s won flag game. Reward: $%d (%d exp)", name, points, exp);
 		}
 		else
 		{
-			chat->SendArenaMessage(arena, "Unidentified team won flag game. Reward: $%d (%d exp)", reward, exp);
+			chat->SendArenaMessage(arena, "Unidentified team won flag game. Reward: $%d (%d exp)", points, exp);
 		}
 	}
 	else
 	{
-		chat->SendArenaMessage(arena, "Reward: $%d (%d exp)", reward, exp);
+		chat->SendArenaMessage(arena, "Reward: $%d (%d exp)", points, exp);
 	}
 
 	 //Distribute Wealth
     pd->Lock();
-	FOR_EACH_PLAYER(p)
+	FOR_EACH_PLAYER(i)
 	{
-		if(p->arena == arena && p->p_freq == freq && p->p_ship != SHIP_SPEC)
+		if(i->arena == arena && i->p_freq == freq && i->p_ship != SHIP_SPEC)
 		{
-			money->giveMoney(p, reward, MONEY_TYPE_FLAG);
-			money->giveExp(p, exp);
+			money->giveMoney(i, points, MONEY_TYPE_FLAG);
+			money->giveExp(i, exp);
 			//no need to send message, as the team announcement works just fine
 			//chat->SendMessage(p, "You received $%d and %d exp for a flag victory.", reward, exp);
 		}
@@ -98,12 +101,12 @@ local void goalCallback(Arena *arena, Player *scorer, int bid, int x, int y)
 	Link *link;
 
 	//Read Settings
-	/* cfghelp: Hyperspace:GoalCoeff, arena, int, def: 500, mod: hscore_rewards
+	/* cfghelp: Hyperspace:GoalCoeff, arena, int, def: 50, mod: hscore_rewards
 	 * The goal reward coefficient. */
-	coeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "GoalCoeff", 500);
-	/* cfghelp: Hyperspace:GoalMin, arena, int, def: 300, mod: hscore_rewards
+	coeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "GoalCoeff", 50);
+	/* cfghelp: Hyperspace:GoalMin, arena, int, def: 30, mod: hscore_rewards
 	 * The amount to add to the goal reward. */
-	min   = (double)cfg->GetInt(arena->cfg, "Hyperspace", "GoalMin",   300);
+	min   = (double)cfg->GetInt(arena->cfg, "Hyperspace", "GoalMin",   30);
 
 	//Calculate Reward
 	amount = pow((double)arena->playing, 0.5);
@@ -126,106 +129,184 @@ local void goalCallback(Arena *arena, Player *scorer, int bid, int x, int y)
 	pd->Unlock();
 }
 
+local int calculateExpReward(Player *killer, Player *killed)
+{
+	/* cfghelp: Hyperspace:UseDiscrete, arena, int, def: 1, mod: hscore_rewards
+	 * 1 = Use discrete method of calculating exp rewards.
+	 * 0 = Use old exponential method.*/
+	int useDiscrete = cfg->GetInt(arena->cfg, "Hyperspace", "UseDiscrete",  1);
+	
+	//get exp
+	//add one to prevent divide by zero errors
+	double kexp = (double) money->getExp(killer) + 1;
+	double dexp = (double) money->getExp(killed) + 1;
+	
+	int reward = 0;
+	
+	if (useDiscrete)
+	{
+		double ratio = dexp / kexp;
+		
+		if (ratio < 0.25)
+		{
+			reward = 0;
+		}
+		else if (ratio < 0.75)
+		{
+			reward = 1;
+		}
+		else if (ratio < 1.25)
+		{
+			reward = 2;
+		}
+		else if (ratio < 2.00)
+		{
+			reward = 3;
+		}
+		else
+		{
+			reward = 4;
+		}
+	}
+	else
+	{
+		/* cfghelp: Hyperspace:KillCoeff, arena, int, def: 10, mod: hscore_rewards
+		 * Kill reward coefficient (discrete = 0). */
+		double coeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "KillCoeff", 10);
+		/* cfghelp: Hyperspace:KillMin, arena, int, def: 1, mod: hscore_rewards
+		 * Amount added to exp (discrete = 0). */
+		double min   = (double)cfg->GetInt(arena->cfg, "Hyperspace", "KillMin",   1);
+		
+		//Calculate Earned Experience
+		double amount = log(dexp + 1) / log(kexp + 2);
+		amount *= coeff;
+		amount += min;
+		reward = (int)amount;
+	}
+	
+	return reward;
+}
+
+//bonus money is shared between teammates
+local int calculateBonusMoneyReward(Player *killer, Player *killed)
+{
+	/* cfghelp: Hyperspace:KillerBountyMult, arena, int, def: 1, mod: hscore_rewards
+	 * Amount to multiply by killer's bounty to add to the money reward.  1000 = 100%*/
+	double killerBountyMult = (double)cfg->GetInt(arena->cfg, "Hyperspace", "KillerBountyMult",  1) / 500.0;
+	/* cfghelp: Hyperspace:KilleeBountyMult, arena, int, def: 1, mod: hscore_rewards
+	 * Amount to multiply by killee's bounty to add to the money reward. 1000 = 100% */
+	double killeeBountyMult = (double)cfg->GetInt(arena->cfg, "Hyperspace", "KilleeBountyMult",  1) / 500.0;
+	
+	double bountyBonus = (double)(killer->position.bounty) * killerBountyMult;
+	bountyBonus += (double)(killed->position.bounty) * killeeBountyMult;
+	
+	//other bonuses can be added here in the future
+	
+	return (int)bountyBonus;
+}
+
+//base money is for the killing player only
+local int calculateBaseMoneyReward(Player *killer, Player *killed)
+{
+	/* cfghelp: Hyperspace:KilleeBountyMult, arena, int, def: 75, mod: hscore_rewards
+	 * base money = base multipiler * exponental formula. */
+	double baseMultiplier = (double)cfg->GetInt(arena->cfg, "Hyperspace", "BaseMultiplier",  75);
+	
+	double kexp = (double) money->getExp(killer) + 1;
+	double dexp = (double) money->getExp(killed) + 1;
+	
+	double baseMoney = exp( -kexp / (dexp + 1)) * baseMultiplier;
+	
+	return (int)baseMoney;
+}
+
 local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty, int flags, int *pts, int *green)
 {
-	/*
-	 * --Old Formula--
-	 * money = coefficient * (killeeBty + bonus) / (killerBty + bonus)) + minimum
-	 * Defaults:
-	 * Coefficient = 50, bonus = 5, minimum = 1
-	 ****************************************************************************
-	 * --New Formula--
-	 * exp = coefficient * ( ln(killeeExp + 1) / ln(killerExp + 2) + minimum
-	 * money = ( multiplier * exp ) + ( killerBty * bonus )
-	 * Defaults:
-	 * Coefficient = 10, minimum = 1, multiplier = 10, bonus = 1
-	 *
-	 * --New Formula 2--
-	 * exp = coefficient * e ^( -killerExp / (killeeExp + 1) )
-	 */
-
 	if(killer->p_freq == killed->p_freq)
 	{
 		chat->SendMessage(killer, "No reward for teamkill of %s.", killed->name);
 	}
 	else
 	{
-		//Variable Declarations
-		double amount, coeff, bountymult, min, mult, kexp, dexp;
-		int hsbucks, xp, exp2;
-
-		//Read Settings
-		/* cfghelp: Hyperspace:KillCoeff, arena, int, def: 10, mod: hscore_rewards
-		 * Kill reward coefficient. */
-		coeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "KillCoeff", 10);
-		/* cfghelp: Hyperspace:KillMin, arena, int, def: 1, mod: hscore_rewards
-		 * Amount added to exp. */
-		min   = (double)cfg->GetInt(arena->cfg, "Hyperspace", "KillMin",   1);
-		/* cfghelp: Hyperspace:KillMult, arena, int, def: 10, mod: hscore_rewards
-		 * Multiply exp reward by this to get money reward. */
-		mult  = (double)cfg->GetInt(arena->cfg, "Hyperspace", "KillMult",  10);
-		/* cfghelp: Hyperspace:BountyMult, arena, int, def: 1, mod: hscore_rewards
-		 * Amount to multiply by killer's bounty to add to the money reward. */
-		bountymult  = (double)cfg->GetInt(arena->cfg, "Hyperspace", "BountyMult",  1);
-
-		//Retrieve Experience
-		kexp = (double) money->getExp(killer);
-
-		dexp = (double) money->getExp(killed);
-
-		//Calculate Earned Experience
-		amount = log(dexp + 1) / log(kexp + 2);
-		amount *= coeff;
-		amount += min;
-		xp = (int) amount;
+		/* cfghelp: Hyperspace:MinBonusPlayers, arena, int, def: 4, mod: hscore_rewards
+		 * Minimum number of players in game required for bonus money. */
+		int minBonusPlayers  = cfg->GetInt(arena->cfg, "Hyperspace", "MinBonusPlayers",  4);
+		/* cfghelp: Hyperspace:DisableMoneyRewards, arena, int, def: 0, mod: hscore_rewards
+		 * If no money should be awarded for kills. */
+		int disableMoneyRewards  = cfg->GetInt(arena->cfg, "Hyperspace", "DisableMoneyRewards",  0);
+		/* cfghelp: Hyperspace:DisableExpRewards, arena, int, def: 0, mod: hscore_rewards
+		 * If no exp should be awarded for kills. */
+		int disableMoneyRewards  = cfg->GetInt(arena->cfg, "Hyperspace", "DisableExpRewards",  0);
 
 		//Calculate Earned Money
-		hsbucks = (mult * xp);
-		hsbucks += (killer->position.bounty * bountymult);
+		int exp = calculateExpReward(killer, killed);
+		int baseMoney = calculateBaseMoneyReward(killer, killed);
+		int bonusMoney = calculateBonusMoneyReward(killer, killed);
 
-		//Calculate Exp2
-		amount =  exp( -kexp / (dexp + 1));
-		amount *= coeff;
-		amount += min;
-		exp2   =  (int)amount;
-
-		//Distribute Wealth
-		money->giveMoney(killer, hsbucks, MONEY_TYPE_KILL);
-		money->giveExp(killer, xp);
-		chat->SendMessage(killer, "You received $%d and %d exp (%d) for killing %s.", hsbucks, xp, exp2, killed->name);
-
-		//give money to teammates
-		Player *p;
-		Link *link;
-		/* cfghelp: Hyperspace:TeammateReward, arena, int, def: 500, mod: hscore_rewards
-		 * The percentage (max) that a teammate can receive from a kill.
-		 * 500 = 50%*/
-		double teammateRewardCoeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "TeammateReward", 500); //50%
-		/* cfghelp: Hyperspace:DistFalloff, arena, int, def: 1440000, mod: hscore_rewards
-		 * Distance falloff divisor in pixels^2. */
-		double distanceFalloff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "DistFalloff", 1440000); //pixels^2
-		double maxReward = (double)(hsbucks) * teammateRewardCoeff / 1000.0;
-		pd->Lock();
-		FOR_EACH_PLAYER(p)
+		if (arena->playing < minBonusPlayers)
 		{
-			if(p->arena == killer->arena && p->p_freq == killer->p_freq && p->p_ship != SHIP_SPEC && p != killer && !(p->position.status & STATUS_SAFEZONE))
+			bonusMoney = 0;
+		}
+		
+		//Distribute Wealth
+		if (!disableExpRewards)
+		{
+			money->giveExp(killer, exp);
+			
+			if (disableMoneyRewards)
 			{
-				int xdelta = (p->position.x - killer->position.x);
-				int ydelta = (p->position.y - killer->position.y);
-				double distPercentage = ((double)(xdelta * xdelta + ydelta * ydelta)) / distanceFalloff;
-
-				int reward = (int)(maxReward * exp(-distPercentage));
-
-				money->giveMoney(p, reward, MONEY_TYPE_KILL);
-
-				//check if they received more than %30. if they did, message them. otherwise, don't bother.
-				if (reward > (int)(0.30 * maxReward))
-				{
-					chat->SendMessage(p, "You received $%d for %s's kill.", reward, killer->name);
-				}
+				chat->SendMessage(killer, "You received %d exp for killing %s.", exp, killed->name);
 			}
 		}
-		pd->Unlock();
+		
+		if (!disableMoneyRewards)
+		{
+			money->giveMoney(killer, baseMoney + bonusMoney, MONEY_TYPE_KILL);
+			
+			if (disableExpRewards)
+			{
+				chat->SendMessage(killer, "You received %d money for killing %s.", baseMoney + bonusMoney, killed->name);
+			}			
+			else
+			{
+				chat->SendMessage(killer, "You received %d money and %d exp for killing %s.", baseMoney + bonusMoney, exp, killed->name);
+			}
+		
+			//give money to teammates
+			Player *p;
+			Link *link;
+			/* cfghelp: Hyperspace:TeammateReward, arena, int, def: 500, mod: hscore_rewards
+			 * The percentage (max) that a teammate can receive from a kill.
+			 * 1000 = 100%*/
+			double teammateRewardCoeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "TeammateReward", 500) / 1000.0; //50%
+			/* cfghelp: Hyperspace:DistFalloff, arena, int, def: 1440000, mod: hscore_rewards
+			 * Distance falloff divisor in pixels^2. */
+			double distanceFalloff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "DistFalloff", 1440000); //pixels^2
+			
+			pd->Lock();
+			FOR_EACH_PLAYER(p)
+			{
+				if(p->arena == killer->arena && p->p_freq == killer->p_freq && p->p_ship != SHIP_SPEC && p != killer && !(p->position.status & STATUS_SAFEZONE))
+				{
+					double maxReward = teammateRewardCoeff * (double)(bonusMoney + calculateBaseMoneyReward(p, killed));
+
+					int xdelta = (p->position.x - killer->position.x);
+					int ydelta = (p->position.y - killer->position.y);
+					double distPercentage = ((double)(xdelta * xdelta + ydelta * ydelta)) / distanceFalloff;
+
+					int reward = (int)(maxReward * exp(-distPercentage));
+
+					money->giveMoney(p, reward, MONEY_TYPE_KILL);
+
+					//check if they received more than %30. if they did, message them. otherwise, don't bother.
+					if (reward > (int)(0.30 * maxReward))
+					{
+						chat->SendMessage(p, "You received $%d for %s's kill of %s.", reward, killer->name, killed->name);
+					}
+				}
+			}
+			pd->Unlock();
+		}
 	}
 }
 
