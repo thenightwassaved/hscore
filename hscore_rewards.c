@@ -48,10 +48,15 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 	}
 	
 	exp = (players - onfreq);
+	
+	/* cfghelp: Hyperspace:FlagMoneyMult, arena, int, def: 1000, mod: hscore_rewards
+	 * Multiplier for flag money. 1000 = 100% */
+	points *= (double)cfg->GetInt(arena->cfg, "Hyperspace", "FlagMoneyMult", 1000) / 1000.0;	
+	
+	/* cfghelp: Hyperspace:ExpMoneyMult, arena, int, def: 1000, mod: hscore_rewards
+	 * Multiplier for flag exp reward. 1000 = 100% */
+	exp *= (double)cfg->GetInt(arena->cfg, "Hyperspace", "ExpMoneyMult", 1000) / 1000.0;		
 
-	/* cfghelp: Flag:SplitPoints, arena, bool, def: 0
-	 * Whether to split a flag reward between the members of a freq or
-	 * give them each the full amount. */
 	if (onfreq > 0 && cfg->GetInt(arena->cfg, "Flag", "SplitPoints", 0))
 		points /= onfreq;
 
@@ -194,13 +199,18 @@ local int calculateBonusMoneyReward(Player *killer, Player *killed)
 {
 	/* cfghelp: Hyperspace:KillerBountyMult, arena, int, def: 1, mod: hscore_rewards
 	 * Amount to multiply by killer's bounty to add to the money reward.  1000 = 100%*/
-	double killerBountyMult = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "KillerBountyMult",  1) / 500.0;
+	double killerBountyMult = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "KillerBountyMult",  1000) / 1000.0;
 	/* cfghelp: Hyperspace:KilleeBountyMult, arena, int, def: 1, mod: hscore_rewards
 	 * Amount to multiply by killee's bounty to add to the money reward. 1000 = 100% */
-	double killeeBountyMult = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "KilleeBountyMult",  1) / 500.0;
-	
+	double killeeBountyMult = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "KilleeBountyMult",  1000) / 1000.0;
+	/* cfghelp: Hyperspace:AddToBonus, arena, int, def: 0, mod: hscore_rewards
+	 * Added directly to the bonus calculation */
+	int addToBonus = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "AddToBonus",  0);
+		
 	double bountyBonus = (double)(killer->position.bounty) * killerBountyMult;
 	bountyBonus += (double)(killed->position.bounty) * killeeBountyMult;
+	
+	bountyBonus += addToBonus;
 	
 	//other bonuses can be added here in the future
 	
@@ -267,11 +277,11 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 			
 			if (disableExpRewards)
 			{
-				chat->SendMessage(killer, "You received %d money for killing %s.", baseMoney + bonusMoney, killed->name);
+				chat->SendMessage(killer, "You received $%d for killing %s.", baseMoney + bonusMoney, killed->name);
 			}			
 			else
 			{
-				chat->SendMessage(killer, "You received %d money and %d exp for killing %s.", baseMoney + bonusMoney, experience, killed->name);
+				chat->SendMessage(killer, "You received $%d and %d exp for killing %s.", baseMoney + bonusMoney, experience, killed->name);
 			}
 		
 			//give money to teammates
