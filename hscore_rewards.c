@@ -7,6 +7,8 @@
 #include "hscore.h"
 #include <math.h>
 #include "hscore_teamnames.h"
+#include "jackpot.h"
+
 
 //modules
 local Imodman *mm;
@@ -17,7 +19,7 @@ local Iconfig *cfg;
 local Ihscoremoney *money;
 
 //This is assuming we're using fg_wz.py
-local void flagWinCallback(Arena *arena, int freq, int *points)
+local void flagWinCallback(Arena *arena, int freq, int *pts)
 {
 	int players = 0, onfreq = 0, points, exp;
 	Player *i;
@@ -134,7 +136,7 @@ local int calculateExpReward(Player *killer, Player *killed)
 	/* cfghelp: Hyperspace:UseDiscrete, arena, int, def: 1, mod: hscore_rewards
 	 * 1 = Use discrete method of calculating exp rewards.
 	 * 0 = Use old exponential method.*/
-	int useDiscrete = cfg->GetInt(arena->cfg, "Hyperspace", "UseDiscrete",  1);
+	int useDiscrete = cfg->GetInt(killer->arena->cfg, "Hyperspace", "UseDiscrete",  1);
 	
 	//get exp
 	//add one to prevent divide by zero errors
@@ -172,10 +174,10 @@ local int calculateExpReward(Player *killer, Player *killed)
 	{
 		/* cfghelp: Hyperspace:KillCoeff, arena, int, def: 10, mod: hscore_rewards
 		 * Kill reward coefficient (discrete = 0). */
-		double coeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "KillCoeff", 10);
+		double coeff = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "KillCoeff", 10);
 		/* cfghelp: Hyperspace:KillMin, arena, int, def: 1, mod: hscore_rewards
 		 * Amount added to exp (discrete = 0). */
-		double min   = (double)cfg->GetInt(arena->cfg, "Hyperspace", "KillMin",   1);
+		double min   = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "KillMin",   1);
 		
 		//Calculate Earned Experience
 		double amount = log(dexp + 1) / log(kexp + 2);
@@ -192,10 +194,10 @@ local int calculateBonusMoneyReward(Player *killer, Player *killed)
 {
 	/* cfghelp: Hyperspace:KillerBountyMult, arena, int, def: 1, mod: hscore_rewards
 	 * Amount to multiply by killer's bounty to add to the money reward.  1000 = 100%*/
-	double killerBountyMult = (double)cfg->GetInt(arena->cfg, "Hyperspace", "KillerBountyMult",  1) / 500.0;
+	double killerBountyMult = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "KillerBountyMult",  1) / 500.0;
 	/* cfghelp: Hyperspace:KilleeBountyMult, arena, int, def: 1, mod: hscore_rewards
 	 * Amount to multiply by killee's bounty to add to the money reward. 1000 = 100% */
-	double killeeBountyMult = (double)cfg->GetInt(arena->cfg, "Hyperspace", "KilleeBountyMult",  1) / 500.0;
+	double killeeBountyMult = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "KilleeBountyMult",  1) / 500.0;
 	
 	double bountyBonus = (double)(killer->position.bounty) * killerBountyMult;
 	bountyBonus += (double)(killed->position.bounty) * killeeBountyMult;
@@ -210,7 +212,7 @@ local int calculateBaseMoneyReward(Player *killer, Player *killed)
 {
 	/* cfghelp: Hyperspace:KilleeBountyMult, arena, int, def: 75, mod: hscore_rewards
 	 * base money = base multipiler * exponental formula. */
-	double baseMultiplier = (double)cfg->GetInt(arena->cfg, "Hyperspace", "BaseMultiplier",  75);
+	double baseMultiplier = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "BaseMultiplier",  75);
 	
 	double kexp = (double) money->getExp(killer) + 1;
 	double dexp = (double) money->getExp(killed) + 1;
@@ -236,7 +238,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		int disableMoneyRewards  = cfg->GetInt(arena->cfg, "Hyperspace", "DisableMoneyRewards",  0);
 		/* cfghelp: Hyperspace:DisableExpRewards, arena, int, def: 0, mod: hscore_rewards
 		 * If no exp should be awarded for kills. */
-		int disableMoneyRewards  = cfg->GetInt(arena->cfg, "Hyperspace", "DisableExpRewards",  0);
+		int disableExpRewards  = cfg->GetInt(arena->cfg, "Hyperspace", "DisableExpRewards",  0);
 
 		//Calculate Earned Money
 		int exp = calculateExpReward(killer, killed);
