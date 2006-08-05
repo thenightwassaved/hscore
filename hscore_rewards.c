@@ -18,10 +18,39 @@ local Ichat *chat;
 local Iconfig *cfg;
 local Ihscoremoney *money;
 
+local int minmax(int min, int x, int max)
+{
+	if (min > x)
+	{
+		x = min;
+	}
+	else if (max < x)
+	{
+		x = max;
+	}
+	
+	return x;
+}
+
+local double minmax_double(double min, double x, double max)
+{
+	if (min > x)
+	{
+		x = min;
+	}
+	else if (max < x)
+	{
+		x = max;
+	}
+	
+	return x;
+}
+
 //This is assuming we're using fg_wz.py
 local void flagWinCallback(Arena *arena, int freq, int *pts)
 {
 	int players = 0, onfreq = 0, points, exp;
+	int totalexp = 0, teamexp = 0;
 	Player *i;
 	Link *link;
 	Ijackpot *jackpot;
@@ -35,10 +64,16 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 			IS_HUMAN(i))
 		{
 			players++;
+			totalexp += money->GetExp(i);
 			if (i->p_freq == freq)
+			{
 				onfreq++;
+				teamexp += money->GetExp(i);
+			}
 		}
 	pd->Unlock();
+	
+	onfreq = max(onfreq, 1);
 
 	jackpot = mm->GetInterface(I_JACKPOT, arena);
 	if (jackpot)
@@ -55,8 +90,30 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 	
 	/* cfghelp: Hyperspace:ExpMoneyMult, arena, int, def: 1000, mod: hscore_rewards
 	 * Multiplier for flag exp reward. 1000 = 100% */
-	exp *= (double)cfg->GetInt(arena->cfg, "Hyperspace", "ExpMoneyMult", 1000) / 1000.0;		
+	exp *= (double)cfg->GetInt(arena->cfg, "Hyperspace", "ExpMoneyMult", 1000) / 1000.0;
 
+	/* cfghelp: Hyperspace:FlagUseRatio, arena, int, def: 1, mod: hscore_rewards
+	 * If the flag reward should take into account the ratio of arena exp to team exp. */
+	if (cfg->GetInt(arena->cfg, "Hyperspace", "FlagUseRatio", 1)
+	{
+		/* cfghelp: Hyperspace:MaxExpRatio, arena, int, def: 2500, mod: hscore_rewards
+		 * Maximum exp ratio for flag reward. 1000=1 */
+		double max = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "MaxExpRatio", 2500) / 1000.0;
+		/* cfghelp: Hyperspace:MinExpRatio, arena, int, def: 100, mod: hscore_rewards
+		 * Minimum exp ratio for flag reward. 1000=1.0 */
+		double min = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "MinExpRatio", 100) / 1000.0;
+
+		double averageOpposingExp = ((double)(totalexp - teamexp)) / ((double)(players - onfreq));
+		double averageTeamExp = ((double)(totalexp)) / ((double)(onfreq));
+		
+		double ratio = (averageOpposingExp + 1) / (averageTeamExp + 1);
+		
+		
+		ratio = minmax_double(min, ratio, max);
+		
+		exp = (int)(ratio * (double)exp);
+	}
+	
 	if (onfreq > 0 && cfg->GetInt(arena->cfg, "Flag", "SplitPoints", 0))
 		points /= onfreq;
 
@@ -152,36 +209,31 @@ local int calculateExpReward(Player *killer, Player *killed)
 	
 	if (useDiscrete)
 	{
+		/* cfghelp: Hyperspace:ExpSlope, arena, int, def: 2000, mod: hscore_rewards
+		 * Discrete slope. The m in exp = floor(m*x + b). 1000 = 1.0*/
+		double m = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "ExpSlope", 2000) / 1000.0;
+		/* cfghelp: Hyperspace:ExpIntercept, arena, int, def: 500, mod: hscore_rewards
+		 * Discrete intercept. The b in exp = floor(m*x + b). 1000 = 1.0*/
+		double b = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "ExpIntercept", 500) / 1000.0;
+		/* cfghelp: Hyperspace:MaxExp, arena, int, def: 6, mod: hscore_rewards
+		 * Maximum exp reward that can be distributed. */
+		int max = cfg->GetInt(killer->arena->cfg, "Hyperspace", "MaxExp", 6);
+		/* cfghelp: Hyperspace:MinExp, arena, int, def: 0, mod: hscore_rewards
+		 * Minimum exp reward that can be distributed. */
+		int min = cfg->GetInt(killer->arena->cfg, "Hyperspace", "MinExp", 0);
+	
 		double ratio = dexp / kexp;
 		
-		if (ratio < 0.25)
-		{
-			reward = 0;
-		}
-		else if (ratio < 0.75)
-		{
-			reward = 1;
-		}
-		else if (ratio < 1.25)
-		{
-			reward = 2;
-		}
-		else if (ratio < 2.00)
-		{
-			reward = 3;
-		}
-		else
-		{
-			reward = 4;
-		}
+		reward = (int)(floor(m * ratio + b));
+		reward = minmax(min, reward, max);
 	}
 	else
 	{
 		/* cfghelp: Hyperspace:KillCoeff, arena, int, def: 10, mod: hscore_rewards
-		 * Kill reward coefficient (discrete = 0). */
+		 * Kill reward coefficient (if discrete = 0). */
 		double coeff = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "KillCoeff", 10);
 		/* cfghelp: Hyperspace:KillMin, arena, int, def: 1, mod: hscore_rewards
-		 * Amount added to exp (discrete = 0). */
+		 * Amount added to exp (if discrete = 0). */
 		double min   = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "KillMin",   1);
 		
 		//Calculate Earned Experience
@@ -205,7 +257,7 @@ local int calculateBonusMoneyReward(Player *killer, Player *killed)
 	double killeeBountyMult = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "KilleeBountyMult",  1000) / 1000.0;
 	/* cfghelp: Hyperspace:AddToBonus, arena, int, def: 0, mod: hscore_rewards
 	 * Added directly to the bonus calculation */
-	int addToBonus = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "AddToBonus",  0);
+	int addToBonus = cfg->GetInt(killer->arena->cfg, "Hyperspace", "AddToBonus",  0);
 		
 	double bountyBonus = (double)(killer->position.bounty) * killerBountyMult;
 	bountyBonus += (double)(killed->position.bounty) * killeeBountyMult;
