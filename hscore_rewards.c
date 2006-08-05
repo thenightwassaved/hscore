@@ -64,16 +64,16 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 			IS_HUMAN(i))
 		{
 			players++;
-			totalexp += money->GetExp(i);
+			totalexp += money->getExp(i);
 			if (i->p_freq == freq)
 			{
 				onfreq++;
-				teamexp += money->GetExp(i);
+				teamexp += money->getExp(i);
 			}
 		}
 	pd->Unlock();
 	
-	onfreq = max(onfreq, 1);
+	if (onfreq < 1) onfreq = 1; //no division by zero, please
 
 	jackpot = mm->GetInterface(I_JACKPOT, arena);
 	if (jackpot)
@@ -94,14 +94,14 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 
 	/* cfghelp: Hyperspace:FlagUseRatio, arena, int, def: 1, mod: hscore_rewards
 	 * If the flag reward should take into account the ratio of arena exp to team exp. */
-	if (cfg->GetInt(arena->cfg, "Hyperspace", "FlagUseRatio", 1)
+	if (cfg->GetInt(arena->cfg, "Hyperspace", "FlagUseRatio", 1))
 	{
 		/* cfghelp: Hyperspace:MaxExpRatio, arena, int, def: 2500, mod: hscore_rewards
 		 * Maximum exp ratio for flag reward. 1000=1 */
-		double max = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "MaxExpRatio", 2500) / 1000.0;
+		double max = (double)cfg->GetInt(arena->cfg, "Hyperspace", "MaxExpRatio", 2500) / 1000.0;
 		/* cfghelp: Hyperspace:MinExpRatio, arena, int, def: 100, mod: hscore_rewards
 		 * Minimum exp ratio for flag reward. 1000=1.0 */
-		double min = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "MinExpRatio", 100) / 1000.0;
+		double min = (double)cfg->GetInt(arena->cfg, "Hyperspace", "MinExpRatio", 100) / 1000.0;
 
 		double averageOpposingExp = ((double)(totalexp - teamexp)) / ((double)(players - onfreq));
 		double averageTeamExp = ((double)(totalexp)) / ((double)(onfreq));
