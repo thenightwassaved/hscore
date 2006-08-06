@@ -94,7 +94,7 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 
 	/* cfghelp: Hyperspace:FlagUseRatio, arena, int, def: 1, mod: hscore_rewards
 	 * If the flag reward should take into account the ratio of arena exp to team exp. */
-	if (cfg->GetInt(arena->cfg, "Hyperspace", "FlagUseRatio", 1))
+	if (cfg->GetInt(arena->cfg, "Hyperspace", "FlagUseRatio", 1) && (players - onfreq) > 0)
 	{
 		/* cfghelp: Hyperspace:MaxExpRatio, arena, int, def: 2500, mod: hscore_rewards
 		 * Maximum exp ratio for flag reward. 1000=1 */
