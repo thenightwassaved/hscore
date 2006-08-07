@@ -136,7 +136,7 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 	}
 
 	 //Distribute Wealth
-    pd->Lock();
+	pd->Lock();
 	FOR_EACH_PLAYER(i)
 	{
 		if(i->arena == arena && i->p_freq == freq && i->p_ship != SHIP_SPEC)
@@ -247,7 +247,7 @@ local int calculateExpReward(Player *killer, Player *killed)
 }
 
 //bonus money is shared between teammates
-local int calculateBonusMoneyReward(Player *killer, Player *killed)
+local int calculateBonusMoneyReward(Player *killer, Player *killed, int bounty)
 {
 	/* cfghelp: Hyperspace:KillerBountyMult, arena, int, def: 1, mod: hscore_rewards
 	 * Amount to multiply by killer's bounty to add to the money reward.  1000 = 100%*/
@@ -260,11 +260,13 @@ local int calculateBonusMoneyReward(Player *killer, Player *killed)
 	int addToBonus = cfg->GetInt(killer->arena->cfg, "Hyperspace", "AddToBonus",  0);
 		
 	double bountyBonus = (double)(killer->position.bounty) * killerBountyMult;
-	bountyBonus += (double)(killed->position.bounty) * killeeBountyMult;
+	bountyBonus += (double)(bounty) * killeeBountyMult;
 	
 	bountyBonus += addToBonus;
 	
 	//other bonuses can be added here in the future
+	
+	if (bountyBonus > 40000) bountyBonus = 0;
 	
 	return (int)bountyBonus;
 }
@@ -305,7 +307,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		//Calculate Earned Money
 		int experience = calculateExpReward(killer, killed);
 		int baseMoney = calculateBaseMoneyReward(killer, killed);
-		int bonusMoney = calculateBonusMoneyReward(killer, killed);
+		int bonusMoney = calculateBonusMoneyReward(killer, killed, bounty);
 
 		if (arena->playing < minBonusPlayers)
 		{
