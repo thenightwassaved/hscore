@@ -8,3 +8,4 @@ add
 del
 datazero
 transwarp
+dontbrick
