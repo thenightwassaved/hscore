@@ -979,12 +979,13 @@ local void loadArenaStoresQueryCallback(int status, db_res *result, void *passed
 		return;
 	}
 
+	lock();
 	while ((row = mysql->GetRow(result)))
 	{
 		Store *store = NULL;
 		Link *link;
 		int id = atoi(mysql->GetField(row, 0));
-		lock();
+
 		for (link = LLGetHead(&arenaData->storeList); link; link = link->next)
 		{
 			Store *s = link->data;
@@ -1001,6 +1002,9 @@ local void loadArenaStoresQueryCallback(int status, db_res *result, void *passed
 			store = amalloc(sizeof(*store));
 			LLInit(&store->itemList);
 			store->id = id;
+			store->name[0] = 0;
+			store->description[0] = 0;
+			store->region[0] = 0;
 			LLAdd(&arenaData->storeList, store);
 		}
 		else
@@ -1011,9 +1015,8 @@ local void loadArenaStoresQueryCallback(int status, db_res *result, void *passed
 		astrncpy(store->name, mysql->GetField(row, 1), 33);			//name
 		astrncpy(store->description, mysql->GetField(row, 2), 201);	//description
 		astrncpy(store->region, mysql->GetField(row, 3), 17);		//region
-
-		unlock();
 	}
+	unlock();
 
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i stores were loaded from MySQL.", results);
 	LoadStoreItems(arena); //now that all the stores are in, load the items into them.
@@ -1098,12 +1101,13 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 		return;
 	}
 
+	lock();
 	while ((row = mysql->GetRow(result)))
 	{
 		Category *category = NULL;
 		Link *link;
 		int id = atoi(mysql->GetField(row, 0));
-		lock();
+		
 		for (link = LLGetHead(&arenaData->categoryList); link; link = link->next)
 		{
 			Category *c = link->data;
@@ -1120,6 +1124,9 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 			category = amalloc(sizeof(*category));
 			LLInit(&category->itemList);
 			category->id = id;
+			category->name[0] = 0;
+			category->description[0] = 0;
+			category->hidden = 0;
 			LLAdd(&arenaData->categoryList, category);
 		}
 		else
@@ -1130,9 +1137,8 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 		astrncpy(category->name, mysql->GetField(row, 1), 33);			//name
 		astrncpy(category->description, mysql->GetField(row, 2), 65);	//description
 		category->hidden = atoi(mysql->GetField(row, 3));				//hidden
-
-		unlock();
 	}
+	unlock();
 
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i categories were loaded from MySQL.", results);
 	LoadCategoryItems(arena); //now that all the stores are in, load the items into them.
