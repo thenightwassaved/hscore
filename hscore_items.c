@@ -116,11 +116,12 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 
 local helptext_t grantItemHelp =
 "Targets: player or freq or arena\n"
-"Args: [-f] [-q] [-c <amount>] [-s <ship #>] <item>\n"
+"Args: [-f] [-q] [-i] [-c <amount>] [-s <ship #>] <item>\n"
 "Adds the specified item to the inventory of the targeted players.\n"
 "If {-s} is not specified, the item is added to the player's current ship.\n"
 "Will only effect speccers if {-s} is used. The added amount defaults to 1.\n"
-"For typo safety, the {-f} must be specified when granting to more than one player.\n";
+"For typo safety, the {-f} must be specified when granting to more than one player.\n"
+"The {-i} flag ignores ship requirements (single receipient only).";
 
 local void grantItemCommand(const char *command, const char *params, Player *p, const Target *target)
 {
@@ -128,6 +129,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 	int quiet = 0;
 	int count = 1;
 	int ship = 0;
+	int ignore = 0;
 	const char *itemName;
 	Item *item;
 	int newItemCount;
@@ -160,6 +162,21 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					return;
 				}
 			}
+			else if (*params == 'i')
+			{
+				ignore = 1;
+
+				params = strchr(params, ' ');
+				if (params) //check so that params can still == NULL
+				{
+					params++; //we want *after* the space
+				}
+				else
+				{
+					chat->SendMessage(p, "Grantitem: invalid usage.");
+					return;
+				}
+			}			
 			else if (*params == 'q')
 			{
 				quiet = 1;
@@ -197,7 +214,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 				}
 
 				params = next;
-			}
+			}	
 			else if (*params == 's')
 			{
 				params = strchr(params, ' ');
@@ -287,11 +304,11 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 				}
 
 				newItemCount = getItemCount(t, item, ship) + count;
-				if (item->max == 0 || newItemCount <= item->max)
+				if (ignore || item->max == 0 || newItemCount <= item->max)
 				{
 					if (item->type1 != NULL)
 					{
-						if (getFreeItemTypeSpots(t, item->type1, ship) - (item->typeDelta1 * count) < 0) //have no free spots
+						if (!ignore && getFreeItemTypeSpots(t, item->type1, ship) - (item->typeDelta1 * count) < 0) //have no free spots
 						{
 							chat->SendMessage(p, "Does not have enough free %s spots.", item->type1->name);
 							return;
@@ -300,7 +317,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 
 					if (item->type2 != NULL)
 					{
-						if (getFreeItemTypeSpots(t, item->type2, ship) - (item->typeDelta2 * count) < 0) //have no free spots
+						if (!ignore && getFreeItemTypeSpots(t, item->type2, ship) - (item->typeDelta2 * count) < 0) //have no free spots
 						{
 							chat->SendMessage(p, "Does not have enough free %s spots.", item->type2->name);
 							return;
@@ -711,7 +728,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 
 	if (count < 0)
 	{
-		lm->LogP(L_ERROR, "hscore_items", p, "asked to set item %s count to %i", item->name, count);
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to set item %s count to %i. Setting to 0.", item->name, count);
 		count = 0; //no negative counts make sense
 	}
 
@@ -1050,6 +1067,8 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 			}
 		}
 	}
+	
+	DO_CBS(CB_TRIGGER_EVENT, p->arena, triggerEventFunction, (p, triggerItem, ship, eventName));
 }
 
 local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship) //call with no lock

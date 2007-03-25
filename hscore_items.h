@@ -5,9 +5,11 @@
 
 //callback
 #define CB_EVENT_ACTION "eventaction"
+#define CB_TRIGGER_EVENT "triggerevent"
 
 //callback function prototype
 typedef void (*eventActionFunction)(Player *p, int eventID);
+typedef void (*triggerEventFunction)(Player *p, Item *triggerItem, int ship, const char *eventName);
 
 typedef struct Ihscoreitems
 {

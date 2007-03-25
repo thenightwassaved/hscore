@@ -450,11 +450,12 @@ local void setMoneyCommand(const char *command, const char *params, Player *p, c
 		{
 			if (database->isLoaded(t))
 			{
+				int oldAmount = getMoney(t);
 				setMoney(t, amount, MONEY_TYPE_GRANT);
 
 				if (quiet)
 				{
-					chat->SendMessage(p, "Quietly set player %s's money to $%i.", t->name, amount);
+					chat->SendMessage(p, "Quietly set player %s's money to $%i (from %i).", t->name, amount, oldAmount);
 				}
 				else
 				{
@@ -467,7 +468,7 @@ local void setMoneyCommand(const char *command, const char *params, Player *p, c
 						chat->SendMessage(t, "Your money was set to $%i %s", amount, message);
 					}
 
-					chat->SendMessage(p, "Set player %s's money to $%i.", t->name, amount);
+					chat->SendMessage(p, "Set player %s's money to $%i (from %i).", t->name, amount, oldAmount);
 				}
 			}
 			else
@@ -598,11 +599,12 @@ local void setExpCommand(const char *command, const char *params, Player *p, con
 		{
 			if (database->isLoaded(t))
 			{
+				int oldAmount = getExp(t);
 				setExp(t, amount);
 
 				if (quiet)
 				{
-					chat->SendMessage(p, "Quietly set player %s's exp to %i.", t->name, amount);
+					chat->SendMessage(p, "Quietly set player %s's exp to %i (from %i).", t->name, amount, oldAmount);
 				}
 				else
 				{
@@ -615,7 +617,7 @@ local void setExpCommand(const char *command, const char *params, Player *p, con
 						chat->SendMessage(t, "Your exp was set to %i %s", amount, message);
 					}
 
-					chat->SendMessage(p, "Set player %s's exp to %i.", t->name, amount);
+					chat->SendMessage(p, "Set player %s's exp to %i (from %i).", t->name, amount, oldAmount);
 				}
 			}
 			else

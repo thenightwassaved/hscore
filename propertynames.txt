@@ -79,3 +79,24 @@ summon
 
 energyviewing
 dontbrick
+
+bulletdamage
+bulletdamageup
+bombdamage
+ebombtime
+ebombdamage
+bbombdamage
+burstdamage
+decoyalive
+warppointdelay
+rocketthrust
+rocketspeed
+inactshrapdamage
+shrapdamage
+mapzoom
+flaggunup
+flagbombup
+soccerallowbombs
+soccerallowguns
+socceruseflag
+soccerseeball

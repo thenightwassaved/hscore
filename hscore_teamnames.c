@@ -46,6 +46,11 @@ typedef struct ArenaData
 	LinkedList teamDataList;
 } ArenaData;
 
+typedef struct PlayerDataStruct
+{
+	ticks_t nextChange;
+} PlayerDataStruct;
+
 typedef struct TeamData
 {
 	char name[MAX_TEAM_NAME_LENGTH];
@@ -73,6 +78,7 @@ local const char * getPlayerTeamName(Player *p);
 
 //keys
 local int arenaDataKey;
+local int playerDataKey;
 
 //mutex
 local pthread_mutex_t teamMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -664,11 +670,15 @@ local void Initial(Player *p, int *ship, int *freq)
 	Arena *arena = p->arena;
 	int f, s = *ship;
 	ConfigHandle ch;
-
+	PlayerDataStruct *data = PPDATA(p, playerDataKey);
+	
 	if (!arena) return;
 
 	ch = arena->cfg;
 
+	//if it's the initial ship change, we should reset the nextChange
+	data->nextChange = 0;
+	
 	if (count_current_playing(arena) >= MAXPLAYING(ch) ||
 	    p->flags.no_ship ||
 	    !screen_res_allowed(p, ch) ||
@@ -686,8 +696,13 @@ local void Initial(Player *p, int *ship, int *freq)
 		f = BalanceFreqs(arena, p, inclspec);
 		/* and make sure the ship is still legal */
 		s = FindLegalShip(p, f, s);
+		
+		if (s == SHIP_SPEC)
+		{
+			f = arena->specfreq;
+		}
 	}
-
+	
 	*ship = s; *freq = f;
 }
 
@@ -697,6 +712,7 @@ local void Ship(Player *p, int *ship, int *freq)
 	Arena *arena = p->arena;
 	int f = *freq, s = *ship;
 	ConfigHandle ch;
+	PlayerDataStruct *data = PPDATA(p, playerDataKey);
 
 	if (!arena) return;
 
@@ -725,8 +741,7 @@ local void Ship(Player *p, int *ship, int *freq)
 	else if (p->p_ship == SHIP_SPEC && count_current_playing(arena) >= MAXPLAYING(ch))
 	{
 		if (chat)
-			chat->SendMessage(p,
-					"There are too many people playing in this arena.");
+			chat->SendMessage(p, "There are too many people playing in this arena.");
 		goto deny;
 	}
 	/* ok, allowed change */
@@ -740,11 +755,42 @@ local void Ship(Player *p, int *ship, int *freq)
 			f = BalanceFreqs(arena, p, inclspec);
 			/* and make sure the ship is still legal */
 			s = FindLegalShip(p, f, s);
+			
+			if (s == SHIP_SPEC)
+			{
+				f = arena->specfreq;
+			}
+			
+			//check if they've changed ship too recently
+			if (s != SHIP_SPEC && data->nextChange > current_ticks())
+			{
+				s = SHIP_SPEC;
+				f = arena->specfreq;
+				chat->SendMessage(p, "You cannot leave spec yet: you have changed ships too recently.");
+			}
 		}
 		else
 		{
-			/* don't touch freq, but make sure ship is ok */
-			s = FindLegalShip(p, f, s);
+			//check if they've changed ship too recently
+			if (data->nextChange > current_ticks())
+			{
+				s = p->p_ship;
+				chat->SendMessage(p, "You have changed ships too recently. Try again in a moment");
+			}
+			else
+			{
+				/* don't touch freq, but make sure ship is ok */
+				s = FindLegalShip(p, f, s);
+			}
+		}
+		
+		if (s != p->p_ship)
+		{
+			//changed, set the next change time
+			
+			/* cfghelp: Team:ShipChangeDelay, arena, int, def: 0
+			 * How long to keep players from changing into a new ship. */
+			data->nextChange = current_ticks() + cfg->GetInt(ch, "Team", "ShipChangeDelay", 0);
 		}
 	}
 
@@ -909,6 +955,10 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		if (arenaDataKey == -1)
 			return MM_FAIL;
 
+		playerDataKey = pd->AllocatePlayerData(sizeof(PlayerDataStruct));
+		if (playerDataKey == -1)
+			return MM_FAIL;
+			
 		mm->RegCallback(CB_PLAYERACTION, playerActionCallback, ALLARENAS);
 		mm->RegCallback(CB_SHIPCHANGE, shipChangeCallback, ALLARENAS);
 
@@ -920,6 +970,7 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 			return MM_FAIL;
 
 		aman->FreeArenaData(arenaDataKey);
+		pd->FreePlayerData(playerDataKey);
 
 		mm->UnregCallback(CB_PLAYERACTION, playerActionCallback, ALLARENAS);
 		mm->UnregCallback(CB_SHIPCHANGE, shipChangeCallback, ALLARENAS);
