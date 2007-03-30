@@ -16,6 +16,7 @@ local Iplayerdata *pd;
 local Igame *game;
 local Ihscoredatabase *database;
 local Imainloop *ml;
+local Iconfig *cfg;
 
 //a few internal functions
 local int internalGetItemCount(Player *p, Item *item, int ship);
@@ -614,7 +615,8 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 	else if (action == ACTION_SHIP_RESET) //sends a shipreset packet and reprizes all items (antideath, really)
 	{
 		int respawnTime = cfg->GetInt(p->arena->cfg, "Kill", "EnterDelay", 0);
-		int delay = max(respawnTime - 50, 1);
+		int delay = respawnTime - 50;
+		if (delay < 1) delay = 1;
 		
 		ml->ClearTimer(timer_callback, p);	
 		ml->SetTimer(timer_callback, delay, delay, p, p);
@@ -1284,8 +1286,9 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 		game = mm->GetInterface(I_GAME, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
 		ml = mm->GetInterface(I_MAINLOOP, ALLARENAS);
+		cfg = mm->GetInterface(I_CONFIG, ALLARENAS);
 
-		if (!lm || !chat || !cmd || !pd || !game || !database || !ml)
+		if (!lm || !chat || !cmd || !pd || !game || !database || !ml || !cfg)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(chat);
@@ -1294,6 +1297,7 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 			mm->ReleaseInterface(game);
 			mm->ReleaseInterface(database);
 			mm->ReleaseInterface(ml);
+			mm->ReleaseInterface(cfg);
 
 			return MM_FAIL;
 		}
@@ -1328,6 +1332,7 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(game);
 		mm->ReleaseInterface(database);
 		mm->ReleaseInterface(ml);
+		mm->ReleaseInterface(cfg);
 
 		return MM_OK;
 	}
