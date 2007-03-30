@@ -166,13 +166,20 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 					{
 						Ihscorestoreman *storeman = mm->GetInterface(I_HSCORE_STOREMAN, p->arena);
 						int storemanOk;
+						LinkedList list;
+						LLInit(&list);
+						
 						if (!storeman)
 						{
 							storemanOk = 1;
 						}
 						else
 						{
-							storemanOk = storeman->canBuyItem(p, item);
+							storemanOk = storeman->canSellItem(p, item);
+							if (!storemanOk)
+							{
+								storeman->getStoreList(p, item, &list); //fills the linked list with stores that buy the item
+							}
 						}
 						mm->ReleaseInterface(storeman);
 
@@ -211,7 +218,29 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 						}
 						else
 						{
-							chat->SendMessage(p, "You cannot buy item %s at your current location. Go to a store that sells it.", item->name);
+							int storeCount = LLCount(&list);
+							if (count == 0)
+							{
+								chat->SendMessage(p, "You cannot buy item %s at your current location. No known stores sell it!", item->name);
+							}
+							else if (count == 1)
+							{
+								Store *store = LLGetHead(&list)->data;
+								chat->SendMessage(p, "You cannot buy item %s here. Go to %s to buy it!", item->name, store->name);
+							}
+							else
+							{
+								Link *link;
+								chat->SendMessage(p, "You cannot buy item %s here. The following stores sell it:", item->name);
+								for (link = LLGetHead(&list); link; link = link->next)
+								{
+									Store *store = link->data;
+									
+									chat->SendMessage(p, "%s", store->name);
+								}
+							}
+							
+							LLEmpty(&list);
 						}
 					}
 					else
@@ -246,6 +275,9 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 	{
 		Ihscorestoreman *storeman = mm->GetInterface(I_HSCORE_STOREMAN, p->arena);
 		int storemanOk;
+		LinkedList list;
+		LLInit(&list);
+		
 		if (!storeman)
 		{
 			storemanOk = 1;
@@ -253,6 +285,10 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 		else
 		{
 			storemanOk = storeman->canSellItem(p, item);
+			if (!storemanOk)
+			{
+				storeman->getStoreList(p, item, &list); //fills the linked list with stores that buy the item
+			}
 		}
 		mm->ReleaseInterface(storeman);
 
@@ -292,7 +328,29 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 		}
 		else
 		{
-			chat->SendMessage(p, "You cannot sell item %s at your current location. Go to a store that buys it.", item->name);
+			int storeCount = LLCount(&list);
+			if (count == 0)
+			{
+				chat->SendMessage(p, "You cannot sell item %s at your current location. No known stores buy it!", item->name);
+			}
+			else if (count == 1)
+			{
+				Store *store = LLGetHead(&list)->data;
+				chat->SendMessage(p, "You cannot sell item %s here. Go to %s to sell it!", item->name, store->name);
+			}
+			else
+			{
+				Link *link;
+				chat->SendMessage(p, "You cannot sell item %s here. The following stores buy it:", item->name);
+				for (link = LLGetHead(&list); link; link = link->next)
+				{
+					Store *store = link->data;
+					
+					chat->SendMessage(p, "%s", store->name);
+				}
+			}
+			
+			LLEmpty(&list);
 		}
 	}
 	else

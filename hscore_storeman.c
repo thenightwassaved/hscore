@@ -182,6 +182,28 @@ local void sellingItem(Player *p, Item *item)
 	//nothing to do for the standard module
 }
 
+void getStoreList(Player *p, Item *item, LinkedList *list) /*must be unlocked*/
+{
+	Link *link, *itemLink;
+
+	database->lock();
+	for (link = LLGetHead(database->getStoreList(p->arena)); link; link = link->next)
+	{
+		Store *store = link->data;
+
+		for (itemLink = LLGetHead(&store->itemList); itemLink; itemLink = itemLink->next)
+		{
+			Item *storeItem = itemLink->data;
+
+			if (storeItem == item)
+			{
+				LLAdd(list, store);
+			}
+		}
+	}
+	database->unlock();
+}
+
 local Ihscorestoreman interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_STOREMAN, "hscore_storeman")
