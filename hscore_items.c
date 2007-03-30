@@ -15,6 +15,7 @@ local Icmdman *cmd;
 local Iplayerdata *pd;
 local Igame *game;
 local Ihscoredatabase *database;
+local Imainloop *ml;
 
 //a few internal functions
 local int internalGetItemCount(Player *p, Item *item, int ship);
@@ -456,6 +457,27 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 	}
 }
 
+local int timer_callback(void *clos)
+{
+	Player *p = clos;
+
+	Target t;
+	Ihscorespawner *spawner;
+	t.type = T_PLAYER;
+	t.u.p = p;
+
+	game->ShipReset(&t);
+
+	spawner = mm->GetInterface(I_HSCORE_SPAWNER, p->arena);
+	if (spawner)
+	{
+		spawner->respawn(p);
+		mm->ReleaseInterface(spawner);
+	}
+	
+	return FALSE;
+}
+	
 local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with lock held
 {
 	int removed = 0;
@@ -591,19 +613,11 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 	}
 	else if (action == ACTION_SHIP_RESET) //sends a shipreset packet and reprizes all items (antideath, really)
 	{
-		Target t;
-		Ihscorespawner *spawner;
-		t.type = T_PLAYER;
-		t.u.p = p;
-
-		game->ShipReset(&t);
-
-		spawner = mm->GetInterface(I_HSCORE_SPAWNER, p->arena);
-		if (spawner)
-		{
-			spawner->respawn(p);
-			mm->ReleaseInterface(spawner);
-		}
+		int respawnTime = cfg->GetInt(p->arena->cfg, "Kill", "EnterDelay", 0);
+		int delay = max(respawnTime - 50, 1);
+		
+		ml->ClearTimer(timer_callback, p);	
+		ml->SetTimer(timer_callback, delay, delay, p, p);
 	}
 	else if (action == ACTION_CALLBACK) //calls a callback passing an eventid of event->data.
 	{
@@ -1269,8 +1283,9 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
 		game = mm->GetInterface(I_GAME, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
+		ml = mm->GetInterface(I_MAINLOOP, ALLARENAS);
 
-		if (!lm || !chat || !cmd || !pd || !game || !database)
+		if (!lm || !chat || !cmd || !pd || !game || !database || !ml)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(chat);
@@ -1278,6 +1293,7 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 			mm->ReleaseInterface(pd);
 			mm->ReleaseInterface(game);
 			mm->ReleaseInterface(database);
+			mm->ReleaseInterface(ml);
 
 			return MM_FAIL;
 		}
@@ -1303,12 +1319,15 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 		cmd->RemoveCommand("iteminfo", itemInfoCommand, ALLARENAS);
 		cmd->RemoveCommand("grantitem", grantItemCommand, ALLARENAS);
 
+		ml->ClearTimer(timer_callback, NULL);
+		
 		mm->ReleaseInterface(lm);
 		mm->ReleaseInterface(chat);
 		mm->ReleaseInterface(cmd);
 		mm->ReleaseInterface(pd);
 		mm->ReleaseInterface(game);
 		mm->ReleaseInterface(database);
+		mm->ReleaseInterface(ml);
 
 		return MM_OK;
 	}
