@@ -207,7 +207,7 @@ void getStoreList(Player *p, Item *item, LinkedList *list) /*must be unlocked*/
 local Ihscorestoreman interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_STOREMAN, "hscore_storeman")
-	canBuyItem, canSellItem, buyingItem, sellingItem,
+	canBuyItem, canSellItem, buyingItem, sellingItem, getStoreList,
 };
 
 EXPORT const char info_hscore_storeman[] = "v1.0 Dr Brain <drbrain@gmail.com>";
