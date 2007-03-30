@@ -219,11 +219,11 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 						else
 						{
 							int storeCount = LLCount(&list);
-							if (count == 0)
+							if (storeCount == 0)
 							{
 								chat->SendMessage(p, "You cannot buy item %s at your current location. No known stores sell it!", item->name);
 							}
-							else if (count == 1)
+							else if (storeCount == 1)
 							{
 								Store *store = LLGetHead(&list)->data;
 								chat->SendMessage(p, "You cannot buy item %s here. Go to %s to buy it!", item->name, store->name);
@@ -329,11 +329,11 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 		else
 		{
 			int storeCount = LLCount(&list);
-			if (count == 0)
+			if (storeCount == 0)
 			{
 				chat->SendMessage(p, "You cannot sell item %s at your current location. No known stores buy it!", item->name);
 			}
-			else if (count == 1)
+			else if (storeCount == 1)
 			{
 				Store *store = LLGetHead(&list)->data;
 				chat->SendMessage(p, "You cannot sell item %s here. Go to %s to sell it!", item->name, store->name);
