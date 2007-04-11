@@ -117,6 +117,7 @@ typedef struct GlobalOverrideKeys
 	override_key_t AllowGuns;
 	override_key_t UseFlagger;
 	override_key_t BallLocation;
+	override_key_t DisableFastShooting;
 } GlobalOverrideKeys;
 
 //modules
@@ -240,6 +241,7 @@ local void loadOverrides()
 		shipOverrideKeys[i].InitialThor = clientset->GetOverrideKey(shipNames[i], "InitialThor");
 		shipOverrideKeys[i].InitialDecoy = clientset->GetOverrideKey(shipNames[i], "InitialDecoy");
 		shipOverrideKeys[i].InitialPortal = clientset->GetOverrideKey(shipNames[i], "InitialPortal");
+		shipOverrideKeys[i].DisableFastShooting = clientset->GetOverrideKey(shipNames[i], "DisableFastShooting");
 	}
 	
 	globalOverrideKeys.BulletDamageLevel = clientset->GetOverrideKey("Bullet", "BulletDamageLevel");
@@ -558,6 +560,10 @@ local void addOverrides(Player *p)
 			int grav = items->getPropertySum(p, i, "grav");
 			if (grav) clientset->PlayerOverride(p, shipOverrideKeys[i].Gravity, grav);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].Gravity);
+
+			int fastShoot = items->getPropertySum(p, i, "nofastshoot");
+			if (fastShoot) clientset->PlayerOverride(p, shipOverrideKeys[i].DisableFastShooting, fastShoot);
+			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].DisableFastShooting);
 			
 			data->usingPerShip[i] = checkUsingPerShip(p, i);
 		}
