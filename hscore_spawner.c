@@ -93,6 +93,7 @@ typedef struct ShipOverrideKeys
 	override_key_t InitialThor;
 	override_key_t InitialDecoy;
 	override_key_t InitialPortal;
+	override_key_t DisableFastShooting;	
 } ShipOverrideKeys;
 
 typedef struct GlobalOverrideKeys
@@ -117,7 +118,6 @@ typedef struct GlobalOverrideKeys
 	override_key_t AllowGuns;
 	override_key_t UseFlagger;
 	override_key_t BallLocation;
-	override_key_t DisableFastShooting;
 } GlobalOverrideKeys;
 
 //modules
