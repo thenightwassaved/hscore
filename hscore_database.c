@@ -1545,6 +1545,92 @@ local void storeAllCommand(const char *command, const char *params, Player *p, c
 	chat->SendMessage(p, "Executed.");
 }
 
+local helptext_t resetHelp =
+"Targets: none or player\n"
+"Args: none\n"
+"Resets money, exp, items, ships and score. No undo!\n";
+
+local void resetCommand(const char *command, const char *params, Player *p, const Target *target)
+{
+	Player *t = (target->type == T_PLAYER) ? target->u.p : p;
+	PerPlayerData *playerData = getPerPlayerData(t);
+	Istats *stats;
+
+	if (isLoaded(t))
+	{
+		lock();
+		//do money+exp first
+		
+		//insert a new player into MySQL and then get it
+		/* cfghelp: Hyperspace:InitialMoney, global, int, mod: hscore_database
+		 * The amount of money that is given to a new player. */
+		playerData->money = cfg->GetInt(GLOBAL, "hyperspace", "initialmoney", 1000);
+		/* cfghelp: Hyperspace:InitialExp, global, int, mod: hscore_database
+		 * The amount of exp that is given to a new player. */
+		playerData->exp = cfg->GetInt(GLOBAL, "hyperspace", "initialexp", 0);
+		
+		playerData->moneyType[MONEY_TYPE_GIVE] = 0;
+		playerData->moneyType[MONEY_TYPE_GRANT] = 0;
+		playerData->moneyType[MONEY_TYPE_BUYSELL] = 0;
+		playerData->moneyType[MONEY_TYPE_KILL] = 0;
+		playerData->moneyType[MONEY_TYPE_FLAG] = 0;
+		playerData->moneyType[MONEY_TYPE_BALL] = 0;
+		playerData->moneyType[MONEY_TYPE_EVENT] = 0;
+		
+		mysql->Query(NULL, NULL, 0, "UPDATE hs_players SET money = #, exp = #, money_give = 0, money_grant = 0, money_buysell = 0, money_kill = 0, money_flag = 0, money_ball = 0, money_event = 0 WHERE id = #",
+			playerData->money,
+			playerData->exp,
+			playerData->id);
+
+		//do ships and items now
+		mysql->Query(NULL, NULL, 0, "DELETE hs_player_ships, hs_player_ship_items FROM hs_player_ships, hs_player_ship_items WHERE hs_player_ships.id = hs_player_ship_items.ship_id AND hs_player_ships.player_id = #", playerData->id);
+
+		//unload current ships
+		for (i = 0; i < 8; i++)
+		{
+			if (playerData->hull[i] != NULL)
+			{
+				Ship *ship = playerData->hull[i];
+				
+				LLEnum(&ship->inventoryEntryList, afree);
+				LLEmpty(&ship->inventoryEntryList);
+				HashEnum(ship->propertySums, hash_enum_afree, NULL);
+				HashFree(ship->propertySums);
+				
+				afree(ship);
+				
+				playerData->hull[i] = NULL;
+			}
+		}
+		
+		unlock();
+		
+		//reset score too
+
+		stats = mm->GetInterface(I_STATS, t->arena);
+		if (stats != NULL)
+		{
+			stats->ScoreReset(t, INTERVAL_RESET);
+			stats->SendUpdates(NULL);
+			mm->ReleaseInterface(stats);
+		}
+		
+		if (t != p)
+		{
+			chat->SendMessage(t, "Reset!");
+			chat->SendMessage(p, "Player %s reset!", t->name);
+		}
+		else
+		{
+			chat->SendMessage(p, "Reset!");
+		}
+	}
+	else
+	{
+		chat->SendMessage(p, "Data not loaded!");
+	}
+}
+
 //+----------------------+
 //|                      |
 //|  Callback functions  |
@@ -2059,6 +2145,7 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 
 		cmd->AddCommand("reloaditems", reloadItemsCommand, ALLARENAS, reloadItemsHelp);
 		cmd->AddCommand("storeall", storeAllCommand, ALLARENAS, storeAllHelp);
+		cmd->AddCommand("reset", resetCommand, ALLARENAS, resetHelp);
 
 		ml->SetTimer(periodicStoreTimer, 30000, 30000, NULL, NULL);
 
@@ -2088,6 +2175,7 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 
 		cmd->RemoveCommand("reloaditems", reloadItemsCommand, ALLARENAS);
 		cmd->RemoveCommand("storeall", storeAllCommand, ALLARENAS);
+		cmd->RemoveCommand("reset", resetCommand, ALLARENAS);
 
 		mm->UnregCallback(CB_NEWPLAYER, allocatePlayerCallback, ALLARENAS);
 		mm->UnregCallback(CB_PLAYERACTION, playerActionCallback, ALLARENAS);
