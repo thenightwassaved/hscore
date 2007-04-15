@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "asss.h"
 #include "hscore.h"
@@ -123,13 +124,15 @@ local void shipItemsCommand(const char *command, const char *params, Player *p, 
 	if (database->areShipsLoaded(t))
 	{
 		PerPlayerData *playerData = database->getPerPlayerData(t);
+		Link *link;
 
 		if (playerData->hull[ship] != NULL)
 		{
 			int first = 1;
 			char line[100];
 			char buffer[100];
-			char lineLength = 0;
+			int lineLen = 0;
+			int bufferLen;
 
 			chat->SendMessage(p, "+------------------+");
 			chat->SendMessage(p, "| %-16s |", shipNames[ship]);
