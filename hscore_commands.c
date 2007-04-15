@@ -87,18 +87,214 @@ local int printCacheEntry(const char *key, void *val, void *clos)
 	return 0;
 }
 
+local helptext_t shipItemsHelp =
+"Targets: none or player\n"
+"Args: [ship number]\n"
+"Displays a short list of the ship's items.\n"
+"If no ship is specified, current ship is assumed.\n"
+
+local void shipItemsCommand(const char *command, const char *params, Player *p, const Target *target)
+{
+	Player *t = (target->type == T_PLAYER) ? target->u.p : p;
+	
+	int ship = atoi(params);
+	if (ship == 0)
+	{
+		ship = t->p_ship;
+	}
+	else
+	{
+		ship--; //warbird is 0, not 1
+	}
+
+	if (ship == SHIP_SPEC)
+	{
+		chat->SendMessage(p, "Spectators do not have items. Please use ?shipitems <ship> to check items on a certain hull.");
+		return;
+	}
+
+	if (ship >= 8 || ship < 0)
+	{
+		chat->SendMessage(p, "Ship out of range. Please choose a ship from 1 to 8.");
+		return;
+	}
+
+	if (database->areShipsLoaded(t))
+	{
+		PerPlayerData *playerData = database->getPerPlayerData(t);
+
+		if (playerData->hull[ship] != NULL)
+		{
+			int first = 1;
+			char line[100];
+			char buffer[100];
+			char lineLength = 0;
+
+			chat->SendMessage(p, "+------------------+");
+			chat->SendMessage(p, "| %-16s |", shipNames[ship]);
+			chat->SendMessage(p, "+------------------+--------------------------------------------------------------------------+");
+
+			database->lock();
+			for (link = LLGetHead(&playerData->hull[ship]->inventoryEntryList); link; link = link->next)
+			{
+				InventoryEntry *entry = link->data;
+				Item *item = entry->item;
+				int count = entry->count;
+				int last = (link->next == NULL);
+				
+				if (first && last)
+				{
+					first = 0;
+					
+					if (count == 1)
+					{
+						sprintf(buffer, "%s", item->name);
+					}
+					else
+					{
+						sprintf(buffer, "%d %s", count, item->name);
+					}
+				}
+				else if (first)
+				{
+					first = 0;
+					
+					if (count == 1)
+					{
+						sprintf(buffer, "%s,", item->name);
+					}
+					else
+					{
+						sprintf(buffer, "%d %s,", count, item->name);
+					}				
+				}
+				else if (last)
+				{
+					if (lineLen == 0)
+					{
+						if (count == 1)
+						{
+							sprintf(buffer, "%s", item->name);
+						}
+						else
+						{
+							sprintf(buffer, "%d %s", count, item->name);
+						}
+					}
+					else
+					{
+						if (count == 1)
+						{
+							sprintf(buffer, " %s", item->name);
+						}
+						else
+						{
+							sprintf(buffer, " %d %s", count, item->name);
+						}
+					}
+				}
+				else
+				{
+					if (lineLen == 0)
+					{
+						if (count == 1)
+						{
+							sprintf(buffer, "%s,", item->name);
+						}
+						else
+						{
+							sprintf(buffer, "%d %s,", count, item->name);
+						}
+					}
+					else
+					{
+						if (count == 1)
+						{
+							sprintf(buffer, " %s,", item->name);
+						}
+						else
+						{
+							sprintf(buffer, " %d %s,", count, item->name);
+						}
+					}			
+				}
+				
+				//buffer is now filled with the properly formatted string.
+				bufferLen = strlen(buffer);
+				if (lineLen + bufferLen <= 91);
+				{
+					strcat(line, buffer);
+					lineLen = strlen(line);
+				}
+				else
+				{
+					//need a new line
+					chat->SendMessage(p, "| %91s |", line);
+					lineLen = 0;
+					*line = '\0';
+				}
+			}
+			database->unlock();
+			
+			//check if there's still stuff left in the line
+			if (lineLen != 0)
+			{
+				chat->SendMessage(p, "| %91s |", line);
+			}
+			
+			chat->SendMessage(p, "+---------------------------------------------------------------------------------------------+")
+		}
+		else
+		{
+			int buyPrice = cfg->GetInt(p->arena->cfg, shipNames[ship], "BuyPrice", 0);
+
+			if (buyPrice == 0)
+			{
+				chat->SendMessage(p, "No items can be loaded onto a %s in this arena.", shipNames[ship]);
+			}
+			else
+			{
+				if (p == t)
+					chat->SendMessage(p, "You do not own a %s.", shipNames[ship]);
+				else
+					chat->SendMessage(p, "Player %s does not own a %s.", t->name, shipNames[ship]);
+			}
+		}
+	}
+	else
+	{
+		if (p == t)
+			chat->SendMessage(p, "Unexpected error: Your ships are not loaded.");
+		else
+			chat->SendMessage(p, "Unexpected error: %s's ships are not loaded.", t->name);
+	}
+}
 
 local helptext_t shipStatusHelp =
 "Targets: none or player\n"
-"Args: [ship number]\n"
+"Args: [-v] [ship number]\n"
 "Displays the specified ship's inventory.\n"
-"If no ship is specified, your current ship is assumed.\n";
+"If no ship is specified, current ship is assumed.\n"
+"The -v flag will give you a list of all properties set on your ship.\n";
 
 local void shipStatusCommand(const char *command, const char *params, Player *p, const Target *target)
 {
+	int verbose = 0;
+	int ship;
 	Player *t = (target->type == T_PLAYER) ? target->u.p : p;
 
-	int ship = atoi(params);
+	if (strncmp(params, "-v", 2) == 0)
+	{
+		verbose = 1;
+	}
+	
+	params = strchr(params, ' ');
+	if (params) //check so that params can still == NULL
+	{
+		params++; //we want *after* the space
+	}
+	
+	ship = atoi(params);
 	if (ship == 0)
 	{
 		ship = t->p_ship;
@@ -182,16 +378,23 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 
 				chat->SendMessage(p, "| %-16s | %5i | %10i | %-16s | %5i | %-16s | %5i |", item->name, entry->count, ammoCount, type1, item->typeDelta1 * entry->count, type2, item->typeDelta2 * entry->count);
 			}
+			
+			if (!verbose)
+			{
+				chat->SendMessage(p, "+------------------+-------+------------+------------------+-------+------------------+-------+");
+			}
+			else
+			{
+				chat->SendMessage(p, "+------------------+-------+--------+---+------------------+-------+------------------+-------+");
+				chat->SendMessage(p, "| Property Name    | Property Value |");
+				chat->SendMessage(p, "+------------------+----------------+");
+
+				items->recaclulateEntireCache(t, ship);
+				HashEnum(playerData->hull[ship]->propertySums, printCacheEntry, p);
+
+				chat->SendMessage(p, "+------------------+----------------+");
+			}
 			database->unlock();
-
-			chat->SendMessage(p, "+------------------+-------+--------+---+------------------+-------+------------------+-------+");
-			chat->SendMessage(p, "| Property Name    | Property Value |");
-			chat->SendMessage(p, "+------------------+----------------+");
-
-			items->recaclulateEntireCache(p, ship);
-			HashEnum(playerData->hull[ship]->propertySums, printCacheEntry, p);
-
-			chat->SendMessage(p, "+------------------+----------------+");
 		}
 		else
 		{
@@ -263,6 +466,7 @@ EXPORT int MM_hscore_commands(int action, Imodman *_mm, Arena *arena)
 	{
 		cmd->AddCommand("ships", shipsCommand, arena, shipsHelp);
 		cmd->AddCommand("shipstatus", shipStatusCommand, arena, shipStatusHelp);
+		cmd->AddCommand("shipitems", shipItemsCommand, arena, shipItemsHelp);
 
 		return MM_OK;
 	}
@@ -270,6 +474,7 @@ EXPORT int MM_hscore_commands(int action, Imodman *_mm, Arena *arena)
 	{
 		cmd->RemoveCommand("ships", shipsCommand, arena);
 		cmd->RemoveCommand("shipstatus", shipStatusCommand, arena);
+		cmd->RemoveCommand("shipitems", shipItemsCommand, arena);
 
 		return MM_OK;
 	}
