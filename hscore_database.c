@@ -1555,6 +1555,7 @@ local void resetCommand(const char *command, const char *params, Player *p, cons
 	Player *t = (target->type == T_PLAYER) ? target->u.p : p;
 	PerPlayerData *playerData = getPerPlayerData(t);
 	Istats *stats;
+	int i;
 
 	if (isLoaded(t))
 	{
@@ -1590,7 +1591,7 @@ local void resetCommand(const char *command, const char *params, Player *p, cons
 		{
 			if (playerData->hull[i] != NULL)
 			{
-				Ship *ship = playerData->hull[i];
+				ShipHull *ship = playerData->hull[i];
 				
 				LLEnum(&ship->inventoryEntryList, afree);
 				LLEmpty(&ship->inventoryEntryList);
