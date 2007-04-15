@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdlib.h>
 
 #include "asss.h"
@@ -91,7 +92,7 @@ local helptext_t shipItemsHelp =
 "Targets: none or player\n"
 "Args: [ship number]\n"
 "Displays a short list of the ship's items.\n"
-"If no ship is specified, current ship is assumed.\n"
+"If no ship is specified, current ship is assumed.\n";
 
 local void shipItemsCommand(const char *command, const char *params, Player *p, const Target *target)
 {
