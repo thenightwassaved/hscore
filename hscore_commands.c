@@ -225,7 +225,7 @@ local void shipItemsCommand(const char *command, const char *params, Player *p, 
 				
 				//buffer is now filled with the properly formatted string.
 				bufferLen = strlen(buffer);
-				if (lineLen + bufferLen <= 91);
+				if (lineLen + bufferLen <= 91)
 				{
 					strcat(line, buffer);
 					lineLen = strlen(line);
@@ -246,7 +246,7 @@ local void shipItemsCommand(const char *command, const char *params, Player *p, 
 				chat->SendMessage(p, "| %91s |", line);
 			}
 			
-			chat->SendMessage(p, "+---------------------------------------------------------------------------------------------+")
+			chat->SendMessage(p, "+---------------------------------------------------------------------------------------------+");
 		}
 		else
 		{
