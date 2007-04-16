@@ -235,9 +235,11 @@ local void shipItemsCommand(const char *command, const char *params, Player *p, 
 				else
 				{
 					//need a new line
-					chat->SendMessage(p, "| %91s |", line);
-					lineLen = 0;
+					chat->SendMessage(p, "| %-91s |", line);
+					
 					*line = '\0';
+					strcat(line, buffer);
+					lineLen = strlen(line);
 				}
 			}
 			database->unlock();
