@@ -27,6 +27,7 @@ local void internalTriggerEventOnItem(Player *p, Item *item, int ship, const cha
 local int getItemCount(Player *p, Item *item, int ship);
 local int addItem(Player *p, Item *item, int ship, int amount);
 local Item * getItemByName(const char *name, Arena *arena);
+local Item * getItemByPartialName(const char *name, Arena *arena);
 local int getPropertySum(Player *p, int ship, const char *prop);
 local void triggerEvent(Player *p, int ship, const char *event);
 local void triggerEventOnItem(Player *p, Item *item, int ship, const char *event);
