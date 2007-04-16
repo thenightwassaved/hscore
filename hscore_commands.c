@@ -134,7 +134,7 @@ local void shipItemsCommand(const char *command, const char *params, Player *p, 
 			int lineLen = 0;
 			int bufferLen;
 
-			buffer[0] = '\0';
+			line[0] = '\0';
 			
 			chat->SendMessage(p, "+------------------+");
 			chat->SendMessage(p, "| %-16s |", shipNames[ship]);
@@ -292,12 +292,12 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 	if (strncmp(params, "-v", 2) == 0)
 	{
 		verbose = 1;
-	}
-	
-	params = strchr(params, ' ');
-	if (params) //check so that params can still == NULL
-	{
-		params++; //we want *after* the space
+		
+		params = strchr(params, ' ');
+		if (params) //check so that params can still == NULL
+		{
+			params++; //we want *after* the space
+		}
 	}
 	
 	ship = t->p_ship;
