@@ -134,6 +134,8 @@ local void shipItemsCommand(const char *command, const char *params, Player *p, 
 			int lineLen = 0;
 			int bufferLen;
 
+			buffer[0] = '\0';
+			
 			chat->SendMessage(p, "+------------------+");
 			chat->SendMessage(p, "| %-16s |", shipNames[ship]);
 			chat->SendMessage(p, "+------------------+--------------------------------------------------------------------------+");
@@ -243,7 +245,7 @@ local void shipItemsCommand(const char *command, const char *params, Player *p, 
 			//check if there's still stuff left in the line
 			if (lineLen != 0)
 			{
-				chat->SendMessage(p, "| %91s |", line);
+				chat->SendMessage(p, "| %-91s |", line);
 			}
 			
 			chat->SendMessage(p, "+---------------------------------------------------------------------------------------------+");
@@ -298,14 +300,18 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 		params++; //we want *after* the space
 	}
 	
-	ship = atoi(params);
-	if (ship == 0)
+	ship = t->p_ship;
+	if (params != NULL)
 	{
-		ship = t->p_ship;
-	}
-	else
-	{
-		ship--; //warbird is 0, not 1
+		ship = atoi(params);
+		if (ship == 0)
+		{
+			ship = t->p_ship;
+		}
+		else
+		{
+			ship--; //warbird is 0, not 1
+		}
 	}
 
 	if (ship == SHIP_SPEC)
