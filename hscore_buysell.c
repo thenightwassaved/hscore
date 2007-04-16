@@ -535,6 +535,9 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 		}
 		else
 		{
+			int matches;
+			Category *category;
+
 			//check if they're asking for a ship
 			for (int i = 0; i < 8; i++)
 			{
@@ -547,22 +550,36 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 
 			//check if they're asking for a category
 			database->lock();
+			matches = 0;
 			for (link = LLGetHead(categoryList); link; link = link->next)
 			{
-				Category *category = link->data;
+				Category *c = link->data;
 
-				if (strcasecmp(newParams, category->name) == 0)
+				if (strncasecmp(newParams, category->name, strlen(newParams)) == 0)
 				{
-					printCategoryItems(p, category);
-
-					database->unlock();
-					return;
+					category = c;
+					matches++;
 				}
+			}
+			
+			if (matches == 1)
+			{
+				printCategoryItems(p, category);
+				
+				database->unlock();
+				return;
+			}
+			else if (matches > 1)
+			{
+				chat->SendMessage(p, "Too many partial matches! Try typing more of the name!");
+				
+				database->unlock();
+				return;
 			}
 			database->unlock();
 
 			//not a category. check for an item
-			Item *item = items->getItemByName(newParams, p->arena);
+			Item *item = items->getItemByPartialName(newParams, p->arena);
 			if (item != NULL)
 			{
 				if (p->p_ship != SHIP_SPEC)

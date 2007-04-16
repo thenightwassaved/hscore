@@ -55,7 +55,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 		return;
 	}
 
-	item = getItemByName(params, p->arena);
+	item = getItemByPartialName(params, p->arena);
 
 	if (item == NULL)
 	{
@@ -833,6 +833,44 @@ local Item * getItemByName(const char *name, Arena *arena) //call with no lock
 	return NULL;
 }
 
+local Item * getItemByPartialName(const char *name, Arena *arena) //call with no lock
+{
+	int matches = 0;
+	Item *item;
+	LinkedList *categoryList = database->getCategoryList(arena);
+	Link *catLink;
+
+	//to deal with the fact that an item name is only unique per arena,
+	//we scan the items in the categories rather than the item list
+	database->lock();
+	for (catLink = LLGetHead(categoryList); catLink; catLink = catLink->next)
+	{
+		Category *category = catLink->data;
+		Link *itemLink;
+
+		for (itemLink = LLGetHead(&category->itemList); itemLink; itemLink = itemLink->next)
+		{
+			Item *i = itemLink->data;
+
+			if (strncasecmp(item->name, name, strlen(name)) == 0)
+			{
+				item = i;
+				matches++;
+			}
+		}
+	}
+	database->unlock();
+	
+	if (matches == 1)
+	{
+		return item;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
 local int getPropertySum(Player *p, int ship, const char *propString) //call with no lock
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
@@ -1266,7 +1304,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 local Ihscoreitems interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_ITEMS, "hscore_items")
-	getItemCount, addItem, getItemByName, getPropertySum,
+	getItemCount, addItem, getItemByName, getItemByPartialName, getPropertySum,
 	triggerEvent, triggerEventOnItem, getFreeItemTypeSpots, hasItemsLeftOnShip,
 	recaclulateEntireCache,
 };
