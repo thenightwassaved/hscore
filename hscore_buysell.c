@@ -555,7 +555,7 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 			{
 				Category *c = link->data;
 
-				if (strcasecmp(newParams, category->name) == 0)
+				if (strcasecmp(c->name, newParams, strlen(newParams)) == 0)
 				{
 					category = c;
 					matches++;

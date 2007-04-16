@@ -853,7 +853,7 @@ local Item * getItemByPartialName(const char *name, Arena *arena) //call with no
 		{
 			Item *i = itemLink->data;
 
-			if (strcasecmp(item->name, name) == 0)
+			if (strcasecmp(i->name, name, strlen(name)) == 0)
 			{
 				item = i;
 				matches++;
