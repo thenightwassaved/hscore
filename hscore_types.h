@@ -63,7 +63,7 @@ typedef struct ItemTypeEntry
 {
 	ItemType *itemType;
 	int delta;
-}
+} ItemTypeEntry;
 
 typedef struct Item
 {
