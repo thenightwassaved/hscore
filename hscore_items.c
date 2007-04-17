@@ -31,7 +31,7 @@ local Item * getItemByPartialName(const char *name, Arena *arena);
 local int getPropertySum(Player *p, int ship, const char *prop);
 local void triggerEvent(Player *p, int ship, const char *event);
 local void triggerEventOnItem(Player *p, Item *item, int ship, const char *event);
-local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship);
+local int getFreeItemTypeSpotsNoLock(Player *p, ItemType *type, int ship);
 local int hasItemsLeftOnShip(Player *p, int ship);
 
 
@@ -45,7 +45,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 	Item *item;
 	char shipMask[] = "12345678";
 	int i;
-	char itemTypes = "<under construction>";
+	char itemTypes[256];
 	char buf[256];
 	const char *temp = NULL;
 	Link *link;
@@ -83,7 +83,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 	//get item type string
 	//FIXME
 
-	chat->SendMessage(p, "| $%-8i | $%-9i | %-5i | %s | %-3i | %-49s |", item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, itemTypes);
+	chat->SendMessage(p, "| $%-8i | $%-9i | %-5i | %s | %-3i | %-49s |", item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, "<under construction>");
 	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+---------------------------------------------------+");
 
 	//print description
@@ -308,7 +308,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 				newItemCount = getItemCount(t, item, ship) + count;
 				if (ignore || item->max == 0 || newItemCount <= item->max)
 				{
-					Link link;
+					Link *link;
 					database->lock();
 					for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
 					{
@@ -395,24 +395,24 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 							int newItemCount = getItemCount(t, item, ship) + count;
 							if (item->max == 0 || newItemCount <= item->max)
 							{
-								if (item->type1 != NULL)
+								Link *link;
+								database->lock();
+								for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
 								{
-									if (getFreeItemTypeSpots(t, item->type1, ship) - (item->typeDelta1 * count) < 0) //have no free spots
+									ItemTypeEntry *entry = link->data;
+								
+									if (entry->itemType != NULL)
 									{
-										chat->SendMessage(p, "Player %s does not have enough free %s spots.", t->name, item->type1->name);
-										return;
+										if (!ignore && getFreeItemTypeSpotsNoLock(t, entry->itemType, ship) - (entry->delta * count) < 0) //have no free spots
+										{
+											chat->SendMessage(p, "Player %s does not have enough free %s spots.", t->name, entry->itemType->name);
+											
+											database->unlock();
+											return;
+										}
 									}
 								}
-
-								if (item->type2 != NULL)
-								{
-									if (getFreeItemTypeSpots(t, item->type2, ship) - (item->typeDelta2 * count) < 0) //have no free spots
-									{
-										chat->SendMessage(p, "Player %s does not have enough free %s spots.", t->name, item->type2->name);
-										return;
-									}
-								}
-
+								database->unlock();
 
 								addItem(t, item, t->p_ship, count);
 								if (!quiet)
