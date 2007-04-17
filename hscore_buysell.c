@@ -185,23 +185,20 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 
 						if (storemanOk)
 						{
-							if (item->type1 != NULL)
+							Link *link;
+							database->lock();
+							for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
 							{
-								if (items->getFreeItemTypeSpots(p, item->type1, ship) - (item->typeDelta1 * count) < 0) //have no free spots
+								ItemTypeEntry *entry = link->data;
+								
+								if (items->getFreeItemTypeSpotsNoLock(p, entry->itemType, ship) - (entry->delta * count) < 0) //have no free spots
 								{
-									chat->SendMessage(p, "You do not have enough free %s spots.", item->type1->name);
+									chat->SendMessage(p, "You do not have enough free %s spots.", entry->itemType->name);
+									database->unlock();
 									return;
 								}
 							}
-
-							if (item->type2 != NULL)
-							{
-								if (items->getFreeItemTypeSpots(p, item->type2, ship) - (item->typeDelta2 * count) < 0) //have no free spots
-								{
-									chat->SendMessage(p, "You do not have enough free %s spots.", item->type2->name);
-									return;
-								}
-							}
+							database->unlock();
 
 							items->addItem(p, item, ship, count);
 
@@ -294,23 +291,20 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 
 		if (storemanOk)
 		{
-			if (item->type1 != NULL)
+			Link *link;
+			database->lock();
+			for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
 			{
-				if (items->getFreeItemTypeSpots(p, item->type1, ship) + item->typeDelta1 * count < 0)
+				ItemTypeEntry *entry = link->data;
+				
+				if (items->getFreeItemTypeSpotsNoLock(p, entry->itemType, ship) + (entry->delta * count) < 0) //have no free spots
 				{
-					chat->SendMessage(p, "You do not have enough free %s spots.", item->type1->name);
+					chat->SendMessage(p, "You do not have enough free %s spots.", entry->itemType->name);
+					database->unlock();
 					return;
 				}
 			}
-
-			if (item->type2 != NULL)
-			{
-				if (items->getFreeItemTypeSpots(p, item->type2, ship) + item->typeDelta2 * count < 0)
-				{
-					chat->SendMessage(p, "You do not have enough free %s spots.", item->type2->name);
-					return;
-				}
-			}
+			database->unlock();
 
 			//trigger before it's sold!
 			items->triggerEventOnItem(p, item, ship, "sell");

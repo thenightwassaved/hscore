@@ -26,7 +26,7 @@ typedef struct Ihscoreitems
 	void (*triggerEvent)(Player *p, int ship, const char *event);
 	void (*triggerEventOnItem)(Player *p, Item *item, int ship, const char *event);
 
-	int (*getFreeItemTypeSpots)(Player *p, ItemType *type, int ship);
+	int (*getFreeItemTypeSpotsNoLock)(Player *p, ItemType *type, int ship);
 
 	int (*hasItemsLeftOnShip)(Player *p, int ship);
 

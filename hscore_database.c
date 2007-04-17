@@ -310,10 +310,7 @@ local void LinkAmmo()
 "  `sell_price` int(11) NOT NULL default '0'," \
 "  `exp_required` int(11) NOT NULL default '0'," \
 "  `ships_allowed` int(11) NOT NULL default '0'," \
-"  `type1` int(10) unsigned NOT NULL default '0'," \
-"  `type2` int(10) unsigned NOT NULL default '0'," \
-"  `type1_delta` int(11) NOT NULL default '0'," \
-"  `type2_delta` int(11) NOT NULL default '0'," \
+"  `item_types` varchar(250) NOT NULL default ''," \
 "  `max` int(11) NOT NULL default '0'," \
 "  `delay_write` tinyint(4) NOT NULL default '0'," \
 "  `ammo` int(10) unsigned NOT NULL default '0'," \
@@ -584,6 +581,8 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 		Link *link;
 		Item *item = NULL;
 		int id = atoi(mysql->GetField(row, 0));
+		
+		char itemTypes[256];
 
 		lock();
 		for (link = LLGetHead(&itemList); link; link = link->next)
@@ -602,8 +601,15 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 			item = amalloc(sizeof(*item));
 			LLInit(&item->propertyList);
 			LLInit(&item->eventList);
+			LLInit(&item->itemTypeEntries);
 			item->id = id;
 			LLAdd(&itemList, item);
+		}
+		else
+		{
+			//empty the item types
+			LLEnum(&item->itemTypeEntries, afree);
+			LLEmpty(&item->itemTypeEntries);
 		}
 
 		astrncpy(item->name, mysql->GetField(row, 1), 17);			//name
@@ -614,18 +620,79 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 		item->expRequired = atoi(mysql->GetField(row, 6));			//exp_required
 		item->shipsAllowed = atoi(mysql->GetField(row, 7));			//ships_allowed
 
-		item->type1 = getItemTypeByIDNoLock(atoi(mysql->GetField(row, 8)));	//type1
-		item->type2 = getItemTypeByIDNoLock(atoi(mysql->GetField(row, 9)));	//type2
+		astrncpy(itemTypes, mysql->GetField(row, 8), 255);			//item_types
 
-		item->typeDelta1 = atoi(mysql->GetField(row, 10));			//type1_delta
-		item->typeDelta2 = atoi(mysql->GetField(row, 11));			//type2_delta
+		item->max = atoi(mysql->GetField(row, 9));					//max
 
-		item->max = atoi(mysql->GetField(row, 12));					//max
+		item->delayStatusWrite = atoi(mysql->GetField(row, 10));	//delay_write
+		item->ammoID = atoi(mysql->GetField(row, 11));				//ammo
+		item->affectsSets = atoi(mysql->GetField(row, 12));			//affects_sets
+		item->resendSets = atoi(mysql->GetField(row, 13));			//resend_sets
+		
+		if (itemTypes != NULL) //parse itemTypes
+		{
+			const char *tmp = NULL;
+			char word[64];
+			while (strsplit(itemTypes, ",", word, sizeof(word), &tmp))
+			{
+				//items should be in the format "item type id" or "item type id:count"
+				char *colonLoc = strchr(word, ':');
+				if (colonLoc == NULL)
+				{
+					//no count included
+					//word should be just "item type id"
+					ItemType *itemType = getItemTypeByIDNoLock(atoi(word));
+					if (itemType != NULL)
+					{
+						ItemTypeEntry *entry = amalloc(sizeof(*entry));
+						entry->itemType = itemType;
+						entry->delta = 1;
+						
+						LLAdd(&item->itemTypeEntries, entry);
+					}
+					else
+					{
+						lm->Log(L_ERROR, "<hscore_database> bad item type %s on item %s", word, item->name);
+					}
+				}
+				else
+				{
+					//null terminate the item name
+					*colonLoc = '\0';
 
-		item->delayStatusWrite = atoi(mysql->GetField(row, 13));	//delay_write
-		item->ammoID = atoi(mysql->GetField(row, 14));				//ammo
-		item->affectsSets = atoi(mysql->GetField(row, 15));			//affects_sets
-		item->resendSets = atoi(mysql->GetField(row, 16));			//resend_sets
+					//make sure a count follows the colon
+					colonLoc++;
+					if (*colonLoc != '\0')
+					{
+						int count = atoi(colonLoc);
+						if (count != 0)
+						{
+							ItemType *itemType = getItemTypeByIDNoLock(atoi(word));
+							if (item != NULL)
+							{
+								ItemTypeEntry *entry = amalloc(sizeof(*entry));
+								entry->itemType = itemType;
+								entry->delta = count;
+								
+								LLAdd(&item->itemTypeEntries, entry);
+							}
+							else
+							{
+								lm->Log(L_ERROR, "<hscore_database> bad item type %s on item %s", word, item->name);
+							}
+						}
+						else
+						{
+							lm->Log(L_ERROR, "<hscore_database> initial count of %d for %s on %s", count, word, item->name);
+						}
+					}
+					else
+					{
+						lm->Log(L_ERROR, "<hscore_database> colon on item type %s not followed by a string on item %s", word, item->name);
+					}
+				}
+			}
+		}		
 
 		unlock();
 
@@ -1257,6 +1324,9 @@ local void UnloadItemListEnumCallback(const void *ptr) //called with lock held
 
 	LLEnum(&item->eventList, afree);
 	LLEmpty(&item->eventList);
+	
+	LLEnum(&item->itemTypeEntries, afree);
+	LLEmpty(&item->itemTypeEntries);
 
 	afree(item);
 }
@@ -1393,7 +1463,7 @@ local void LoadProperties()
 
 local void LoadItemList() //will call LoadProperties() and LoadEvents() when finished
 {
-	mysql->Query(loadItemsQueryCallback, NULL, 1, "SELECT id, name, short_description, long_description, buy_price, sell_price, exp_required, ships_allowed, type1, type2, type1_delta, type2_delta, max, delay_write, ammo, affects_sets, resend_sets FROM hs_items");
+	mysql->Query(loadItemsQueryCallback, NULL, 1, "SELECT id, name, short_description, long_description, buy_price, sell_price, exp_required, ships_allowed, item_types, max, delay_write, ammo, affects_sets, resend_sets FROM hs_items");
 }
 
 local void LoadItemTypeList() //will call LoadItemList() when finished loading

@@ -59,6 +59,12 @@ typedef struct ItemType
 	int id; //MySQL use only
 } ItemType;
 
+typedef struct ItemTypeEntry
+{
+	ItemType *itemType;
+	int delta;
+}
+
 typedef struct Item
 {
 	char name[17];
@@ -75,8 +81,7 @@ typedef struct Item
 
 	LinkedList eventList;
 
-	ItemType *type1, *type2;
-	int typeDelta1, typeDelta2;
+	LinkedList itemTypeEntries;
 
 	int max;
 

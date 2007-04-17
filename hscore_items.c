@@ -45,7 +45,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 	Item *item;
 	char shipMask[] = "12345678";
 	int i;
-	char *itemType1, *itemType2;
+	char itemTypes = "<under construction>";
 	char buf[256];
 	const char *temp = NULL;
 	Link *link;
@@ -68,8 +68,8 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 
 	chat->SendMessage(p, "+------------------+");
 	chat->SendMessage(p, "| %-16s |", item->name);
-	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+-----------------+-------+-----------------+-------+");
-	chat->SendMessage(p, "| Buy Price | Sell Price | Exp   | Ships    | Max | Item Type 1     | Usage | Item Type 2     | Usage |");
+	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+---------------------------------------------------+");
+	chat->SendMessage(p, "| Buy Price | Sell Price | Exp   | Ships    | Max | Item Types                                        |");
 
 	//calculate ship mask
 	for (i = 0; i < 8; i++)
@@ -80,12 +80,11 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 		}
 	}
 
-	//get item type strings
-	itemType1 = (item->type1) ? item->type1->name : "<none>";
-	itemType2 = (item->type2) ? item->type2->name : "<none>";
+	//get item type string
+	//FIXME
 
-	chat->SendMessage(p, "| $%-8i | $%-9i | %-5i | %s | %-3i | %-15s | %-5i | %-15s | %-5i |", item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, itemType1, item->typeDelta1, itemType2, item->typeDelta2);
-	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+-----------------+-------+-----------------+-------+");
+	chat->SendMessage(p, "| $%-8i | $%-9i | %-5i | %s | %-3i | %-49s |", item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, itemTypes);
+	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+---------------------------------------------------+");
 
 	//print description
 	while (strsplit(item->longDesc, "ß", buf, 256, &temp))
@@ -309,23 +308,24 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 				newItemCount = getItemCount(t, item, ship) + count;
 				if (ignore || item->max == 0 || newItemCount <= item->max)
 				{
-					if (item->type1 != NULL)
+					Link link;
+					database->lock();
+					for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
 					{
-						if (!ignore && getFreeItemTypeSpots(t, item->type1, ship) - (item->typeDelta1 * count) < 0) //have no free spots
+						ItemTypeEntry *entry = link->data;
+					
+						if (entry->itemType != NULL)
 						{
-							chat->SendMessage(p, "Does not have enough free %s spots.", item->type1->name);
-							return;
+							if (!ignore && getFreeItemTypeSpotsNoLock(t, entry->itemType, ship) - (entry->delta * count) < 0) //have no free spots
+							{
+								chat->SendMessage(p, "Does not have enough free %s spots.", entry->itemType->name);
+								
+								database->unlock();
+								return;
+							}
 						}
 					}
-
-					if (item->type2 != NULL)
-					{
-						if (!ignore && getFreeItemTypeSpots(t, item->type2, ship) - (item->typeDelta2 * count) < 0) //have no free spots
-						{
-							chat->SendMessage(p, "Does not have enough free %s spots.", item->type2->name);
-							return;
-						}
-					}
+					database->unlock();
 
 					addItem(t, item, ship, count);
 					if (ship == t->p_ship)
@@ -1126,7 +1126,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 	DO_CBS(CB_TRIGGER_EVENT, p->arena, triggerEventFunction, (p, triggerItem, ship, eventName));
 }
 
-local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship) //call with no lock
+local int getFreeItemTypeSpotsNoLock(Player *p, ItemType *type, int ship) //call with lock
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
 	Link *link;
@@ -1161,22 +1161,22 @@ local int getFreeItemTypeSpots(Player *p, ItemType *type, int ship) //call with 
 
 	count = type->max;
 
-	database->lock();
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
 		InventoryEntry *entry = link->data;
 		Item *item = entry->item;
 
-		if (item->type1 == type)
+		Link *itemTypeLink;
+		for (itemTypeLink = LLGetHead(&item->itemTypeEntries); itemTypeLink; itemTypeLink = itemTypeLink->next)
 		{
-			count -= entry->count * item->typeDelta1;
-		}
-		if (item->type2 == type)
-		{
-			count -= entry->count * item->typeDelta2;
+			ItemTypeEntry *typeEntry = itemTypeLink->data;
+			
+			if (typeEntry->itemType == type)
+			{
+				count -= entry->count * typeEntry->delta;
+			}
 		}
 	}
-	database->unlock();
 
 	return count;
 }
@@ -1306,7 +1306,7 @@ local Ihscoreitems interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_ITEMS, "hscore_items")
 	getItemCount, addItem, getItemByName, getItemByPartialName, getPropertySum,
-	triggerEvent, triggerEventOnItem, getFreeItemTypeSpots, hasItemsLeftOnShip,
+	triggerEvent, triggerEventOnItem, getFreeItemTypeSpotsNoLock, hasItemsLeftOnShip,
 	recaclulateEntireCache,
 };
 
