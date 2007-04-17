@@ -345,7 +345,7 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 			chat->SendMessage(p, "+------------------+");
 			chat->SendMessage(p, "| %-16s |", shipNames[ship]);
 			chat->SendMessage(p, "+------------------+-------+------------+------------------+-------+------------------+-------+");
-			chat->SendMessage(p, "| Item Name        | Count | Ammo Count | Item Type 1      | Usage | Item Type 2      | Usage |");
+			chat->SendMessage(p, "| Item Name        | Count | Ammo Count | Item Types                                          |");
 			chat->SendMessage(p, "+------------------+-------+------------+------------------+-------+------------------+-------+");
 
 			Link *link;
@@ -377,26 +377,7 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 					ammoCount = 0;
 				}
 
-				char *type1, *type2;
-				if (item->type1 == NULL)
-				{
-					type1 = "<None>";
-				}
-				else
-				{
-					type1 = item->type1->name;
-				}
-
-				if (item->type2 == NULL)
-				{
-					type2 = "<None>";
-				}
-				else
-				{
-					type2 = item->type2->name;
-				}
-
-				chat->SendMessage(p, "| %-16s | %5i | %10i | %-16s | %5i | %-16s | %5i |", item->name, entry->count, ammoCount, type1, item->typeDelta1 * entry->count, type2, item->typeDelta2 * entry->count);
+				chat->SendMessage(p, "| %-16s | %5i | %10i | %-51s |", item->name, entry->count, ammoCount, "<under construction>");
 			}
 			
 			if (!verbose)
