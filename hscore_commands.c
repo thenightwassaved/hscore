@@ -238,7 +238,15 @@ local void shipItemsCommand(const char *command, const char *params, Player *p, 
 					chat->SendMessage(p, "| %-91s |", line);
 					
 					*line = '\0';
-					strcat(line, buffer);
+					if (*buffer == ' ')
+					{
+						strcat(line, buffer + 1);
+					}
+					else
+					{
+						strcat(line, buffer);					
+					}
+					
 					lineLen = strlen(line);
 				}
 			}
