@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "asss.h"
 #include "hscore.h"
@@ -114,10 +115,12 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 				sprintf(buf, ", %d %s", entry->delta, entry->itemType->name);
 			}
 		}
+		
+		strcat(itemTypes, buf);
 	}
 	database->unlock();
 
-	chat->SendMessage(p, "| $%-8i | $%-9i | %-5i | %s | %-3i | %-49s |", item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, "<under construction>");
+	chat->SendMessage(p, "| $%-8i | $%-9i | %-5i | %s | %-3i | %-49s |", item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, itemTypes);
 	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+---------------------------------------------------+");
 
 	//print description
