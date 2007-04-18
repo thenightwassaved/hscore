@@ -45,7 +45,10 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 	Item *item;
 	char shipMask[] = "12345678";
 	int i;
+	
 	char itemTypes[256];
+	int first = 1;
+	
 	char buf[256];
 	const char *temp = NULL;
 	Link *link;
@@ -64,7 +67,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 		return;
 	}
 
-	//FIXME: add ammo and max
+	//FIXME: add ammo
 
 	chat->SendMessage(p, "+------------------+");
 	chat->SendMessage(p, "| %-16s |", item->name);
@@ -81,7 +84,38 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 	}
 
 	//get item type string
-	//FIXME
+	database->lock();
+	itemTypes[0] = '\0';
+	for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
+	{
+		ItemTypeEntry *entry = link->data;
+		
+		if (first == 1)
+		{
+			first = 0;
+			
+			if (entry->delta == 1)
+			{
+				sprintf(buf, "%s", entry->itemType->name);
+			}
+			else
+			{
+				sprintf(buf, "%d %s", entry->delta, entry->itemType->name);
+			}
+		}
+		else
+		{
+			if (entry->delta == 1)
+			{
+				sprintf(buf, ", %s", entry->itemType->name);
+			}
+			else
+			{
+				sprintf(buf, ", %d %s", entry->delta, entry->itemType->name);
+			}
+		}
+	}
+	database->unlock();
 
 	chat->SendMessage(p, "| $%-8i | $%-9i | %-5i | %s | %-3i | %-49s |", item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, "<under construction>");
 	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+---------------------------------------------------+");

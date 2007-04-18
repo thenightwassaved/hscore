@@ -355,6 +355,10 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 			{
 				InventoryEntry *entry = link->data;
 				Item *item = entry->item;
+				int first = 1;
+				char itemTypes[256];
+				char buf[256];
+				Link *itemTypeLink;
 
 				int ammoCount;
 				if (item->ammo != NULL)
@@ -377,7 +381,40 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 					ammoCount = 0;
 				}
 
-				chat->SendMessage(p, "| %-16s | %5i | %10i | %-51s |", item->name, entry->count, ammoCount, "<under construction>");
+				itemTypes[0] = '\0';
+				for (itemTypeLink = LLGetHead(&item->itemTypeEntries); itemTypeLink; itemTypeLink = itemTypeLink->next)
+				{
+					ItemTypeEntry *entry = itemTypeLink->data;
+					
+					if (first == 1)
+					{
+						first = 0;
+						
+						if (entry->delta == 1)
+						{
+							sprintf(buf, "%s", entry->itemType->name);
+						}
+						else
+						{
+							sprintf(buf, "%d %s", entry->delta, entry->itemType->name);
+						}
+					}
+					else
+					{
+						if (entry->delta == 1)
+						{
+							sprintf(buf, ", %s", entry->itemType->name);
+						}
+						else
+						{
+							sprintf(buf, ", %d %s", entry->delta, entry->itemType->name);
+						}
+					}
+					
+					strcat(itemTypes, buf);
+				}
+				
+				chat->SendMessage(p, "| %-16s | %5i | %10i | %-51s |", item->name, entry->count, ammoCount, itemTypes);
 			}
 			
 			if (!verbose)
