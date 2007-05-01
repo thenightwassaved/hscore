@@ -408,6 +408,33 @@ local void addOverrides(Player *p)
 			{
 				clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialRotation);
 			}
+			
+			int maxthrust = items->getPropertySum(p, i, "maxthrust");
+			if (maxthrust) 
+			{
+				int initThrust = cfg->GetInt(conf, shipname, "InitialThrust", 0);
+				int upThrust = cfg->GetInt(conf, shipname, "UpgradeThrust", 0);
+				int newThrust = initThrust + (upThrust * maxthrust);
+				clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumThrust, newThrust);
+			}
+			else
+			{
+				clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaximumThrust);
+			}
+
+			int maxspeed = items->getPropertySum(p, i, "maxspeed");
+			if (maxspeed) 
+			{
+				int initSpeed = cfg->GetInt(conf, shipname, "InitialSpeed", 0);
+				int upSpeed = cfg->GetInt(conf, shipname, "UpgradeSpeed", 0);
+				int newSpeed = initSpeed + (upSpeed * maxspeed);		
+				clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumSpeed, newSpeed);
+			}
+			else
+			{
+				clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaximumSpeed);
+			}
+			
 
 			int initBurst = cfg->GetInt(conf, shipname, "InitialBurst", 0);
 			int burst = items->getPropertySum(p, i, "burst") + initBurst;
@@ -488,14 +515,6 @@ local void addOverrides(Player *p)
 			int xradarenergy = items->getPropertySum(p, i, "xradarenergy");
 			if (xradarenergy) clientset->PlayerOverride(p, shipOverrideKeys[i].XRadarEnergy, xradarenergy);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].XRadarEnergy);
-
-			int maxthrust = items->getPropertySum(p, i, "maxthrust");
-			if (maxthrust) clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumThrust, maxthrust);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaximumThrust);
-
-			int maxspeed = items->getPropertySum(p, i, "maxspeed");
-			if (maxspeed) clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumSpeed, maxspeed);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaximumSpeed);
 
 			int afterburner = items->getPropertySum(p, i, "afterburner");
 			if (afterburner) clientset->PlayerOverride(p, shipOverrideKeys[i].AfterburnerEnergy, afterburner);
