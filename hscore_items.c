@@ -925,7 +925,7 @@ local int getPropertySum(Player *p, int ship, const char *propString) //call wit
 
 	if (!database->areShipsLoaded(p))
 	{
-		lm->LogP(L_ERROR, "hscore_items", p, "asked to get props from a player with unloaded ships");
+		//lm->LogP(L_ERROR, "hscore_items", p, "asked to get props from a player with unloaded ships");
 		return 0;
 	}
 
