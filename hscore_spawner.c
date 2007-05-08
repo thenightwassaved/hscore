@@ -131,6 +131,7 @@ local Iconfig *cfg;
 local Ihscoreitems *items;
 local Iclientset *clientset;
 local Ihscoredatabase *database;
+local Imainloop *ml;
 
 local int playerDataKey;
 
@@ -334,11 +335,11 @@ local void addOverrides(Player *p)
 
 
 			int gunlevel = items->getPropertySum(p, i, "gunlevel");
-			if (gunlevel) clientset->PlayerOverride(p, shipOverrideKeys[i].InitialGuns, gunlevel);
+			if (gunlevel > 0) clientset->PlayerOverride(p, shipOverrideKeys[i].InitialGuns, gunlevel);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialGuns);
 
 			int bomblevel = items->getPropertySum(p, i, "bomblevel");
-			if (bomblevel) clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBombs, bomblevel);
+			if (bomblevel > 0) clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBombs, bomblevel);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialBombs);
 
 
@@ -824,16 +825,25 @@ local void shipsLoadedCallback(Player *p)
 	data->currentShip = p->p_ship;
 }
 
+local int itemCountChangedTimer(void *clos)
+{
+	Player *p = clos;
+	PlayerDataStruct *data = PPDATA(p, playerDataKey);
+	data->dirty = 0;
+	addOverrides(p);
+	clientset->SendClientSettings(p);
+	
+	return FALSE;
+}
+
 local void itemCountChangedCallback(Player *p, Item *item, InventoryEntry *entry, int newCount, int oldCount) //called with lock held
 {
 	PlayerDataStruct *data = PPDATA(p, playerDataKey);
 
 	if (item->resendSets)
 	{
-		//resend the settings now
-		data->dirty = 0;
-		addOverrides(p);
-		clientset->SendClientSettings(p);
+		//resend the settings in a callback to avoid a deadlock
+		ml->SetTimer(itemCountChangedTimer, 0, 0, p, p);
 	}
 	else //check if it changed anything in clientset, and if it did, recompute and flag dirty
 	{
@@ -1085,8 +1095,9 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 		items = mm->GetInterface(I_HSCORE_ITEMS, ALLARENAS);
 		clientset = mm->GetInterface(I_CLIENTSET, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
+		ml = mm->GetInterface(I_MAINLOOP, ALLARENAS);
 
-		if (!lm || !pd || !net || !game || !chat || !cfg || !items || !clientset || !database)
+		if (!lm || !pd || !net || !game || !chat || !cfg || !items || !clientset || !database || !ml)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(pd);
@@ -1097,6 +1108,7 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 			mm->ReleaseInterface(items);
 			mm->ReleaseInterface(clientset);
 			mm->ReleaseInterface(database);
+			mm->ReleaseInterface(ml);
 
 			return MM_FAIL;
 		}
@@ -1123,6 +1135,8 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 
 		pd->FreePlayerData(playerDataKey);
 
+		ml->ClearTimer(itemCountChangedTimer, NULL);		
+		
 		mm->ReleaseInterface(lm);
 		mm->ReleaseInterface(pd);
 		mm->ReleaseInterface(net);
@@ -1132,6 +1146,7 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(items);
 		mm->ReleaseInterface(clientset);
 		mm->ReleaseInterface(database);
+		mm->ReleaseInterface(ml);
 
 		return MM_OK;
 	}
@@ -1157,7 +1172,7 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 		{
 			return MM_FAIL;
 		}
-
+		
 		mm->UnregCallback(CB_FREQCHANGE, freqChangeCallback, arena);
 		mm->UnregCallback(CB_ITEM_COUNT_CHANGED, itemCountChangedCallback, arena);
 		mm->UnregCallback(CB_KILL, killCallback, arena);
