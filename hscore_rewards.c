@@ -104,7 +104,7 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 		double min = (double)cfg->GetInt(arena->cfg, "Hyperspace", "MinExpRatio", 100) / 1000.0;
 
 		double averageOpposingExp = ((double)(totalexp - teamexp)) / ((double)(players - onfreq));
-		double averageTeamExp = ((double)(totalexp)) / ((double)(onfreq));
+		double averageTeamExp = ((double)(teamexp)) / ((double)(onfreq));
 		
 		double ratio = (averageOpposingExp + 1) / (averageTeamExp + 1);
 		
@@ -117,6 +117,15 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 	if (onfreq > 0 && cfg->GetInt(arena->cfg, "Flag", "SplitPoints", 0))
 		points /= onfreq;
 
+	if (onfreq > players - onfreq) //team is bigger than the rest of the arena combined
+	{
+		/* cfghelp: Hyperspace:FlagBigTeamPenalty, arena, int, def: 1000, mod: hscore_rewards
+		 * Percentage multiplier applied to a big team's reward. 1000=full reward */
+		double bigTeamPenalty = (double)cfg->GetInt(arena->cfg, "Hyperspace", "FlagBigTeamPenalty", 1000) / 1000.0;
+		points = (int)(bigTeamPenalty * (double)points);
+		exp = (int)(bigTeamPenalty * (double)exp);
+	}
+		
 	teamnames = mm->GetInterface(I_TEAMNAMES, arena);
 	if (teamnames)
 	{

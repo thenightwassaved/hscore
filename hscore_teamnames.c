@@ -194,6 +194,7 @@ local int count_freq(Arena *arena, int freq, Player *excl, int inclspec)
 		if (p->arena == arena &&
 		    p->p_freq == freq &&
 		    p != excl &&
+			IS_HUMAN(p) &&
 		    ( p->p_ship != SHIP_SPEC || inclspec ) )
 			t++;
 	pd->Unlock();
