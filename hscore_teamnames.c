@@ -639,7 +639,7 @@ local int BalanceFreqs(Arena *arena, Player *excl, int inclspec)
 
 	if (best == -1) /* shouldn't happen */
 		return 0;
-	else if (max == 0 || best < max) /* we found a spot */
+	else if (max == 0 || counts[best] < max) /* we found a spot */
 		return best;
 	else /* no spots within desired freqs */
 	{
