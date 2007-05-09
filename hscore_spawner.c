@@ -11,6 +11,13 @@
 #include "hscore_shipnames.h"
 #include "fg_wz.h"
 
+typedef struct PrizeData
+{
+	Player *player;
+	int prizeNumber;
+	int count;
+} PrizeData;
+
 typedef struct PlayerDataStruct
 {
 	short underOurControl;
@@ -955,15 +962,24 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 	pd->Unlock();
 }
 
+local int prizeTimerCallback(void *clos)
+{
+	PrizeData *prizeData = clos;
+	Target t;
+	t.type = T_PLAYER;
+	t.u.p = prizeData->player;
+	
+	game->GivePrize(&t, prizeData->prizeNumber, prizeData->count);
+	
+	afree(clos);
+	
+	return FALSE;
+}
+
 local void triggerEventCallback(Player *p, Item *item, int ship, const char *eventName)
 {
 	int mult;
 	Link *propLink;
-	
-	Target t;
-	t.type = T_PLAYER;
-	t.u.p = p;
-	
 	
 	if (item == NULL)
 	{
@@ -1046,7 +1062,13 @@ local void triggerEventCallback(Player *p, Item *item, int ship, const char *eve
 			prizeNumber = 15;
 			
 		if (prizeNumber != -1)
-			game->GivePrize(&t, mult*mult2*prizeNumber, count);
+		{
+			PrizeData *prizeData = amalloc(sizeof(*prizeData));
+			prizeData->player = p;
+			prizeData->prizeNumber = mult*mult2*prizeNumber;
+			prizeData->count = count;
+			ml->SetTimer(prizeTimerCallback, 1, 1, prizeData, prizeData);
+		}
 	}
 }
 
@@ -1135,7 +1157,8 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 
 		pd->FreePlayerData(playerDataKey);
 
-		ml->ClearTimer(itemCountChangedTimer, NULL);		
+		ml->ClearTimer(itemCountChangedTimer, NULL);	
+		ml->ClearTimer(prizeTimerCallback, NULL);		
 		
 		mm->ReleaseInterface(lm);
 		mm->ReleaseInterface(pd);
