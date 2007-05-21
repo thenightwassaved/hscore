@@ -29,6 +29,7 @@ typedef struct Ihscoremysql
 	int (*GetRowCount)(db_res *res);
 	db_row * (*GetRow)(db_res *res);
 	const char * (*GetField)(db_row *row, int fieldnum);
+	int (*GetLastInsertId)(void);
 } Ihscoremysql;
 
 

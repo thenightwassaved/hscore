@@ -234,7 +234,10 @@ local const char * GetField(db_row *row, int fieldnum)
 	return ((MYSQL_ROW)row)[fieldnum];
 }
 
-
+local int GetLastInsertId(void)
+{
+	return mysql_insert_id(mydb);
+}
 
 local Ihscoremysql my_int =
 {
