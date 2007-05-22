@@ -244,7 +244,8 @@ local Ihscoremysql my_int =
 	INTERFACE_HEAD_INIT(I_HSCORE_MYSQL, "hscore_mysql")
 	GetStatus,
 	Query,
-	GetRowCount, GetRow, GetField
+	GetRowCount, GetRow, GetField,
+	GetLastInsertId
 };
 
 EXPORT const char info_hscore_mysql[] = "v1.0 Grelminar, modified by Dr Brain";
