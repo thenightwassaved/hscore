@@ -420,7 +420,7 @@ local void addOverrides(Player *p)
 			int maxthrust = items->getPropertySum(p, i, "maxthrust");
 			if (maxthrust) 
 			{
-				int initThrust = cfg->GetInt(conf, shipname, "InitialThrust", 0);
+				int initThrust = cfg->GetInt(conf, shipname, "MaximumThrust", 0);
 				int upThrust = cfg->GetInt(conf, shipname, "UpgradeThrust", 0);
 				int newThrust = initThrust + (upThrust * maxthrust);
 				clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumThrust, newThrust);
@@ -433,7 +433,7 @@ local void addOverrides(Player *p)
 			int maxspeed = items->getPropertySum(p, i, "maxspeed");
 			if (maxspeed) 
 			{
-				int initSpeed = cfg->GetInt(conf, shipname, "InitialSpeed", 0);
+				int initSpeed = cfg->GetInt(conf, shipname, "MaximumSpeed", 0);
 				int upSpeed = cfg->GetInt(conf, shipname, "UpgradeSpeed", 0);
 				int newSpeed = initSpeed + (upSpeed * maxspeed);		
 				clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumSpeed, newSpeed);
@@ -591,6 +591,14 @@ local void addOverrides(Player *p)
 			int fastShoot = items->getPropertySum(p, i, "nofastshoot");
 			if (fastShoot) clientset->PlayerOverride(p, shipOverrideKeys[i].DisableFastShooting, fastShoot);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].DisableFastShooting);
+			
+			int turretThrust = items->getPropertySum(p, i, "turretthrust");
+			if (turretThrust) clientset->PlayerOverride(p, shipOverrideKeys[i].TurretThrustPenalty, turretThrust);
+			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].TurretThrustPenalty);
+			
+			int turretSpeed = items->getPropertySum(p, i, "turretspeed");
+			if (turretSpeed) clientset->PlayerOverride(p, shipOverrideKeys[i].TurretSpeedPenalty, turretSpeed);
+			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].TurretSpeedPenalty);
 			
 			data->usingPerShip[i] = checkUsingPerShip(p, i);
 		}
