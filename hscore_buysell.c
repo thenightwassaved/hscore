@@ -268,95 +268,102 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 
 local void sellItem(Player *p, Item *item, int count, int ship)
 {
-	if (items->getItemCount(p, item, ship) >= count)
+	if (item->sellPrice)
 	{
-		Ihscorestoreman *storeman = mm->GetInterface(I_HSCORE_STOREMAN, p->arena);
-		int storemanOk;
-		LinkedList list;
-		LLInit(&list);
-		
-		if (!storeman)
+		if (items->getItemCount(p, item, ship) >= count)
 		{
-			storemanOk = 1;
-		}
-		else
-		{
-			storemanOk = storeman->canSellItem(p, item);
-			if (!storemanOk)
+			Ihscorestoreman *storeman = mm->GetInterface(I_HSCORE_STOREMAN, p->arena);
+			int storemanOk;
+			LinkedList list;
+			LLInit(&list);
+			
+			if (!storeman)
 			{
-				storeman->getStoreList(p, item, &list); //fills the linked list with stores that buy the item
-			}
-		}
-		mm->ReleaseInterface(storeman);
-
-		if (storemanOk)
-		{
-			Link *link;
-			database->lock();
-			for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
-			{
-				ItemTypeEntry *entry = link->data;
-				
-				if (items->getFreeItemTypeSpotsNoLock(p, entry->itemType, ship) + (entry->delta * count) < 0) //have no free spots
-				{
-					chat->SendMessage(p, "You do not have enough free %s spots.", entry->itemType->name);
-					database->unlock();
-					return;
-				}
-			}
-			database->unlock();
-
-			//trigger before it's sold!
-			items->triggerEventOnItem(p, item, ship, "sell");
-
-			items->addItem(p, item, ship, -count); //change the count BEFORE the "del" event
-
-			for (int i = 0; i < count; i++)
-			{
-				items->triggerEventOnItem(p, item, ship, "del");
-			}
-
-			money->giveMoney(p, item->sellPrice * count, MONEY_TYPE_BUYSELL);
-
-			chat->SendMessage(p, "You sold %i of item %s for $%i.", count, item->name, item->sellPrice * count);
-		}
-		else
-		{
-			int storeCount = LLCount(&list);
-			if (storeCount == 0)
-			{
-				chat->SendMessage(p, "You cannot sell item %s at your current location. No known stores buy it!", item->name);
-			}
-			else if (storeCount == 1)
-			{
-				Store *store = LLGetHead(&list)->data;
-				chat->SendMessage(p, "You cannot sell item %s here. Go to %s to sell it!", item->name, store->name);
+				storemanOk = 1;
 			}
 			else
 			{
-				Link *link;
-				chat->SendMessage(p, "You cannot sell item %s here. The following stores buy it:", item->name);
-				for (link = LLGetHead(&list); link; link = link->next)
+				storemanOk = storeman->canSellItem(p, item);
+				if (!storemanOk)
 				{
-					Store *store = link->data;
-					
-					chat->SendMessage(p, "%s", store->name);
+					storeman->getStoreList(p, item, &list); //fills the linked list with stores that buy the item
 				}
 			}
-			
-			LLEmpty(&list);
+			mm->ReleaseInterface(storeman);
+
+			if (storemanOk)
+			{
+				Link *link;
+				database->lock();
+				for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
+				{
+					ItemTypeEntry *entry = link->data;
+					
+					if (items->getFreeItemTypeSpotsNoLock(p, entry->itemType, ship) + (entry->delta * count) < 0) //have no free spots
+					{
+						chat->SendMessage(p, "You do not have enough free %s spots.", entry->itemType->name);
+						database->unlock();
+						return;
+					}
+				}
+				database->unlock();
+
+				//trigger before it's sold!
+				items->triggerEventOnItem(p, item, ship, "sell");
+
+				items->addItem(p, item, ship, -count); //change the count BEFORE the "del" event
+
+				for (int i = 0; i < count; i++)
+				{
+					items->triggerEventOnItem(p, item, ship, "del");
+				}
+
+				money->giveMoney(p, item->sellPrice * count, MONEY_TYPE_BUYSELL);
+
+				chat->SendMessage(p, "You sold %i of item %s for $%i.", count, item->name, item->sellPrice * count);
+			}
+			else
+			{
+				int storeCount = LLCount(&list);
+				if (storeCount == 0)
+				{
+					chat->SendMessage(p, "You cannot sell item %s at your current location. No known stores buy it!", item->name);
+				}
+				else if (storeCount == 1)
+				{
+					Store *store = LLGetHead(&list)->data;
+					chat->SendMessage(p, "You cannot sell item %s here. Go to %s to sell it!", item->name, store->name);
+				}
+				else
+				{
+					Link *link;
+					chat->SendMessage(p, "You cannot sell item %s here. The following stores buy it:", item->name);
+					for (link = LLGetHead(&list); link; link = link->next)
+					{
+						Store *store = link->data;
+						
+						chat->SendMessage(p, "%s", store->name);
+					}
+				}
+				
+				LLEmpty(&list);
+			}
+		}
+		else
+		{
+			if (count == 1)
+			{
+				chat->SendMessage(p, "You do not have any of item %s to sell", item->name);
+			}
+			else
+			{
+				chat->SendMessage(p, "You do not have that many of item %s to sell", item->name);
+			}
 		}
 	}
 	else
 	{
-		if (count == 1)
-		{
-			chat->SendMessage(p, "You do not have any of item %s to sell", item->name);
-		}
-		else
-		{
-			chat->SendMessage(p, "You do not have that many of item %s to sell", item->name);
-		}
+		chat->SendMessage(p, "Item %s cannot be sold.", item->name);
 	}
 }
 
