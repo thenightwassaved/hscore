@@ -4,6 +4,7 @@
 #include "asss.h"
 #include "hscore.h"
 #include "hscore_database.h"
+#include "hscore_mysql.h"
 
 //modules
 local Imodman *mm;
@@ -13,6 +14,7 @@ local Iconfig *cfg;
 local Icmdman *cmd;
 local Iplayerdata *pd;
 local Ihscoredatabase *database;
+local Ihscoremysql *mysql;
 
 //interface prototypes
 local void giveMoney(Player *p, int amount, MoneyType type);
@@ -156,6 +158,11 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 			if (database->isLoaded(t))
 			{
 				giveMoney(t, amount, MONEY_TYPE_GRANT);
+				mysql->Query(NULL, NULL, 0, "INSERT INTO hs_transactions (srcplayer, tgtplayer, action, amount) VALUES(#,#,#,#)",
+					database->getPerPlayerData(p)->id,
+					database->getPerPlayerData(t)->id,
+					MONEY_TYPE_GRANT,
+					amount);
 
 				if (quiet)
 				{
@@ -201,6 +208,12 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 				if (database->isLoaded(t))
 				{
 					giveMoney(t, amount, MONEY_TYPE_GRANT);
+
+					mysql->Query(NULL, NULL, 0, "INSERT INTO hs_transactions (srcplayer, tgtplayer, action, amount) VALUES(#,#,#,#)",
+						database->getPerPlayerData(p)->id,
+						database->getPerPlayerData(t)->id,
+						MONEY_TYPE_GRANT,
+						amount);
 
 					if (!quiet)
 					{
@@ -451,6 +464,11 @@ local void setMoneyCommand(const char *command, const char *params, Player *p, c
 			if (database->isLoaded(t))
 			{
 				int oldAmount = getMoney(t);
+				mysql->Query(NULL, NULL, 0, "INSERT INTO hs_transactions (srcplayer, tgtplayer, action, amount) VALUES(#,#,#,#)",
+					database->getPerPlayerData(p)->id,
+					database->getPerPlayerData(t)->id,
+					MONEY_TYPE_GRANT,
+					amount - oldAmount);
 				setMoney(t, amount, MONEY_TYPE_GRANT);
 
 				if (quiet)
@@ -496,6 +514,12 @@ local void setMoneyCommand(const char *command, const char *params, Player *p, c
 
 				if (database->isLoaded(t))
 				{
+					mysql->Query(NULL, NULL, 0, "INSERT INTO hs_transactions (srcplayer, tgtplayer, action, amount) VALUES(#,#,#,#)",
+						database->getPerPlayerData(p)->id,
+						database->getPerPlayerData(t)->id,
+						MONEY_TYPE_GRANT,
+						amount - getMoney(t));
+
 					setMoney(t, amount, MONEY_TYPE_GRANT);
 
 					if (!quiet)
@@ -714,7 +738,7 @@ local void giveCommand(const char *command, const char *params, Player *p, const
 			if (database->isLoaded(t))
 			{
 				/* cfghelp: Hyperspace:MinMoney, global, int, def: 1000, mod: hscore_money
-				* The amount of money that must be left behind when using ?give. */				
+				* The amount of money that must be left behind when using ?give. */
 				int minMoney = cfg->GetInt(GLOBAL, "hyperspace", "minmoney", 1000);
 				/* cfghelp: Hyperspace:MinGive, global, int, def: 1, mod: hscore_money
 				* The smallest amount that can be transferred using ?give. */
@@ -742,6 +766,12 @@ local void giveCommand(const char *command, const char *params, Player *p, const
 							}
 
 							chat->SendMessage(p, "You gave %s $%i.", t->name, amount);
+
+							mysql->Query(NULL, NULL, 0, "INSERT INTO hs_transactions (srcplayer, tgtplayer, action, amount) VALUES(#,#,#,#)",
+								database->getPerPlayerData(p)->id,
+								database->getPerPlayerData(t)->id,
+								MONEY_TYPE_GIVE,
+								amount);
 						}
 						else
 						{
@@ -947,8 +977,9 @@ EXPORT int MM_hscore_money(int action, Imodman *_mm, Arena *arena)
 		cmd = mm->GetInterface(I_CMDMAN, ALLARENAS);
 		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
+		mysql = mm->GetInterface(I_HSCORE_MYSQL, ALLARENAS);
 
-		if (!lm || !chat || !cfg || !cmd || !pd || !database)
+		if (!lm || !chat || !cfg || !cmd || !pd || !database || !mysql)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(chat);
@@ -956,6 +987,7 @@ EXPORT int MM_hscore_money(int action, Imodman *_mm, Arena *arena)
 			mm->ReleaseInterface(cmd);
 			mm->ReleaseInterface(pd);
 			mm->ReleaseInterface(database);
+			mm->ReleaseInterface(mysql);
 
 			return MM_FAIL;
 		}
@@ -995,6 +1027,7 @@ EXPORT int MM_hscore_money(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(cmd);
 		mm->ReleaseInterface(pd);
 		mm->ReleaseInterface(database);
+		mm->ReleaseInterface(mysql);
 
 		return MM_OK;
 	}

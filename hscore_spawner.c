@@ -125,6 +125,7 @@ typedef struct GlobalOverrideKeys
 	override_key_t AllowGuns;
 	override_key_t UseFlagger;
 	override_key_t BallLocation;
+	override_key_t DoorMode;
 } GlobalOverrideKeys;
 
 //modules
@@ -280,6 +281,8 @@ local void loadOverrides()
 	globalOverrideKeys.AllowGuns = clientset->GetOverrideKey("Soccer", "AllowGuns");
 	globalOverrideKeys.UseFlagger = clientset->GetOverrideKey("Soccer", "UseFlagger");
 	globalOverrideKeys.BallLocation = clientset->GetOverrideKey("Soccer", "BallLocation");
+	
+	globalOverrideKeys.DoorMode = clientset->GetOverrideKey("Door", "DoorMode");
 }
 
 local int checkUsingPerShip(Player *p, int ship)
@@ -686,6 +689,10 @@ local void addOverrides(Player *p)
 		int soccerseeball = items->getPropertySum(p, p->p_ship, "soccerseeball");
 		if (soccerseeball) clientset->PlayerOverride(p, globalOverrideKeys.BallLocation, soccerseeball);
 		else clientset->PlayerUnoverride(p, globalOverrideKeys.BallLocation);
+		
+		int doormode = items->getPropertySum(p, p->p_ship, "doormode");
+		if (doormode) clientset->PlayerOverride(p, globalOverrideKeys.DoorMode, doormode);
+		else clientset->PlayerUnoverride(p, globalOverrideKeys.DoorMode);
 	}
 	
 }
@@ -784,6 +791,7 @@ local void removeOverrides(Player *p)
 	clientset->PlayerUnoverride(p, globalOverrideKeys.AllowGuns);
 	clientset->PlayerUnoverride(p, globalOverrideKeys.UseFlagger);
 	clientset->PlayerUnoverride(p, globalOverrideKeys.BallLocation);	
+	clientset->PlayerUnoverride(p, globalOverrideKeys.DoorMode);
 }
 
 local void Pppk(Player *p, byte *p2, int len)

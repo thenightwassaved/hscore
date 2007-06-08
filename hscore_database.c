@@ -371,6 +371,15 @@ local void LinkAmmo()
 "  PRIMARY KEY  (`id`)" \
 ")"
 
+#define CREATE_TRANSACTIONS_TABLE \
+"CREATE TABLE IF NOT EXISTS `hs_transactions` (" \
+"  `id` int(10) NOT NULL auto_increment," \
+"  `srcplayer` int(11) NOT NULL default '0'," \
+"  `tgtplayer` int(11) NOT NULL default '0'," \
+"  `action` tinyint(4) NOT NULL default '0', " \
+"  `amount` int(11) NOT NULL default '0'," \
+"  PRIMARY KEY  (`id`)" \
+")"
 
 
 local void initTables()
@@ -386,6 +395,7 @@ local void initTables()
 	mysql->Query(NULL, NULL, 0, CREATE_PLAYERS_TABLE);
 	mysql->Query(NULL, NULL, 0, CREATE_STORE_ITEMS_TABLE);
 	mysql->Query(NULL, NULL, 0, CREATE_STORES_TABLE);
+	mysql->Query(NULL, NULL, 0, CREATE_TRANSACTIONS_TABLE);
 }
 
 //+-------------------------+
@@ -415,7 +425,7 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 		lm->Log(L_WARN, "<hscore_database> No properties returned from MySQL query.");
 	}
 
-	
+
 	lock();
 
 	for (link = LLGetHead(&itemList); link; link = link->next)
@@ -424,7 +434,7 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 		LLEnum(&i->propertyList, afree);
 		LLEmpty(&i->propertyList);
 	}
-	
+
 	pd->Lock();
 	FOR_EACH_PLAYER(p)
 	{
@@ -466,9 +476,9 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 				astrncpy(property->name, mysql->GetField(row, 1), 17);
 				LLAdd(&item->propertyList, property);
 			}
-			
+
 			property->value = atoi(mysql->GetField(row, 2));		//value
-			
+
 		}
 		else
 		{
@@ -480,7 +490,7 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 	DO_CBS(CB_HS_ITEMRELOAD, ALLARENAS, HSItemReload, ());
 
 	lm->Log(L_DRIVEL, "<hscore_database> %i properties were loaded from MySQL.", results);
-	
+
 }
 
 local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
@@ -501,7 +511,7 @@ local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 	{
 		lm->Log(L_WARN, "<hscore_database> No events returned from MySQL query.");
 	}
-	
+
 	lock();
 	for (link = LLGetHead(&itemList); link; link = link->next)
 	{
@@ -538,14 +548,14 @@ local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 				astrncpy(event->event, mysql->GetField(row, 1), 17);
 				LLAdd(&item->eventList, event);
 			}
-			
 
-			
+
+
 			event->action = atoi(mysql->GetField(row, 2));			//action
 			event->data = atoi(mysql->GetField(row, 3));			//data
 			astrncpy(event->message, mysql->GetField(row, 4), 201);	//message
 
-			
+
 		}
 		else
 		{
@@ -555,7 +565,7 @@ local void loadEventsQueryCallback(int status, db_res *result, void *passedData)
 	unlock();
 
 	lm->Log(L_DRIVEL, "<hscore_database> %i events were loaded from MySQL.", results);
-	
+
 }
 
 local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
@@ -581,7 +591,7 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 		Link *link;
 		Item *item = NULL;
 		int id = atoi(mysql->GetField(row, 0));
-		
+
 		char itemTypes[256];
 
 		lock();
@@ -628,7 +638,7 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 		item->ammoID = atoi(mysql->GetField(row, 11));				//ammo
 		item->affectsSets = atoi(mysql->GetField(row, 12));			//affects_sets
 		item->resendSets = atoi(mysql->GetField(row, 13));			//resend_sets
-		
+
 		if (itemTypes != NULL) //parse itemTypes
 		{
 			const char *tmp = NULL;
@@ -647,7 +657,7 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 						ItemTypeEntry *entry = amalloc(sizeof(*entry));
 						entry->itemType = itemType;
 						entry->delta = 1;
-						
+
 						LLAdd(&item->itemTypeEntries, entry);
 					}
 					else
@@ -673,7 +683,7 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 								ItemTypeEntry *entry = amalloc(sizeof(*entry));
 								entry->itemType = itemType;
 								entry->delta = count;
-								
+
 								LLAdd(&item->itemTypeEntries, entry);
 							}
 							else
@@ -692,7 +702,7 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 					}
 				}
 			}
-		}		
+		}
 
 		unlock();
 
@@ -706,7 +716,7 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 
 	//process the ammo ids
 	LinkAmmo();
-	
+
 }
 
 local void loadItemTypesQueryCallback(int status, db_res *result, void *passedData)
@@ -742,7 +752,7 @@ local void loadItemTypesQueryCallback(int status, db_res *result, void *passedDa
 				break;
 			}
 		}
-		
+
 		//if the ItemType doesn't exist yet, create it, otherwise just change the values
 		if (!itemType)
 		{
@@ -750,7 +760,7 @@ local void loadItemTypesQueryCallback(int status, db_res *result, void *passedDa
 			itemType->id = id;
 			LLAdd(&itemTypeList, itemType);
 		}
-		
+
 		astrncpy(itemType->name, mysql->GetField(row, 1), 33);	//name
 		itemType->max = atoi(mysql->GetField(row, 2));			//max
 
@@ -759,7 +769,7 @@ local void loadItemTypesQueryCallback(int status, db_res *result, void *passedDa
 
 	lm->Log(L_DRIVEL, "<hscore_database> %i item types were loaded from MySQL.", results);
 	LoadItemList(); //now that all the item types are in, load the items.
-	
+
 }
 
 local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *passedData)
@@ -1087,7 +1097,7 @@ local void loadArenaStoresQueryCallback(int status, db_res *result, void *passed
 
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i stores were loaded from MySQL.", results);
 	LoadStoreItems(arena); //now that all the stores are in, load the items into them.
-	
+
 }
 
 local void loadCategoryItemsQueryCallback(int status, db_res *result, void *passedData)
@@ -1174,7 +1184,7 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 		Category *category = NULL;
 		Link *link;
 		int id = atoi(mysql->GetField(row, 0));
-		
+
 		for (link = LLGetHead(&arenaData->categoryList); link; link = link->next)
 		{
 			Category *c = link->data;
@@ -1184,7 +1194,7 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 				break;
 			}
 		}
-		
+
 		//if the Category doesn't exist, create it, otherwise just change the values and reset the lists
 		if (!category)
 		{
@@ -1209,7 +1219,7 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i categories were loaded from MySQL.", results);
 	LoadCategoryItems(arena); //now that all the stores are in, load the items into them.
-	
+
 }
 
 //+------------------+
@@ -1324,7 +1334,7 @@ local void UnloadItemListEnumCallback(const void *ptr) //called with lock held
 
 	LLEnum(&item->eventList, afree);
 	LLEmpty(&item->eventList);
-	
+
 	LLEnum(&item->itemTypeEntries, afree);
 	LLEmpty(&item->itemTypeEntries);
 
@@ -1588,7 +1598,7 @@ local void reloadItemsCommand(const char *command, const char *params, Player *p
 	Link *link;
 	Arena *a;
 	chat->SendMessage(p, "Reloading items...");
-	
+
 	LoadItemTypeList();
 	chat->SendMessage(p, "...Ran items queries.");
 
@@ -1631,7 +1641,7 @@ local void resetCommand(const char *command, const char *params, Player *p, cons
 	{
 		lock();
 		//do money+exp first
-		
+
 		//insert a new player into MySQL and then get it
 		/* cfghelp: Hyperspace:InitialMoney, global, int, mod: hscore_database
 		 * The amount of money that is given to a new player. */
@@ -1639,7 +1649,7 @@ local void resetCommand(const char *command, const char *params, Player *p, cons
 		/* cfghelp: Hyperspace:InitialExp, global, int, mod: hscore_database
 		 * The amount of exp that is given to a new player. */
 		playerData->exp = cfg->GetInt(GLOBAL, "hyperspace", "initialexp", 0);
-		
+
 		playerData->moneyType[MONEY_TYPE_GIVE] = 0;
 		playerData->moneyType[MONEY_TYPE_GRANT] = 0;
 		playerData->moneyType[MONEY_TYPE_BUYSELL] = 0;
@@ -1647,7 +1657,7 @@ local void resetCommand(const char *command, const char *params, Player *p, cons
 		playerData->moneyType[MONEY_TYPE_FLAG] = 0;
 		playerData->moneyType[MONEY_TYPE_BALL] = 0;
 		playerData->moneyType[MONEY_TYPE_EVENT] = 0;
-		
+
 		mysql->Query(NULL, NULL, 0, "UPDATE hs_players SET money = #, exp = #, money_give = 0, money_grant = 0, money_buysell = 0, money_kill = 0, money_flag = 0, money_ball = 0, money_event = 0 WHERE id = #",
 			playerData->money,
 			playerData->exp,
@@ -1662,20 +1672,20 @@ local void resetCommand(const char *command, const char *params, Player *p, cons
 			if (playerData->hull[i] != NULL)
 			{
 				ShipHull *ship = playerData->hull[i];
-				
+
 				LLEnum(&ship->inventoryEntryList, afree);
 				LLEmpty(&ship->inventoryEntryList);
 				HashEnum(ship->propertySums, hash_enum_afree, NULL);
 				HashFree(ship->propertySums);
-				
+
 				afree(ship);
-				
+
 				playerData->hull[i] = NULL;
 			}
 		}
-		
+
 		unlock();
-		
+
 		//reset score too
 
 		stats = mm->GetInterface(I_STATS, t->arena);
@@ -1685,7 +1695,7 @@ local void resetCommand(const char *command, const char *params, Player *p, cons
 			stats->SendUpdates(NULL);
 			mm->ReleaseInterface(stats);
 		}
-		
+
 		if (t != p)
 		{
 			chat->SendMessage(t, "Reset!");
@@ -2169,7 +2179,7 @@ EXPORT const char info_hscore_database[] = "v1.0 Dr Brain <drbrain@gmail.com>";
 
 EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 {
-	
+
 	if (action == MM_LOAD)
 	{
 		mm = _mm;
@@ -2275,5 +2285,5 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 		return MM_OK;
 	}
 	return MM_FAIL;
-	
+
 }
