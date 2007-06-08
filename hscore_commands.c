@@ -498,6 +498,7 @@ local void shipInfoCommand(const char *command, const char *params, Player *p, c
 	else
 	{
 		char *shipname = shipNames[ship];
+		ConfigHandle conf = p->arena->cfg;
 		
 		int initEnergy = cfg->GetInt(conf, shipname, "InitialEnergy", 0);
 		int maxEnergy = cfg->GetInt(conf, shipname, "MaximumEnergy", 0);
