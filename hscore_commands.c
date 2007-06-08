@@ -460,6 +460,70 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 	}
 }
 
+local helptext_t shipInfoHelp =
+"Targets: none\n"
+"Args: [ship number]\n"
+"Displays info about the specified ship.\n"
+"If no ship is specified, current ship is assumed.\n";
+
+local void shipInfoCommand(const char *command, const char *params, Player *p, const Target *target)
+{
+	int ship;
+	
+	ship = p->p_ship;
+	if (params != NULL)
+	{
+		ship = atoi(params);
+		if (ship == 0)
+		{
+			ship = p->p_ship;
+		}
+		else
+		{
+			ship--; //warbird is 0, not 1
+		}
+	}
+	
+	if (ship == SHIP_SPEC)
+	{
+		chat->SendMessage(p, "Spectators do not have any ship information. Please use ?shipinfo <#> to check the info on a certain hull.");
+		return;
+	}
+
+	if (ship >= 8 || ship < 0)
+	{
+		chat->SendMessage(p, "Ship out of range. Please choose a ship from 1 to 8.");
+		return;
+	}	
+	else
+	{
+		char *shipname = shipNames[ship];
+		
+		int initEnergy = cfg->GetInt(conf, shipname, "InitialEnergy", 0);
+		int maxEnergy = cfg->GetInt(conf, shipname, "MaximumEnergy", 0);
+		int initRecharge = cfg->GetInt(conf, shipname, "InitialRecharge", 0);
+		int maxRecharge = cfg->GetInt(conf, shipname, "MaximumRecharge", 0);
+		int initSpeed = cfg->GetInt(conf, shipname, "InitialSpeed", 0);
+		int maxSpeed = cfg->GetInt(conf, shipname, "MaximumSpeed", 0);
+		int initThrust = cfg->GetInt(conf, shipname, "InitialThrust", 0);
+		int maxThrust = cfg->GetInt(conf, shipname, "MaximumThrust", 0);
+		int initRotation = cfg->GetInt(conf, shipname, "InitialRotation", 0);
+		int maxRotation = cfg->GetInt(conf, shipname, "MaximumRotation", 0);
+		int bulletSpeed = cfg->GetInt(conf, shipname, "BulletSpeed", 0);
+		int bombSpeed = cfg->GetInt(conf, shipname, "BombSpeed", 0);
+	
+		chat->SendMessage(p, "+------------------+");
+		chat->SendMessage(p, "| %-16s |", shipname);
+		chat->SendMessage(p, "+------------------+---+----------------------+----------------------+----------------------+");
+		chat->SendMessage(p, "| Init Energy:   %-5d | Init Recharge: %-5d | Init Speed:    %-5d | Init Thrust:   %-5d |", initEnergy, initRecharge, initSpeed, initThrust);
+		chat->SendMessage(p, "| Max Energy:    %-5d | Max Recharge:  %-5d | Max Speed:     %-5d | Max Thrust:    %-5d |", maxEnergy, maxRecharge, maxSpeed, maxThrust);
+		chat->SendMessage(p, "+----------------------+----------------------+----------------------+----------------------+");	
+		chat->SendMessage(p, "| Init Rotation: %-5d | Bullet Speed:  %-5d |                      |                      |", initRotation, bulletSpeed);
+		chat->SendMessage(p, "| Max Rotation:  %-5d | Bomb Speed:    %-5d |                      |                      |", maxRotation, bombSpeed);
+		chat->SendMessage(p, "+----------------------+----------------------+----------------------+----------------------+");
+	}
+}
+
 EXPORT const char info_hscore_commands[] = "v1.0 Dr Brain <drbrain@gmail.com>";
 
 EXPORT int MM_hscore_commands(int action, Imodman *_mm, Arena *arena)
@@ -505,6 +569,7 @@ EXPORT int MM_hscore_commands(int action, Imodman *_mm, Arena *arena)
 		cmd->AddCommand("ships", shipsCommand, arena, shipsHelp);
 		cmd->AddCommand("shipstatus", shipStatusCommand, arena, shipStatusHelp);
 		cmd->AddCommand("shipitems", shipItemsCommand, arena, shipItemsHelp);
+		cmd->AddCommand("shipinfo", shipInfoCommand, arena, shipInfoHelp);
 
 		return MM_OK;
 	}
@@ -513,6 +578,7 @@ EXPORT int MM_hscore_commands(int action, Imodman *_mm, Arena *arena)
 		cmd->RemoveCommand("ships", shipsCommand, arena);
 		cmd->RemoveCommand("shipstatus", shipStatusCommand, arena);
 		cmd->RemoveCommand("shipitems", shipItemsCommand, arena);
+		cmd->RemoveCommand("shipinfo", shipInfoCommand, arena);
 
 		return MM_OK;
 	}
