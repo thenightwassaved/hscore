@@ -9,4 +9,4 @@ $(eval $(call dl_template,hscore))
 
 $(call tobuild, hscore_mysql.o): CFLAGS += $(MYSQL_CFLAGS)
 
-EXTRA_INCLUDE_DIRS = $(EXTRA_INCLUDE_DIRS) -Ihscore
+EXTRA_INCLUDE_DIRS := $(EXTRA_INCLUDE_DIRS) -Ihscore
