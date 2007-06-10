@@ -1653,9 +1653,9 @@ local void refundCommand(const char *command, const char *params, Player *p, con
 							if (!(entry->item->shipsAllowed & 1 << ship))
 							{
 								//not allowed
-								int price = max(entry->item->buyPrice, entry->item->sellPrice);
+								int price = entry->item->buyPrice > entry->item->sellPrice?entry->item->buyPrice:entry->item->sellPrice; //max
 								playerData->money += price * entry->count;
-								playerData->moneyType[MONEY_TYPE_BUYSELL] += price * entry->count
+								playerData->moneyType[MONEY_TYPE_BUYSELL] += price * entry->count;
 								LLAdd(&list, entry);
 							}
 						}
