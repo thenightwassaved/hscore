@@ -1614,13 +1614,13 @@ local void reloadItemsCommand(const char *command, const char *params, Player *p
 	chat->SendMessage(p, "Ran all queries.");
 }
 
-local helptext_t refundItemsHelp =
+local helptext_t refundHelp =
 "Targets: none\n"
 "Args: none\n"
 "This command will check all item ship limitations and refund\n"
 "max(buy price, sell price). It checks both online and offline players.\n";
 
-local void refundItemsCommand(const char *command, const char *params, Player *p, const Target *target)
+local void refundCommand(const char *command, const char *params, Player *p, const Target *target)
 {
 	LinkedList list;
 	Link *link;
@@ -1644,7 +1644,7 @@ local void refundItemsCommand(const char *command, const char *params, Player *p
 				{
 					if (playerData->hull[ship] != NULL)
 					{
-						inventoryList = &playerData->hull[ship]->inventoryEntryList;
+						LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 						
 						Link *item_link;
 						for (item_link = LLGetHead(inventoryList); item_link; item_link = item_link->next)
@@ -1654,7 +1654,8 @@ local void refundItemsCommand(const char *command, const char *params, Player *p
 							{
 								//not allowed
 								int price = max(entry->item->buyPrice, entry->item->sellPrice);
-								money->giveMoney(p, price * entry->count, MONEY_TYPE_BUYSELL);
+								playerData->money += price * entry->count;
+								playerData->moneyType[MONEY_TYPE_BUYSELL] += price * entry->count
 								LLAdd(&list, entry);
 							}
 						}
