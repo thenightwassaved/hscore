@@ -1614,6 +1614,84 @@ local void reloadItemsCommand(const char *command, const char *params, Player *p
 	chat->SendMessage(p, "Ran all queries.");
 }
 
+local helptext_t refundItemsHelp =
+"Targets: none\n"
+"Args: none\n"
+"This command will check all item ship limitations and refund\n"
+"max(buy price, sell price). It checks both online and offline players.\n";
+
+local void refundItemsCommand(const char *command, const char *params, Player *p, const Target *target)
+{
+	LinkedList list;
+	Link *link;
+	Player *i;
+
+	chat->SendMessage(p, "Refunding items of online players...");
+	
+	LLInit(&list);
+	
+	pd->Lock();
+	lock();
+	FOR_EACH_PLAYER(i)
+		if (isLoaded(i))
+		{
+			if (areShipsLoaded(i))
+			{
+				int ship;
+				PerPlayerData *playerData = getPerPlayerData(i);
+				
+				for (ship = 0; ship < 8; ship++)
+				{
+					if (playerData->hull[ship] != NULL)
+					{
+						inventoryList = &playerData->hull[ship]->inventoryEntryList;
+						
+						Link *item_link;
+						for (item_link = LLGetHead(inventoryList); item_link; item_link = item_link->next)
+						{
+							InventoryEntry *entry = item_link->data;
+							if (!(entry->item->shipsAllowed & 1 << ship))
+							{
+								//not allowed
+								int price = max(entry->item->buyPrice, entry->item->sellPrice);
+								money->giveMoney(p, price * entry->count, MONEY_TYPE_BUYSELL);
+								LLAdd(&list, entry);
+							}
+						}
+						
+						//now remove all of the items in the list
+						for (item_link = LLGetHead(&list); item_link; item_link = item_link->next)
+						{
+							InventoryEntry *entry = item_link->data;
+							Item *item = entry->item;
+							
+							int shipID = playerData->hull[ship]->id;
+							int oldCount = entry->count;
+
+							mysql->Query(NULL, NULL, 0, "DELETE FROM hs_player_ship_items WHERE ship_id = # AND item_id = #", shipID, item->id);
+
+							LLRemove(inventoryList, entry);
+							afree(entry);
+
+							DO_CBS(CB_ITEM_COUNT_CHANGED, i->arena, ItemCountChanged, (i, item, NULL, 0, oldCount));
+						}
+						
+						LLEmpty(&list);
+					}
+				}
+			}
+		}
+	unlock();
+	pd->Unlock();
+	
+	chat->SendMessage(p, "Refunding items of offline players...");
+	
+	mysql->Query(NULL, NULL, 0, "UPDATE hs_players, (SELECT player_id, SUM(price) as money FROM (SELECT hs_players.id as player_id, GREATEST(hs_items.buy_price, hs_items.sell_price) as price, hs_items.id as item_id FROM hs_players INNER JOIN (hs_player_ships, hs_player_ship_items, hs_items) ON (hs_player_ships.player_id = hs_players.id AND hs_player_ship_items.ship_id = hs_player_ships.id AND hs_player_ship_items.item_id = hs_items.id) WHERE ((1 << hs_player_ships.ship) & hs_items.ships_allowed) = 0) as temp GROUP BY player_id) AS to_update SET hs_players.money = hs_players.money + to_update.money, hs_players.money_buysell = hs_players.money.buy_sell + to_update.money WHERE hs_players.id = to_update.player_id;");
+	mysql->Query(NULL, NULL, 0, "DELETE FROM hs_player_ship_items USING hs_items, hs_players, hs_player_ship_items, hs_player_ships WHERE hs_player_ship_items.ship_id = hs_player_ships.id AND hs_players.id = hs_player_ships.player_id AND hs_items.id = hs_player_ship_items.item_id AND ((1 << hs_player_ships.ship) & hs_items.ships_allowed) = 0;");
+	
+	chat->SendMessage(p, "Done!");
+}
+
 local helptext_t storeAllHelp =
 "Targets: none\n"
 "Args: none\n"
@@ -2227,6 +2305,7 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 		cmd->AddCommand("reloaditems", reloadItemsCommand, ALLARENAS, reloadItemsHelp);
 		cmd->AddCommand("storeall", storeAllCommand, ALLARENAS, storeAllHelp);
 		cmd->AddCommand("reset", resetCommand, ALLARENAS, resetHelp);
+		cmd->AddCommand("refund", refundCommand, ALLARENAS, refundHelp);
 
 		ml->SetTimer(periodicStoreTimer, 30000, 30000, NULL, NULL);
 
@@ -2257,6 +2336,7 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 		cmd->RemoveCommand("reloaditems", reloadItemsCommand, ALLARENAS);
 		cmd->RemoveCommand("storeall", storeAllCommand, ALLARENAS);
 		cmd->RemoveCommand("reset", resetCommand, ALLARENAS);
+		cmd->RemoveCommand("refund", refundCommand, ALLARENAS);
 
 		mm->UnregCallback(CB_NEWPLAYER, allocatePlayerCallback, ALLARENAS);
 		mm->UnregCallback(CB_PLAYERACTION, playerActionCallback, ALLARENAS);
