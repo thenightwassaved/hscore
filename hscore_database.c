@@ -283,6 +283,8 @@ local void LinkAmmo()
 "  `action` mediumint(9) NOT NULL default '0'," \
 "  `data` int(11) NOT NULL default '0'," \
 "  `message` varchar(200) NOT NULL default ''" \
+"  `id` int(10) unsigned NOT NULL auto_increment," \
+"  PRIMARY KEY  (`id`)" \
 ")"
 
 #define CREATE_ITEM_PROPERTIES_TABLE \
@@ -290,6 +292,8 @@ local void LinkAmmo()
 "  `item_id` int(10) unsigned NOT NULL default '0'," \
 "  `name` varchar(32) NOT NULL default ''," \
 "  `value` int(11) NOT NULL default '0'" \
+"  `id` int(10) unsigned NOT NULL auto_increment," \
+"  PRIMARY KEY  (`id`)" \
 ")"
 
 #define CREATE_ITEM_TYPES_TABLE \
@@ -1627,9 +1631,9 @@ local void refundCommand(const char *command, const char *params, Player *p, con
 	Player *i;
 
 	chat->SendMessage(p, "Refunding items of online players...");
-	
+
 	LLInit(&list);
-	
+
 	pd->Lock();
 	lock();
 	FOR_EACH_PLAYER(i)
@@ -1639,13 +1643,13 @@ local void refundCommand(const char *command, const char *params, Player *p, con
 			{
 				int ship;
 				PerPlayerData *playerData = getPerPlayerData(i);
-				
+
 				for (ship = 0; ship < 8; ship++)
 				{
 					if (playerData->hull[ship] != NULL)
 					{
 						LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
-						
+
 						Link *item_link;
 						for (item_link = LLGetHead(inventoryList); item_link; item_link = item_link->next)
 						{
@@ -1659,13 +1663,13 @@ local void refundCommand(const char *command, const char *params, Player *p, con
 								LLAdd(&list, entry);
 							}
 						}
-						
+
 						//now remove all of the items in the list
 						for (item_link = LLGetHead(&list); item_link; item_link = item_link->next)
 						{
 							InventoryEntry *entry = item_link->data;
 							Item *item = entry->item;
-							
+
 							int shipID = playerData->hull[ship]->id;
 							int oldCount = entry->count;
 
@@ -1676,7 +1680,7 @@ local void refundCommand(const char *command, const char *params, Player *p, con
 
 							DO_CBS(CB_ITEM_COUNT_CHANGED, i->arena, ItemCountChanged, (i, item, NULL, 0, oldCount));
 						}
-						
+
 						LLEmpty(&list);
 					}
 				}
@@ -1684,12 +1688,12 @@ local void refundCommand(const char *command, const char *params, Player *p, con
 		}
 	unlock();
 	pd->Unlock();
-	
+
 	chat->SendMessage(p, "Refunding items of offline players...");
-	
+
 	mysql->Query(NULL, NULL, 0, "UPDATE hs_players, (SELECT player_id, SUM(price) as money FROM (SELECT hs_players.id as player_id, GREATEST(hs_items.buy_price, hs_items.sell_price) as price, hs_items.id as item_id FROM hs_players INNER JOIN (hs_player_ships, hs_player_ship_items, hs_items) ON (hs_player_ships.player_id = hs_players.id AND hs_player_ship_items.ship_id = hs_player_ships.id AND hs_player_ship_items.item_id = hs_items.id) WHERE ((1 << hs_player_ships.ship) & hs_items.ships_allowed) = 0) as temp GROUP BY player_id) AS to_update SET hs_players.money = hs_players.money + to_update.money, hs_players.money_buysell = hs_players.money.buy_sell + to_update.money WHERE hs_players.id = to_update.player_id;");
 	mysql->Query(NULL, NULL, 0, "DELETE FROM hs_player_ship_items USING hs_items, hs_players, hs_player_ship_items, hs_player_ships WHERE hs_player_ship_items.ship_id = hs_player_ships.id AND hs_players.id = hs_player_ships.player_id AND hs_items.id = hs_player_ship_items.item_id AND ((1 << hs_player_ships.ship) & hs_items.ships_allowed) = 0;");
-	
+
 	chat->SendMessage(p, "Done!");
 }
 
