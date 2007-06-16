@@ -996,13 +996,13 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		LLInit(getTeamDataList(arena));
 		unlock();
 
-		cmd->AddCommand("changeteam", changeTeamCommand, ALLARENAS, changeTeamHelp);
-		cmd->AddCommand("teams", teamsCommand, ALLARENAS, teamsHelp);
-		cmd->AddCommand("getteam", getTeamCommand, ALLARENAS, getTeamHelp);
-		cmd->AddCommand("getowner", getOwnerCommand, ALLARENAS, getOwnerHelp);
-		cmd->AddCommand("giveowner", giveOwnerCommand, ALLARENAS, giveOwnerHelp);
-		cmd->AddCommand("teamkick", teamKickCommand, ALLARENAS, teamKickHelp);
-		cmd->AddCommand("setteampassword", setTeamPasswordCommand, ALLARENAS, setTeamPasswordHelp);
+		cmd->AddCommand("changeteam", changeTeamCommand, arena, changeTeamHelp);
+		cmd->AddCommand("teams", teamsCommand, arena, teamsHelp);
+		cmd->AddCommand("getteam", getTeamCommand, arena, getTeamHelp);
+		cmd->AddCommand("getowner", getOwnerCommand, arena, getOwnerHelp);
+		cmd->AddCommand("giveowner", giveOwnerCommand, arena, giveOwnerHelp);
+		cmd->AddCommand("teamkick", teamKickCommand, arena, teamKickHelp);
+		cmd->AddCommand("setteampassword", setTeamPasswordCommand, arena, setTeamPasswordHelp);
 
 		return MM_OK;
 	}
@@ -1016,13 +1016,13 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		LLEmpty(getTeamDataList(arena));
 		unlock();
 
-		cmd->RemoveCommand("changeteam", changeTeamCommand, ALLARENAS);
-		cmd->RemoveCommand("teams", teamsCommand, ALLARENAS);
-		cmd->RemoveCommand("getteam", getTeamCommand, ALLARENAS);
-		cmd->RemoveCommand("getowner", getOwnerCommand, ALLARENAS);
-		cmd->RemoveCommand("giveowner", giveOwnerCommand, ALLARENAS);
-		cmd->RemoveCommand("teamkick", teamKickCommand, ALLARENAS);
-		cmd->RemoveCommand("setteampassword", setTeamPasswordCommand, ALLARENAS);
+		cmd->RemoveCommand("changeteam", changeTeamCommand, arena);
+		cmd->RemoveCommand("teams", teamsCommand, arena);
+		cmd->RemoveCommand("getteam", getTeamCommand, arena);
+		cmd->RemoveCommand("getowner", getOwnerCommand, arena);
+		cmd->RemoveCommand("giveowner", giveOwnerCommand, arena);
+		cmd->RemoveCommand("teamkick", teamKickCommand, arena);
+		cmd->RemoveCommand("setteampassword", setTeamPasswordCommand, arena);
 
 		return MM_OK;
 	}
