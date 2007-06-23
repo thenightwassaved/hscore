@@ -1093,7 +1093,7 @@ local void internalTriggerEvent(Player *p, int ship, const char *eventName) //ca
 		Item *item = entry->item;
 		link = link->next;
 		
-		if (item->ammo == NULL || internalGetItemCount(p, item->ammo, ship) <= 0)
+		if (item->ammo && internalGetItemCount(p, item->ammo, ship) <= 0)
 		{
 			continue;
 		}
@@ -1172,7 +1172,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 			Link *eventLink;
 			foundItem = 1;
 			
-			if (item->ammo == NULL || internalGetItemCount(p, item->ammo, ship) <= 0)
+			if (item->ammo && internalGetItemCount(p, item->ammo, ship) <= 0)
 			{
 				break;
 			}
@@ -1196,7 +1196,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 	{
 		Link *eventLink;
 		
-		if (triggerItem->ammo == NULL || internalGetItemCount(p, triggerItem->ammo, ship) <= 0)
+		if (triggerItem->ammo && internalGetItemCount(p, triggerItem->ammo, ship) <= 0)
 		{
 			//nothing
 		}
