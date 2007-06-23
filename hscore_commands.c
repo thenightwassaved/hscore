@@ -360,7 +360,7 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 				char buf[256];
 				Link *itemTypeLink;
 
-				int ammoCount;
+				int ammoCount = 0;
 				if (item->ammo != NULL)
 				{
 
@@ -375,10 +375,6 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 							ammoCount = ammoEntry->count;
 						}
 					}
-				}
-				else
-				{
-					ammoCount = 0;
 				}
 
 				itemTypes[0] = '\0';
