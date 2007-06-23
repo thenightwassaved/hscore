@@ -449,6 +449,16 @@ local void addOverrides(Player *p)
 				clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaximumSpeed);
 			}
 			
+			int afterburner = items->getPropertySum(p, i, "afterburner");
+			if (afterburner) 
+			{
+				int upRecharge = cfg->GetInt(conf, shipname, "UpgradeRecharge", 0);
+				clientset->PlayerOverride(p, shipOverrideKeys[i].AfterburnerEnergy, upRecharge * afterburner);
+			else
+			{
+				clientset->PlayerUnoverride(p, shipOverrideKeys[i].AfterburnerEnergy);
+			}
+			
 
 			int initBurst = cfg->GetInt(conf, shipname, "InitialBurst", 0);
 			int burst = items->getPropertySum(p, i, "burst") + initBurst;
@@ -529,10 +539,6 @@ local void addOverrides(Player *p)
 			int xradarenergy = items->getPropertySum(p, i, "xradarenergy");
 			if (xradarenergy) clientset->PlayerOverride(p, shipOverrideKeys[i].XRadarEnergy, xradarenergy);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].XRadarEnergy);
-
-			int afterburner = items->getPropertySum(p, i, "afterburner");
-			if (afterburner) clientset->PlayerOverride(p, shipOverrideKeys[i].AfterburnerEnergy, afterburner);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].AfterburnerEnergy);
 
 			int bombthrust = items->getPropertySum(p, i, "bombthrust");
 			if (bombthrust) clientset->PlayerOverride(p, shipOverrideKeys[i].BombThrust, bombthrust);
