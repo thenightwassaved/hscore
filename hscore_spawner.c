@@ -454,6 +454,7 @@ local void addOverrides(Player *p)
 			{
 				int upRecharge = cfg->GetInt(conf, shipname, "UpgradeRecharge", 0);
 				clientset->PlayerOverride(p, shipOverrideKeys[i].AfterburnerEnergy, upRecharge * afterburner);
+			}
 			else
 			{
 				clientset->PlayerUnoverride(p, shipOverrideKeys[i].AfterburnerEnergy);
