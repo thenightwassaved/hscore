@@ -29,6 +29,7 @@ local Iconfig *cfg;
 local int internalGetItemCount(Player *p, Item *item, int ship);
 local void internalTriggerEvent(Player *p, int ship, const char *event);
 local void internalTriggerEventOnItem(Player *p, Item *item, int ship, const char *event);
+local void recaclulateEntireCache(Player *p, int ship);
 
 //interface prototypes
 local int getItemCount(Player *p, Item *item, int ship);
@@ -750,9 +751,9 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 		return 0;
 	}
 	
-	if (ammount == 0)
+	if (amount == 0)
 	{
-		lm->LogP(L_WARNING, "hscore_items", p, "asked to add 0 of item %s", item->name);
+		lm->LogP(L_WARN, "hscore_items", p, "asked to add 0 of item %s", item->name);
 		//return 0;
 	}
 
@@ -835,7 +836,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 	
 	if (recalcCache)
 	{
-		recalcEntireCache(p, ship);
+		recaclulateEntireCache(p, ship);
 	}
 	
 	if (doInit)
@@ -1013,7 +1014,7 @@ local void processUpdateList(Player *p, int ship, LinkedList *updateList) //call
 	{
 		RemovalEntry *re = link->data;
 		
-		addItem(Player *p, re->item, ship, -re->count);
+		addItem(p, re->item, ship, -re->count);
 		
 		if (re->count > 0)
 		{
@@ -1021,7 +1022,7 @@ local void processUpdateList(Player *p, int ship, LinkedList *updateList) //call
 			int i;
 			for (i = 0; i < re->count; i++)
 			{
-				internalTriggerEventOnItem(t, item, ship, "del");
+				internalTriggerEventOnItem(p, re->item, ship, "del");
 			}			
 		}
 		else
@@ -1030,7 +1031,7 @@ local void processUpdateList(Player *p, int ship, LinkedList *updateList) //call
 			int i;
 			for (i = 0; i < -re->count; i++)
 			{
-				internalTriggerEventOnItem(t, item, ship, "add");
+				internalTriggerEventOnItem(p, re->item, ship, "add");
 			}				
 		}
 		
@@ -1103,7 +1104,7 @@ local void internalTriggerEvent(Player *p, int ship, const char *eventName) //ca
 		}
 	}
 	
-	processUpdateList(p, ship, updateList);
+	processUpdateList(p, ship, &updateList);
 }
 
 local void triggerEventOnItem(Player *p, Item *triggerItem, int ship, const char *eventName) //call with no lock
@@ -1195,7 +1196,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 		}
 	}
 	
-	processUpdateList(p, ship, updateList);
+	processUpdateList(p, ship, &updateList);
 	
 	DO_CBS(CB_TRIGGER_EVENT, p->arena, triggerEventFunction, (p, triggerItem, ship, eventName));
 }
