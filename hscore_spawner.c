@@ -126,6 +126,7 @@ typedef struct GlobalOverrideKeys
 	override_key_t UseFlagger;
 	override_key_t BallLocation;
 	override_key_t DoorMode;
+	override_key_t JitterTime;
 } GlobalOverrideKeys;
 
 //modules
@@ -260,6 +261,7 @@ local void loadOverrides()
 	globalOverrideKeys.EBombShutdownTime = clientset->GetOverrideKey("Bomb", "EBombShutdownTime");
 	globalOverrideKeys.EBombDamagePercent = clientset->GetOverrideKey("Bomb", "EBombDamagePercent");
 	globalOverrideKeys.BBombDamagePercent = clientset->GetOverrideKey("Bomb", "BBombDamagePercent");
+	globalOverrideKeys.JitterTime = clientset->GetOverrideKey("Bomb", "JitterTime");
 	
 	globalOverrideKeys.BurstDamageLevel = clientset->GetOverrideKey("Burst", "BurstDamageLevel");
 	
@@ -307,6 +309,7 @@ local int checkUsingPerShip(Player *p, int ship)
 	if (items->getPropertySum(p, ship, "soccerallowguns")) return 1;
 	if (items->getPropertySum(p, ship, "socceruseflag")) return 1;
 	if (items->getPropertySum(p, ship, "soccerseeball")) return 1;
+	if (items->getPropertySum(p, ship, "jittertime")) return 1;
 
 	return 0;
 }
@@ -638,6 +641,12 @@ local void addOverrides(Player *p)
 		if (burstdamage) clientset->PlayerOverride(p, globalOverrideKeys.BurstDamageLevel, burstdamage);
 		else clientset->PlayerUnoverride(p, globalOverrideKeys.BurstDamageLevel);
 		
+		int jittertime = items->getPropertySum(p, p->p_ship, "jittertime");
+		if (jittertime) clientset->PlayerOverride(p, globalOverrideKeys.JitterTime, jittertime);
+		else clientset->PlayerUnoverride(p, globalOverrideKeys.JitterTime);
+		
+		globalOverrideKeys.JitterTime = clientset->GetOverrideKey("Bomb", "JitterTime");
+		
 		int decoyalive = items->getPropertySum(p, p->p_ship, "decoyalive");
 		if (decoyalive) clientset->PlayerOverride(p, globalOverrideKeys.DecoyAliveTime, decoyalive);
 		else clientset->PlayerUnoverride(p, globalOverrideKeys.DecoyAliveTime);
@@ -777,6 +786,7 @@ local void removeOverrides(Player *p)
 	clientset->PlayerUnoverride(p, globalOverrideKeys.EBombShutdownTime);
 	clientset->PlayerUnoverride(p, globalOverrideKeys.EBombDamagePercent);
 	clientset->PlayerUnoverride(p, globalOverrideKeys.BBombDamagePercent);
+	clientset->PlayerUnoverride(p, globalOverrideKeys.JitterTime);
 	clientset->PlayerUnoverride(p, globalOverrideKeys.BurstDamageLevel);
 	clientset->PlayerUnoverride(p, globalOverrideKeys.DecoyAliveTime);
 	clientset->PlayerUnoverride(p, globalOverrideKeys.WarpPointDelay);
