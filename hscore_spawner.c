@@ -994,7 +994,6 @@ local int prizeTimerCallback(void *clos)
 
 local void handleItemCallback(Player *p, int ship, Item *item, int mult) //if add, mult = 1, if del, mult = -1
 {
-	int mult;
 	Link *propLink;
 	
 	if (ship != p->p_ship)
@@ -1081,12 +1080,12 @@ local void handleItemCallback(Player *p, int ship, Item *item, int mult) //if ad
 	}	
 }
 
-local void ammoAddedFunction(Player *p, int ship, Item *ammoUser) //warnings: cache is out of sync, and lock is held
+local void ammoAddedCallback(Player *p, int ship, Item *ammoUser) //warnings: cache is out of sync, and lock is held
 {
 	handleItemCallback(p, ship, ammoUser, 1);
 }
 
-local void ammoRemovedFunction(Player *p, int ship, Item *ammoUser) //warnings: cache is out of sync, and lock is held
+local void ammoRemovedCallback(Player *p, int ship, Item *ammoUser) //warnings: cache is out of sync, and lock is held
 {
 	handleItemCallback(p, ship, ammoUser, -1);
 }
