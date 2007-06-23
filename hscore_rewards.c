@@ -192,7 +192,7 @@ local void goalCallback(Arena *arena, Player *scorer, int bid, int x, int y)
 	pd->Lock();
 	FOR_EACH_PLAYER(p)
 	{
-		if(p->p_freq == scorer->p_freq && p->p_ship != SHIP_SPEC)
+		if(p->arena == arena && p->p_freq == scorer->p_freq && p->p_ship != SHIP_SPEC)
 		{
 			money->giveMoney(p, reward, MONEY_TYPE_BALL);
 			money->giveExp(p, exp);
@@ -479,10 +479,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		mm->RegInterface(&periodicInterface, arena);
 
 		mm->RegCallback(CB_WARZONEWIN, flagWinCallback, arena);
-		mm->RegCallback(CB_GOAL, goalCallback, arena);
 		mm->RegCallback(CB_KILL, killCallback, arena);
-
-		//chat->SendArenaMessage(arena, "OMGWTFBBQ!!!");
 
 		return MM_OK;
 	}
@@ -491,7 +488,6 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		mm->UnregInterface(&periodicInterface, arena);
 
 		mm->UnregCallback(CB_WARZONEWIN, flagWinCallback, arena);
-		mm->UnregCallback(CB_GOAL, goalCallback, arena);
 		mm->UnregCallback(CB_KILL, killCallback, arena);
 
 		return MM_OK;
