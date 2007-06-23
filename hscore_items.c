@@ -8,6 +8,12 @@
 #include "hscore_shipnames.h"
 #include "hscore_spawner.h"
 
+typedef struct RemovalEntry
+{
+	int count; //to remove, negative for add
+	Item *item;
+} RemovalEntry;
+
 //modules
 local Imodman *mm;
 local Ilogman *lm;
@@ -517,9 +523,8 @@ local int timer_callback(void *clos)
 	return FALSE;
 }
 	
-local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with lock held
+local void doEvent(Player *p, InventoryEntry *entry, Event *event, LinkedList *updateList) //called with lock held
 {
-	int removed = 0;
 	int action = event->action;
 
 	//do the message
@@ -537,17 +542,11 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 	{
 		if (entry != NULL)
 		{
-			//save item pointer
-			Item *item = entry->item;
-			int i;
-
-			removed = addItem(p, item, p->p_ship, -event->data); //remove before "del"
-
-			for (i = 0; i < event->data; i++)
-			{
-				internalTriggerEventOnItem(p, item, p->p_ship, "del"); //fixme, this could be improved greatly (the loop)
-			}
-
+			//add to the list for removal
+			RemovalEntry *re = amalloc(sizeof(*re));
+			re->count = event->data;
+			re->item = entry->item;
+			LLAdd(updateList, re);
 		}
 		else
 		{
@@ -558,12 +557,10 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 	{
 		if (entry != NULL)
 		{
-			int i;
-			removed = addItem(p, entry->item->ammo, p->p_ship, -event->data);
-			for (i = 0; i < event->data; i++)
-			{
-				internalTriggerEventOnItem(p, entry->item->ammo, p->p_ship, "del"); //fixme, this could be improved greatly (the loop)
-			}
+			RemovalEntry *re = amalloc(sizeof(*re));
+			re->count = event->data;
+			re->item = entry->item->ammo;
+			LLAdd(updateList, re);
 		}
 		else
 		{
@@ -627,16 +624,11 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 				while (eventLink != NULL)
 				{
 					Event *eventToCheck = eventLink->data;
-					eventLink = eventLink->next; //doEvent may destroy entry
+					eventLink = eventLink->next;
 
 					if (strcmp(eventToCheck->event, "datazero") == 0)
 					{
-						//fixme: note that only one event tag will be executed, because I don't know how to check if the item was deleted to exit the loop
-						removed = doEvent(p, entry, eventToCheck);
-						if (removed)
-						{
-							break;
-						}
+						doEvent(p, entry, eventToCheck, updateList);
 					}
 				}
 			}
@@ -667,11 +659,9 @@ local int doEvent(Player *p, InventoryEntry *entry, Event *event) //called with 
 	{
 		lm->LogP(L_ERROR, "hscore_items", p, "Unknown action code %i", action);
 	}
-
-	return removed;
 }
 
-local int getItemCount(Player *p, Item *item, int ship)
+local int getItemCount(Player *p, Item *item, int ship) //call without lock held
 {
 	int count;
 	database->lock();
@@ -729,10 +719,12 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
 	Link *link;
+	Link *propLink;
 	LinkedList *inventoryList;
 	int data = 0;
 	int count = 0;
 	int doInit = 0;
+	int recalcCache = 0;
 
 	if (item == NULL)
 	{
@@ -756,6 +748,12 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 	{
 		lm->LogP(L_ERROR, "hscore_items", p, "asked to add item to unowned ship %i", ship);
 		return 0;
+	}
+	
+	if (ammount == 0)
+	{
+		lm->LogP(L_WARNING, "hscore_items", p, "asked to add 0 of item %s", item->name);
+		//return 0;
 	}
 
 	inventoryList = &playerData->hull[ship]->inventoryEntryList;
@@ -786,47 +784,60 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 		count = 0; //no negative counts make sense
 	}
 
-	if (amount != 0)
+	//recalc the related entries
+	for (propLink = LLGetHead(&item->propertyList); propLink; propLink = propLink->next)
 	{
-		int doRecalc = 1;
-		/*if (item->ammo != NULL) //FIXME: wrong. just wrong
+		Property *prop = propLink->data;
+
+		//cache it
+		int *propertySum = (int*)HashGetOne(playerData->hull[ship]->propertySums, prop->name);
+		if (propertySum != NULL)
 		{
-			int ammoCount = internalGetItemCount(p, item->ammo, ship);
-
-			if (ammoCount <= 0) //has ammo
-			{
-				doRecalc = 0;
-			}
-		}*/
-
-		//needs cache recacluation
-		if (doRecalc)
+			int propDifference = prop->value * amount;
+			*propertySum += propDifference;
+		}
+		else
 		{
-			Link *propLink;
-			for (propLink = LLGetHead(&item->propertyList); propLink; propLink = propLink->next)
-			{
-				Property *prop = propLink->data;
+			//not in cache already
 
-				//cache it
-				int *propertySum = (int*)HashGetOne(playerData->hull[ship]->propertySums, prop->name);
-				if (propertySum != NULL)
+			//it's too much work to generate the entire entry only to update it.
+			//instead we'll just leave it out of the cache, and it can be fully generated when needed
+		}
+	}
+	
+	database->updateItemNoLock(p, ship, item, count, data);
+
+	//check other items that use this item as ammo
+	if (count == 0 || doInit)
+	{
+		Link *ammoLink;
+		for (ammoLink = LLGetHead(&item->ammoUsers); ammoLink; ammoLink = ammoLink->next)
+		{
+			Item *user = ammoLink->data;
+			
+			int userCount = internalGetItemCount(p, user, ship);
+			
+			if (userCount != 0)
+			{
+				if (doInit)
 				{
-					int propDifference = prop->value * amount;
-					*propertySum += propDifference;
+					DO_CBS(CB_AMMO_ADDED, p->arena, ammoAddedFunction, (p, ship, user));
 				}
 				else
 				{
-					//not in cache already
-
-					//it's too much work to generate the entire entry only to update it.
-					//instead we'll just leave it out of the cache, and it can be fully generated when needed
+					DO_CBS(CB_AMMO_REMOVED, p->arena, ammoRemovedFunction, (p, ship, user));
 				}
+				
+				recalcCache = 1;
 			}
 		}
+	}	
+	
+	if (recalcCache)
+	{
+		recalcEntireCache(p, ship);
 	}
-
-	database->updateItemNoLock(p, ship, item, count, data);
-
+	
 	if (doInit)
 	{
 		internalTriggerEventOnItem(p, item, ship, "init");
@@ -995,7 +1006,41 @@ local int getPropertySum(Player *p, int ship, const char *propString) //call wit
 	return count;
 }
 
-local void triggerEvent(Player *p, int ship, const char *eventName)
+local void processUpdateList(Player *p, int ship, LinkedList *updateList) //call with lock
+{
+	Link *link;
+	for (link = LLGetHead(updateList); link; link = link->next)
+	{
+		RemovalEntry *re = link->data;
+		
+		addItem(Player *p, re->item, ship, -re->count);
+		
+		if (re->count > 0)
+		{
+			//removing
+			int i;
+			for (i = 0; i < re->count; i++)
+			{
+				internalTriggerEventOnItem(t, item, ship, "del");
+			}			
+		}
+		else
+		{
+			//adding
+			int i;
+			for (i = 0; i < -re->count; i++)
+			{
+				internalTriggerEventOnItem(t, item, ship, "add");
+			}				
+		}
+		
+		afree(re);
+	}
+	
+	LLEmpty(updateList);
+}
+
+local void triggerEvent(Player *p, int ship, const char *eventName) //call with no lock
 {
 	database->lock();
 	internalTriggerEvent(p, ship, eventName);
@@ -1006,6 +1051,7 @@ local void internalTriggerEvent(Player *p, int ship, const char *eventName) //ca
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
 	LinkedList *inventoryList;
+	LinkedList updateList;
 	Link *link;
 
 	if (p->type == T_FAKE)
@@ -1035,7 +1081,7 @@ local void internalTriggerEvent(Player *p, int ship, const char *eventName) //ca
 		return;
 	}
 
-
+	LLInit(&updateList);
 	inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
 	link = LLGetHead(inventoryList);
@@ -1052,18 +1098,15 @@ local void internalTriggerEvent(Player *p, int ship, const char *eventName) //ca
 
 			if (strcmp(event->event, eventName) == 0)
 			{
-				//fixme: note that only one event tag will be executed, because I don't know how to check if the item was deleted to exit the loop
-				int removed = doEvent(p, entry, event); //might delete current node
-				if (removed)
-				{
-					break;
-				}
+				doEvent(p, entry, event, &updateList);
 			}
 		}
 	}
+	
+	processUpdateList(p, ship, updateList);
 }
 
-local void triggerEventOnItem(Player *p, Item *triggerItem, int ship, const char *eventName)
+local void triggerEventOnItem(Player *p, Item *triggerItem, int ship, const char *eventName) //call with no lock
 {
 	database->lock();
 	internalTriggerEventOnItem(p, triggerItem, ship, eventName);
@@ -1075,6 +1118,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 	PerPlayerData *playerData = database->getPerPlayerData(p);
 	int foundItem = 0;
 	LinkedList *inventoryList;
+	LinkedList updateList;
 	Link *link;
 
 	if (eventName == NULL)
@@ -1107,6 +1151,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 		return;
 	}
 
+	LLInit(&updateList);
 	inventoryList = &playerData->hull[ship]->inventoryEntryList;
 
 	link = LLGetHead(inventoryList);
@@ -1127,12 +1172,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 
 				if (strcmp(event->event, eventName) == 0)
 				{
-					//fixme: note that only one event tag will be executed, because I don't know how to check if the item was deleted to exit the loop
-					int removed = doEvent(p, entry, event); //might delete current node
-					if (removed)
-					{
-						break;
-					}
+					doEvent(p, entry, event, &updateList);
 				}
 			}
 
@@ -1150,15 +1190,12 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 
 			if (strcmp(event->event, eventName) == 0)
 			{
-				//fixme: note that only one event tag will be executed, because I don't know how to check if the item was deleted to exit the loop
-				int removed = doEvent(p, NULL, event); //might delete current node
-				if (removed)
-				{
-					break;
-				}
+				doEvent(p, NULL, event, &updateList);
 			}
 		}
 	}
+	
+	processUpdateList(p, ship, updateList);
 	
 	DO_CBS(CB_TRIGGER_EVENT, p->arena, triggerEventFunction, (p, triggerItem, ship, eventName));
 }

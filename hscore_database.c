@@ -242,6 +242,7 @@ local void LinkAmmo()
 			ammo = getItemByIDNoLock(item->ammoID);
 
 			item->ammo = ammo;
+			LLAdd(&ammo->ammoUsers, item);
 
 			if (item->ammo == NULL)
 			{
@@ -616,6 +617,7 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 			LLInit(&item->propertyList);
 			LLInit(&item->eventList);
 			LLInit(&item->itemTypeEntries);
+			LLInit(&item->ammoUsers);
 			item->id = id;
 			LLAdd(&itemList, item);
 		}

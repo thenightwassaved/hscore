@@ -6,10 +6,14 @@
 //callback
 #define CB_EVENT_ACTION "eventaction"
 #define CB_TRIGGER_EVENT "triggerevent"
+#define CB_AMMO_ADDED "ammoaddded"
+#define CB_AMMO_REMOVED "ammoremoved"
 
 //callback function prototype
 typedef void (*eventActionFunction)(Player *p, int eventID);
 typedef void (*triggerEventFunction)(Player *p, Item *triggerItem, int ship, const char *eventName);
+typedef void (*ammoAddedFunction)(Player *p, int ship, Item *ammoUser); //warnings: cache is out of sync, and lock is held
+typedef void (*ammoRemovedFunction)(Player *p, int ship, Item *ammoUser); //warnings: cache is out of sync, and lock is held
 
 typedef struct Ihscoreitems
 {

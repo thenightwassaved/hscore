@@ -992,28 +992,21 @@ local int prizeTimerCallback(void *clos)
 	return FALSE;
 }
 
-local void triggerEventCallback(Player *p, Item *item, int ship, const char *eventName)
+local void handleItemCallback(Player *p, int ship, Item *item, int mult) //if add, mult = 1, if del, mult = -1
 {
 	int mult;
 	Link *propLink;
+	
+	if (ship != p->p_ship)
+	{
+		//it's not on their current ship!
+		return;
+	}
 	
 	if (item == NULL)
 	{
 		lm->LogP(L_ERROR, "hscore_spawner", p, "NULL item in callback.");
 		return;
-	}
-	
-	if (strcasecmp(eventName, "add") == 0)
-	{
-		mult = 1;
-	}
-	else if (strcasecmp(eventName, "del") == 0)
-	{
-		mult = -1;
-	}
-	else
-	{
-		return; //nothing to do
 	}
 	
 	for (propLink = LLGetHead(&item->propertyList); propLink; propLink = propLink->next)
@@ -1085,6 +1078,32 @@ local void triggerEventCallback(Player *p, Item *item, int ship, const char *eve
 			prizeData->count = count;
 			ml->SetTimer(prizeTimerCallback, 1, 1, prizeData, prizeData);
 		}
+	}	
+}
+
+local void ammoAddedFunction(Player *p, int ship, Item *ammoUser) //warnings: cache is out of sync, and lock is held
+{
+	handleItemCallback(p, ship, ammoUser, 1);
+}
+
+local void ammoRemovedFunction(Player *p, int ship, Item *ammoUser) //warnings: cache is out of sync, and lock is held
+{
+	handleItemCallback(p, ship, ammoUser, -1);
+}
+
+local void triggerEventCallback(Player *p, Item *item, int ship, const char *eventName) //called with lock held
+{
+	if (strcasecmp(eventName, "add") == 0)
+	{
+		handleItemCallback(p, ship, item, 1);
+	}
+	else if (strcasecmp(eventName, "del") == 0)
+	{
+		handleItemCallback(p, ship, item, -1);
+	}
+	else
+	{
+		return; //nothing to do
 	}
 }
 
@@ -1202,6 +1221,8 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 		mm->RegCallback(CB_FREQCHANGE, freqChangeCallback, arena);
 		
 		mm->RegCallback(CB_TRIGGER_EVENT, triggerEventCallback, arena);
+		mm->RegCallback(CB_AMMO_ADDED, ammoAddedCallback, arena);
+		mm->RegCallback(CB_AMMO_REMOVED, ammoRemovedCallback, arena);
 
 		return MM_OK;
 	}
@@ -1221,6 +1242,8 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 		mm->UnregCallback(CB_WARZONEWIN, flagWinCallback, arena);
 
 		mm->UnregCallback(CB_TRIGGER_EVENT, triggerEventCallback, arena);
+		mm->UnregCallback(CB_AMMO_ADDED, ammoAddedCallback, arena);
+		mm->UnregCallback(CB_AMMO_REMOVED, ammoRemovedCallback, arena);		
 		
 		return MM_OK;
 	}

@@ -93,6 +93,8 @@ typedef struct Item
 	struct Item *ammo; //can be NULL, only for use by events.
 	int ammoID; //used for post processing ONLY
 
+	LinkedList ammoUsers; //a list of items that use THIS item as ammo
+	
 	//if any of this item's properties change the clientset packet
 	int affectsSets;
 
