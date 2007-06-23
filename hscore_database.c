@@ -2311,7 +2311,7 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 
 		cmd->AddCommand("reloaditems", reloadItemsCommand, ALLARENAS, reloadItemsHelp);
 		cmd->AddCommand("storeall", storeAllCommand, ALLARENAS, storeAllHelp);
-		cmd->AddCommand("reset", resetCommand, ALLARENAS, resetHelp);
+		cmd->AddCommand("resetyesiknowwhatimdoing", resetCommand, ALLARENAS, resetHelp);
 		cmd->AddCommand("refund", refundCommand, ALLARENAS, refundHelp);
 
 		ml->SetTimer(periodicStoreTimer, 30000, 30000, NULL, NULL);
@@ -2342,7 +2342,7 @@ EXPORT int MM_hscore_database(int action, Imodman *_mm, Arena *arena)
 
 		cmd->RemoveCommand("reloaditems", reloadItemsCommand, ALLARENAS);
 		cmd->RemoveCommand("storeall", storeAllCommand, ALLARENAS);
-		cmd->RemoveCommand("reset", resetCommand, ALLARENAS);
+		cmd->RemoveCommand("resetyesiknowwhatimdoing", resetCommand, ALLARENAS);
 		cmd->RemoveCommand("refund", refundCommand, ALLARENAS);
 
 		mm->UnregCallback(CB_NEWPLAYER, allocatePlayerCallback, ALLARENAS);
