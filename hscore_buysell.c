@@ -268,7 +268,7 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 
 local void sellItem(Player *p, Item *item, int count, int ship)
 {
-	if (item->sellPrice)
+	if (!(item->sellPrice == 0 && item->buyPrice != 0))
 	{
 		if (items->getItemCount(p, item, ship) >= count)
 		{
