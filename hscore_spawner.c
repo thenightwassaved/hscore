@@ -1082,11 +1082,13 @@ local void handleItemCallback(Player *p, int ship, Item *item, int mult) //if ad
 
 local void ammoAddedCallback(Player *p, int ship, Item *ammoUser) //warnings: cache is out of sync, and lock is held
 {
+	lm->LogP(L_DRIVEL, "hscore_spawner", p, "Ammo added callback on %s", ammoUser->name);
 	handleItemCallback(p, ship, ammoUser, 1);
 }
 
 local void ammoRemovedCallback(Player *p, int ship, Item *ammoUser) //warnings: cache is out of sync, and lock is held
 {
+	lm->LogP(L_DRIVEL, "hscore_spawner", p, "Ammo removed callback on %s", ammoUser->name);
 	handleItemCallback(p, ship, ammoUser, -1);
 }
 
@@ -1094,10 +1096,12 @@ local void triggerEventCallback(Player *p, Item *item, int ship, const char *eve
 {
 	if (strcasecmp(eventName, "add") == 0)
 	{
+		lm->LogP(L_DRIVEL, "hscore_spawner", p, "Item added callback on %s", item->name);
 		handleItemCallback(p, ship, item, 1);
 	}
 	else if (strcasecmp(eventName, "del") == 0)
 	{
+		lm->LogP(L_DRIVEL, "hscore_spawner", p, "Item del callback on %s", item->name);
 		handleItemCallback(p, ship, item, -1);
 	}
 	else
