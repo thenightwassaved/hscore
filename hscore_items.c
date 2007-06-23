@@ -53,10 +53,10 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 	Item *item;
 	char shipMask[] = "12345678";
 	int i;
-	
+
 	char itemTypes[256];
 	int first = 1;
-	
+
 	char buf[256];
 	const char *temp = NULL;
 	Link *link;
@@ -97,11 +97,11 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 	for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
 	{
 		ItemTypeEntry *entry = link->data;
-		
+
 		if (first == 1)
 		{
 			first = 0;
-			
+
 			if (entry->delta == 1)
 			{
 				sprintf(buf, "%s", entry->itemType->name);
@@ -122,7 +122,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 				sprintf(buf, ", %d %s", entry->delta, entry->itemType->name);
 			}
 		}
-		
+
 		strcat(itemTypes, buf);
 	}
 	database->unlock();
@@ -222,7 +222,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					chat->SendMessage(p, "Grantitem: invalid usage.");
 					return;
 				}
-			}			
+			}
 			else if (*params == 'q')
 			{
 				quiet = 1;
@@ -260,7 +260,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 				}
 
 				params = next;
-			}	
+			}
 			else if (*params == 's')
 			{
 				params = strchr(params, ' ');
@@ -357,13 +357,13 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
 					{
 						ItemTypeEntry *entry = link->data;
-					
+
 						if (entry->itemType != NULL)
 						{
 							if (!ignore && getFreeItemTypeSpotsNoLock(t, entry->itemType, ship) - (entry->delta * count) < 0) //have no free spots
 							{
 								chat->SendMessage(p, "Does not have enough free %s spots.", entry->itemType->name);
-								
+
 								database->unlock();
 								return;
 							}
@@ -444,13 +444,13 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 								for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
 								{
 									ItemTypeEntry *entry = link->data;
-								
+
 									if (entry->itemType != NULL)
 									{
 										if (!ignore && getFreeItemTypeSpotsNoLock(t, entry->itemType, ship) - (entry->delta * count) < 0) //have no free spots
 										{
 											chat->SendMessage(p, "Player %s does not have enough free %s spots.", t->name, entry->itemType->name);
-											
+
 											database->unlock();
 											return;
 										}
@@ -520,10 +520,10 @@ local int timer_callback(void *clos)
 		spawner->respawn(p);
 		mm->ReleaseInterface(spawner);
 	}
-	
+
 	return FALSE;
 }
-	
+
 local void doEvent(Player *p, InventoryEntry *entry, Event *event, LinkedList *updateList) //called with lock held
 {
 	int action = event->action;
@@ -648,8 +648,8 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event, LinkedList *u
 		int respawnTime = cfg->GetInt(p->arena->cfg, "Kill", "EnterDelay", 0);
 		int delay = respawnTime - 50;
 		if (delay < 1) delay = 1;
-		
-		ml->ClearTimer(timer_callback, p);	
+
+		ml->ClearTimer(timer_callback, p);
 		ml->SetTimer(timer_callback, delay, delay, p, p);
 	}
 	else if (action == ACTION_CALLBACK) //calls a callback passing an eventid of event->data.
@@ -750,7 +750,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 		lm->LogP(L_ERROR, "hscore_items", p, "asked to add item to unowned ship %i", ship);
 		return 0;
 	}
-	
+
 	if (amount == 0)
 	{
 		lm->LogP(L_WARN, "hscore_items", p, "asked to add 0 of item %s", item->name);
@@ -805,7 +805,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 			//instead we'll just leave it out of the cache, and it can be fully generated when needed
 		}
 	}
-	
+
 	database->updateItemNoLock(p, ship, item, count, data);
 
 	//check other items that use this item as ammo
@@ -815,9 +815,9 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 		for (ammoLink = LLGetHead(&item->ammoUsers); ammoLink; ammoLink = ammoLink->next)
 		{
 			Item *user = ammoLink->data;
-			
+
 			int userCount = internalGetItemCount(p, user, ship);
-			
+
 			if (userCount != 0)
 			{
 				if (doInit)
@@ -828,17 +828,17 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 				{
 					DO_CBS(CB_AMMO_REMOVED, p->arena, ammoRemovedFunction, (p, ship, user));
 				}
-				
+
 				recalcCache = 1;
 			}
 		}
-	}	
-	
+	}
+
 	if (recalcCache)
 	{
 		recaclulateEntireCache(p, ship);
 	}
-	
+
 	if (doInit)
 	{
 		internalTriggerEventOnItem(p, item, ship, "init");
@@ -910,7 +910,7 @@ local Item * getItemByPartialName(const char *name, Arena *arena) //call with no
 		}
 	}
 	database->unlock();
-	
+
 	if (matches == 1)
 	{
 		return item;
@@ -1013,9 +1013,9 @@ local void processUpdateList(Player *p, int ship, LinkedList *updateList) //call
 	for (link = LLGetHead(updateList); link; link = link->next)
 	{
 		RemovalEntry *re = link->data;
-		
+
 		addItem(p, re->item, ship, -re->count);
-		
+
 		if (re->count > 0)
 		{
 			//removing
@@ -1023,7 +1023,7 @@ local void processUpdateList(Player *p, int ship, LinkedList *updateList) //call
 			for (i = 0; i < re->count; i++)
 			{
 				internalTriggerEventOnItem(p, re->item, ship, "del");
-			}			
+			}
 		}
 		else
 		{
@@ -1032,12 +1032,12 @@ local void processUpdateList(Player *p, int ship, LinkedList *updateList) //call
 			for (i = 0; i < -re->count; i++)
 			{
 				internalTriggerEventOnItem(p, re->item, ship, "add");
-			}				
+			}
 		}
-		
+
 		afree(re);
 	}
-	
+
 	LLEmpty(updateList);
 }
 
@@ -1091,7 +1091,12 @@ local void internalTriggerEvent(Player *p, int ship, const char *eventName) //ca
 		Link *eventLink;
 		InventoryEntry *entry = link->data;
 		Item *item = entry->item;
-		link = link->next; //the current node may be destroyed by doEvent.
+		link = link->next;
+		
+		if (item->ammo == NULL || internalGetItemCount(p, item->ammo, ship) <= 0)
+		{
+			continue;
+		}
 
 		for (eventLink = LLGetHead(&item->eventList); eventLink; eventLink = eventLink->next)
 		{
@@ -1103,7 +1108,7 @@ local void internalTriggerEvent(Player *p, int ship, const char *eventName) //ca
 			}
 		}
 	}
-	
+
 	processUpdateList(p, ship, &updateList);
 }
 
@@ -1166,6 +1171,11 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 		{
 			Link *eventLink;
 			foundItem = 1;
+			
+			if (item->ammo == NULL || internalGetItemCount(p, item->ammo, ship) <= 0)
+			{
+				break;
+			}
 
 			for (eventLink = LLGetHead(&item->eventList); eventLink; eventLink = eventLink->next)
 			{
@@ -1185,6 +1195,12 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 	if (!foundItem)
 	{
 		Link *eventLink;
+		
+		if (item->ammo == NULL || internalGetItemCount(p, item->ammo, ship) <= 0)
+		{
+			continue;
+		}
+		
 		for (eventLink = LLGetHead(&triggerItem->eventList); eventLink; eventLink = eventLink->next)
 		{
 			Event *event = eventLink->data;
@@ -1195,9 +1211,9 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 			}
 		}
 	}
-	
+
 	processUpdateList(p, ship, &updateList);
-	
+
 	DO_CBS(CB_TRIGGER_EVENT, p->arena, triggerEventFunction, (p, triggerItem, ship, eventName));
 }
 
@@ -1245,7 +1261,7 @@ local int getFreeItemTypeSpotsNoLock(Player *p, ItemType *type, int ship) //call
 		for (itemTypeLink = LLGetHead(&item->itemTypeEntries); itemTypeLink; itemTypeLink = itemTypeLink->next)
 		{
 			ItemTypeEntry *typeEntry = itemTypeLink->data;
-			
+
 			if (typeEntry->itemType == type)
 			{
 				count -= entry->count * typeEntry->delta;
@@ -1438,7 +1454,7 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 		cmd->RemoveCommand("grantitem", grantItemCommand, ALLARENAS);
 
 		ml->ClearTimer(timer_callback, NULL);
-		
+
 		mm->ReleaseInterface(lm);
 		mm->ReleaseInterface(chat);
 		mm->ReleaseInterface(cmd);
