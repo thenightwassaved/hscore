@@ -1196,18 +1196,20 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 	{
 		Link *eventLink;
 		
-		if (item->ammo == NULL || internalGetItemCount(p, item->ammo, ship) <= 0)
+		if (triggerItem->ammo == NULL || internalGetItemCount(p, triggerItem->ammo, ship) <= 0)
 		{
-			continue;
+			//nothing
 		}
-		
-		for (eventLink = LLGetHead(&triggerItem->eventList); eventLink; eventLink = eventLink->next)
+		else
 		{
-			Event *event = eventLink->data;
-
-			if (strcmp(event->event, eventName) == 0)
+			for (eventLink = LLGetHead(&triggerItem->eventList); eventLink; eventLink = eventLink->next)
 			{
-				doEvent(p, NULL, event, &updateList);
+				Event *event = eventLink->data;
+
+				if (strcmp(event->event, eventName) == 0)
+				{
+					doEvent(p, NULL, event, &updateList);
+				}
 			}
 		}
 	}
