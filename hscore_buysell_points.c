@@ -206,22 +206,25 @@ local void loadPlayerData(Player *p)
 
 local void savePlayerData(Player *p)
 {
-	PointsArenaData *pad = P_ARENA_DATA(p->arena, adkey);
-	PointsPlayerData *ppd = PPDATA(p, pdkey);
+	if(IS_HUMAN(p))
+	{
+		PointsArenaData *pad = P_ARENA_DATA(p->arena, adkey);
+		PointsPlayerData *ppd = PPDATA(p, pdkey);
 
-	mysql->Query(NULL, NULL, 0,
-		"UPDATE hs_player_points SET points_global = #, points_1 = #, points_2 = #, points_3 = #, points_4 = #, points_5 = #, points_6 = #, points_7 = #, points_8 = # WHERE player_id = # AND arena = ?",
-		ppd->globalPoints,
-		ppd->shipPoints[0],
-		ppd->shipPoints[1],
-		ppd->shipPoints[2],
-		ppd->shipPoints[3],
-		ppd->shipPoints[4],
-		ppd->shipPoints[5],
-		ppd->shipPoints[6],
-		ppd->shipPoints[7],
-		database->getPerPlayerData(p)->id,
-		pad->arenaIdentifier);
+		mysql->Query(NULL, NULL, 0,
+			"UPDATE hs_player_points SET points_global = #, points_1 = #, points_2 = #, points_3 = #, points_4 = #, points_5 = #, points_6 = #, points_7 = #, points_8 = # WHERE player_id = # AND arena = ?",
+			ppd->globalPoints,
+			ppd->shipPoints[0],
+			ppd->shipPoints[1],
+			ppd->shipPoints[2],
+			ppd->shipPoints[3],
+			ppd->shipPoints[4],
+			ppd->shipPoints[5],
+			ppd->shipPoints[6],
+			ppd->shipPoints[7],
+			database->getPerPlayerData(p)->id,
+			pad->arenaIdentifier);
+	}
 }
 
 local void playerActionCallback(Player *p, int action, Arena *arena)
@@ -280,7 +283,11 @@ local int periodicStoreTimer(void *param)
     lm->Log(L_INFO, "<hscore_buysell_points> Storing player data.");
     FOR_EACH_PLAYER(p)
     {
-		savePlayerData(p);
+		PointsArenaData *pad = P_ARENA_DATA(p->arena, adkey);
+		if(pad->usingPoints)
+		{
+			savePlayerData(p);
+		}
 	}
     return 1;
 }
