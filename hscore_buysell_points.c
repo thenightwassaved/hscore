@@ -12,6 +12,7 @@
 
 typedef struct PointsArenaData
 {
+	int usingPoints;
 	char arenaIdentifier[32];
 	int useGlobal;
 } PointsArenaData;
@@ -137,6 +138,7 @@ local void loadArenaData(Arena *a)
 {
 	PointsArenaData *pad = P_ARENA_DATA(a, adkey);
 
+	pad->usingPoints = 1;
 	astrncpy(pad->arenaIdentifier, getArenaIdentifier(a), sizeof(pad->arenaIdentifier));
 	pad->useGlobal = cfg->GetInt(a->cfg, "Hyperspace", "UseGlobalPoints", 1);
 }
@@ -224,41 +226,50 @@ local void savePlayerData(Player *p)
 
 local void playerActionCallback(Player *p, int action, Arena *arena)
 {
-	if (action == PA_CONNECT)
-	{
-		//the player is connecting to the server. not arena-specific.
-	}
-	else if (action == PA_DISCONNECT)
-	{
-		//the player is disconnecting from the server. not arena-specific.
-	}
-	else if (action == PA_PREENTERARENA)
-	{
-		//this is called at the earliest point after a player indicates an
-		//intention to enter an arena.
-		//you can use this for some questionable stuff, like redirecting
-		//the player to a different arena. but in general it's better to
-		//use PA_ENTERARENA for general stuff that should happen on
-	 	//entering arenas.
-	}
-	else if (action == PA_ENTERARENA)
-	{
-		//the player is entering an arena.
-		loadDefaultPoints(p);
-		loadPlayerData(p);
-	}
-	else if (action == PA_LEAVEARENA)
-	{
-		//the player is leaving an arena.
 
-		savePlayerData(p);
-	}
-	else if (action == PA_ENTERGAME)
-	{
-		//this is called at some point after the player has sent his first
-		//position packet (indicating that he's joined the game, as
-		//opposed to still downloading a map).
-	}
+		if (action == PA_CONNECT)
+		{
+			//the player is connecting to the server. not arena-specific.
+		}
+		else if (action == PA_DISCONNECT)
+		{
+			//the player is disconnecting from the server. not arena-specific.
+		}
+		else if (action == PA_PREENTERARENA)
+		{
+			//this is called at the earliest point after a player indicates an
+			//intention to enter an arena.
+			//you can use this for some questionable stuff, like redirecting
+			//the player to a different arena. but in general it's better to
+			//use PA_ENTERARENA for general stuff that should happen on
+			//entering arenas.
+		}
+		else if (action == PA_ENTERARENA)
+		{
+			PointsArenaData *pad = P_ARENA_DATA(arena, adkey);
+			if(pad->usingPoints)
+			{
+				//the player is entering an arena.
+				loadDefaultPoints(p);
+				loadPlayerData(p);
+			}
+		}
+		else if (action == PA_LEAVEARENA)
+		{
+			//the player is leaving an arena.
+			PointsArenaData *pad = P_ARENA_DATA(arena, adkey);
+			if(pad->usingPoints)
+			{
+				savePlayerData(p);
+			}
+		}
+		else if (action == PA_ENTERGAME)
+		{
+			//this is called at some point after the player has sent his first
+			//position packet (indicating that he's joined the game, as
+			//opposed to still downloading a map).
+		}
+
 }
 
 local int periodicStoreTimer(void *param)
@@ -649,9 +660,9 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 
 local void buyShip(Player *p, int ship)
 {
-	int buyPrice = cfg->GetInt(p->arena->cfg, shipNames[ship], "BuyPrice", 0);
+	int buyPrice = cfg->GetInt(p->arena->cfg, shipNames[ship], "BuyPrice", -1);
 
-	if (buyPrice != 0)
+	if (buyPrice != -1)
 	{
 		if (database->areShipsLoaded(p))
 		{
@@ -1169,11 +1180,16 @@ EXPORT int MM_hscore_buysell_points(int action, Imodman *_mm, Arena *arena)
 	}
 	else if (action == MM_DETACH)
 	{
+		PointsArenaData *pad = P_ARENA_DATA(arena, adkey);
+
 		cmd->RemoveCommand("buy", buyCommand, arena);
 		cmd->RemoveCommand("sell", sellCommand, arena);
 		cmd->RemoveCommand("hspoints", hspointsCommand, arena);
 
 		mm->UnregCallback(CB_SHIP_ADDED, shipAddedCallback, arena);
+
+		periodicStoreTimer(NULL);
+		pad->usingPoints = 0;
 
 		return MM_OK;
 	}
