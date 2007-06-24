@@ -283,10 +283,14 @@ local int periodicStoreTimer(void *param)
     lm->Log(L_INFO, "<hscore_buysell_points> Storing player data.");
     FOR_EACH_PLAYER(p)
     {
-		PointsArenaData *pad = P_ARENA_DATA(p->arena, adkey);
-		if(pad->usingPoints)
+		if(p->arena)
 		{
-			savePlayerData(p);
+			PointsArenaData *pad = P_ARENA_DATA(p->arena, adkey);
+
+			if(pad->usingPoints)
+			{
+				savePlayerData(p);
+			}
 		}
 	}
     return 1;
