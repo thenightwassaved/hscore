@@ -386,6 +386,21 @@ local void LinkAmmo()
 "  PRIMARY KEY  (`id`)" \
 ")"
 
+#define CREATE_PLAYER_POINTS_TABLE \
+"CREATE TABLE `hs_player_points` (" \
+"  `player_id` int(10) unsigned NOT NULL default '0'," \
+"  `arena` varchar(32) NOT NULL," \
+"  `points_global` int(11) default '0'," \
+"  `points_1` int(11) default NULL," \
+"  `points_2` int(11) default NULL," \
+"  `points_3` int(11) default NULL," \
+"  `points_4` int(11) default NULL," \
+"  `points_5` int(11) default NULL," \
+"  `points_6` int(11) default NULL," \
+"  `points_7` int(11) default NULL," \
+"  `points_8` int(11) default NULL," \
+"  UNIQUE KEY `index` (`player_id`,`arena`)" \
+")"
 
 local void initTables()
 {
@@ -401,6 +416,7 @@ local void initTables()
 	mysql->Query(NULL, NULL, 0, CREATE_STORE_ITEMS_TABLE);
 	mysql->Query(NULL, NULL, 0, CREATE_STORES_TABLE);
 	mysql->Query(NULL, NULL, 0, CREATE_TRANSACTIONS_TABLE);
+	mysql->Query(NULL, NULL, 0, CREATE_PLAYER_POINTS_TABLE);
 }
 
 //+-------------------------+
