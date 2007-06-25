@@ -383,6 +383,7 @@ local void LinkAmmo()
 "  `tgtplayer` int(11) NOT NULL default '0'," \
 "  `action` tinyint(4) NOT NULL default '0', " \
 "  `amount` int(11) NOT NULL default '0'," \
+"  `timestamp` timestamp NOT NULL default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,  "\
 "  PRIMARY KEY  (`id`)" \
 ")"
 
