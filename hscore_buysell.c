@@ -65,11 +65,12 @@ local void printCategoryItems(Player *p, Category *category) //call with lock he
 	{
 		for (link = LLGetHead(&category->itemList); link; link = link->next)
 		{
+			int i;
 			Item *item = link->data;
 
 			char shipMask[] = "12345678";
 
-			for (int i = 0; i < 8; i++)
+			for (i = 0; i < 8; i++)
 			{
 				if (!((item->shipsAllowed >> i) & 0x1))
 				{
@@ -102,6 +103,7 @@ local void printCategoryItems(Player *p, Category *category) //call with lock he
 
 local void printShipList(Player *p)
 {
+	int i;
 	Link plink = {NULL, p};
 	LinkedList lst = { &plink, &plink };
 	char messageType; 
@@ -110,7 +112,7 @@ local void printShipList(Player *p)
 	chat->SendMessage(p, "| Ship Name | Buy Price | Sell Price | Exp    | Ship Description                                   |");
 	chat->SendMessage(p, "+-----------+-----------+------------+--------+----------------------------------------------------+");
 
-	for (int i = 0; i < 8; i++)
+	for (i = 0; i < 8; i++)
 	{
 		/* cfghelp: All:BuyPrice, arena, int, def: 0, mod: hscore_buysell
 		 * Cost for buying the ship hull. Zero means no purchace needed. */
@@ -185,6 +187,7 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 
 						if (storemanOk)
 						{
+							int i;
 							Link *link;
 							database->lock();
 							for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
@@ -206,7 +209,7 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 
 							items->triggerEventOnItem(p, item, ship, "buy");
 
-							for (int i = 0; i < count; i++)
+							for (i = 0; i < count; i++)
 							{
 								items->triggerEventOnItem(p, item, ship, "add");
 							}
@@ -293,6 +296,7 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 
 			if (storemanOk)
 			{
+				int i;
 				Link *link;
 				database->lock();
 				for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
@@ -313,7 +317,7 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 
 				items->addItem(p, item, ship, -count); //change the count BEFORE the "del" event
 
-				for (int i = 0; i < count; i++)
+				for (i = 0; i < count; i++)
 				{
 					items->triggerEventOnItem(p, item, ship, "del");
 				}
@@ -536,11 +540,12 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 		}
 		else
 		{
+			int i;
 			int matches;
 			Category *category;
 
 			//check if they're asking for a ship
-			for (int i = 0; i < 8; i++)
+			for (i = 0; i < 8; i++)
 			{
 				if (strcasecmp(newParams, shipNames[i]) == 0)
 				{
@@ -704,8 +709,9 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 	}
 	else //has params
 	{
+		int i;
 		//check if they're asking for a ship
-		for (int i = 0; i < 8; i++)
+		for (i = 0; i < 8; i++)
 		{
 			if (strcasecmp(newParams, shipNames[i]) == 0)
 			{
