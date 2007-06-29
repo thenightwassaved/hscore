@@ -283,7 +283,7 @@ local void LinkAmmo()
 "  `event` varchar(16) NOT NULL default ''," \
 "  `action` mediumint(9) NOT NULL default '0'," \
 "  `data` int(11) NOT NULL default '0'," \
-"  `message` varchar(200) NOT NULL default ''" \
+"  `message` varchar(200) NOT NULL default ''," \
 "  `id` int(10) unsigned NOT NULL auto_increment," \
 "  PRIMARY KEY  (`id`)" \
 ")"
@@ -292,7 +292,7 @@ local void LinkAmmo()
 "CREATE TABLE IF NOT EXISTS `hs_item_properties` (" \
 "  `item_id` int(10) unsigned NOT NULL default '0'," \
 "  `name` varchar(32) NOT NULL default ''," \
-"  `value` int(11) NOT NULL default '0'" \
+"  `value` int(11) NOT NULL default '0'," \
 "  `id` int(10) unsigned NOT NULL auto_increment," \
 "  PRIMARY KEY  (`id`)" \
 ")"
