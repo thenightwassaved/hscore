@@ -388,7 +388,7 @@ local void LinkAmmo()
 ")"
 
 #define CREATE_PLAYER_POINTS_TABLE \
-"CREATE TABLE `hs_player_points` (" \
+"CREATE TABLE IF NOT EXISTS `hs_player_points` (" \
 "  `player_id` int(10) unsigned NOT NULL default '0'," \
 "  `arena` varchar(32) NOT NULL," \
 "  `points_global` int(11) default '0'," \
