@@ -1199,7 +1199,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 	{
 		Link *eventLink;
 		
-		if (triggerItem->ammo && item->needsAmmo &&internalGetItemCount(p, triggerItem->ammo, ship) < item->minAmmo)
+		if (triggerItem->ammo && triggerItem->needsAmmo &&internalGetItemCount(p, triggerItem->ammo, ship) < triggerItem->minAmmo)
 		{
 			//nothing
 		}
