@@ -1019,7 +1019,7 @@ local int prizeTimerCallback(void *clos)
 
 local int handleItemCallback(void *clos)
 {
-	CallbackData data = clos;
+	CallbackData *data = clos;
 	Player *p = data->player;
 	int ship = data->ship;
 	Item *item = data->item;
