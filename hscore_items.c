@@ -816,6 +816,9 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 		{
 			Item *user = ammoLink->data;
 
+			if (!user->needsAmmo)
+				continue;
+			
 			int userCount = internalGetItemCount(p, user, ship);
 
 			if (userCount != 0)
@@ -975,11 +978,11 @@ local int getPropertySum(Player *p, int ship, const char *propString) //call wit
 		InventoryEntry *entry = link->data;
 		Item *item = entry->item;
 
-		if (item->ammo != NULL)
+		if (item->ammo != NULL && item->needsAmmo)
 		{
 			int itemCount = internalGetItemCount(p, item->ammo, ship);
 
-			if (itemCount <= 0)
+			if (itemCount < item->minAmmo)
 			{
 				continue; //out of ammo, ignore the item.
 			}
@@ -1093,7 +1096,7 @@ local void internalTriggerEvent(Player *p, int ship, const char *eventName) //ca
 		Item *item = entry->item;
 		link = link->next;
 		
-		if (item->ammo && internalGetItemCount(p, item->ammo, ship) <= 0)
+		if (item->ammo && item->needsAmmo && internalGetItemCount(p, item->ammo, ship) < item->minAmmo)
 		{
 			continue;
 		}
@@ -1172,7 +1175,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 			Link *eventLink;
 			foundItem = 1;
 			
-			if (item->ammo && internalGetItemCount(p, item->ammo, ship) <= 0)
+			if (item->ammo && item->needsAmmo && internalGetItemCount(p, item->ammo, ship) < item->minAmmo)
 			{
 				break;
 			}
@@ -1196,7 +1199,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 	{
 		Link *eventLink;
 		
-		if (triggerItem->ammo && internalGetItemCount(p, triggerItem->ammo, ship) <= 0)
+		if (triggerItem->ammo && item->needsAmmo &&internalGetItemCount(p, triggerItem->ammo, ship) < item->minAmmo)
 		{
 			//nothing
 		}
@@ -1356,11 +1359,11 @@ local void recaclulateEntireCache(Player *p, int ship)
 		Item *item = entry->item;
 		Link *propLink;
 
-		if (item->ammo != NULL)
+		if (item->ammo != NULL && item->needsAmmo)
 		{
 			int itemCount = internalGetItemCount(p, item->ammo, ship);
 
-			if (itemCount <= 0)
+			if (itemCount < item->minAmmo)
 			{
 				continue; //out of ammo, ignore the item.
 			}

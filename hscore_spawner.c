@@ -18,6 +18,14 @@ typedef struct PrizeData
 	int count;
 } PrizeData;
 
+typedef struct CallbackData
+{
+	Player *player;
+	int ship;
+	Item *item;
+	int mult;
+} CallbackData;
+
 typedef struct PlayerDataStruct
 {
 	short underOurControl;
@@ -1009,20 +1017,33 @@ local int prizeTimerCallback(void *clos)
 	return FALSE;
 }
 
-local void handleItemCallback(Player *p, int ship, Item *item, int mult) //if add, mult = 1, if del, mult = -1
+local int handleItemCallback(void *clos)
 {
+	CallbackData data = clos;
+	Player *p = data->player;
+	int ship = data->ship;
+	Item *item = data->item;
+	int mult = data->mult;
 	Link *propLink;
+	
+	afree(clos);
 	
 	if (ship != p->p_ship)
 	{
 		//it's not on their current ship!
-		return;
+		return FALSE;
 	}
 	
 	if (item == NULL)
 	{
 		lm->LogP(L_ERROR, "hscore_spawner", p, "NULL item in callback.");
-		return;
+		return FALSE;
+	}
+		
+	if (item->ammo && item->needsAmmo && items->getItemCount(p, item->ammo, ship) < item->minAmmo)
+	{
+		//doesn't have any ammo, so we don't want to prize/deprize
+		return FALSE;
 	}
 	
 	for (propLink = LLGetHead(&item->propertyList); propLink; propLink = propLink->next)
@@ -1031,7 +1052,7 @@ local void handleItemCallback(Player *p, int ship, Item *item, int mult) //if ad
 		const char *propName = prop->name;
 		int prizeNumber = -1;
 		
-		if (prop->value == 0) return;
+		if (prop->value == 0) continue;
 		
 		int count = abs(prop->value);
 		int mult2 = count/prop->value;
@@ -1094,32 +1115,54 @@ local void handleItemCallback(Player *p, int ship, Item *item, int mult) //if ad
 			prizeData->count = count;
 			ml->SetTimer(prizeTimerCallback, 1, 1, prizeData, prizeData);
 		}
-	}	
+	}
+	
+	return FALSE;
 }
 
 local void ammoAddedCallback(Player *p, int ship, Item *ammoUser) //warnings: cache is out of sync, and lock is held
 {
+	CallbackData *data = amalloc(sizeof(*data));
+	data->player = p;
+	data->ship = ship;
+	data->item = ammoUser;
+	data->mult = 1;
 	lm->LogP(L_DRIVEL, "hscore_spawner", p, "Ammo added callback on %s", ammoUser->name);
-	handleItemCallback(p, ship, ammoUser, 1);
+	ml->SetTimer(handleItemCallback, 1, 1, data, data);
 }
 
 local void ammoRemovedCallback(Player *p, int ship, Item *ammoUser) //warnings: cache is out of sync, and lock is held
 {
+	CallbackData *data = amalloc(sizeof(*data));
+	data->player = p;
+	data->ship = ship;
+	data->item = ammoUser;
+	data->mult = -1;
 	lm->LogP(L_DRIVEL, "hscore_spawner", p, "Ammo removed callback on %s", ammoUser->name);
-	handleItemCallback(p, ship, ammoUser, -1);
+	ml->SetTimer(handleItemCallback, 1, 1, data, data);
 }
 
 local void triggerEventCallback(Player *p, Item *item, int ship, const char *eventName) //called with lock held
 {
 	if (strcasecmp(eventName, "add") == 0)
 	{
+		CallbackData *data = amalloc(sizeof(*data));
+		data->player = p;
+		data->ship = ship;
+		data->item = item;
+		data->mult = 1;
 		lm->LogP(L_DRIVEL, "hscore_spawner", p, "Item added callback on %s", item->name);
-		handleItemCallback(p, ship, item, 1);
+		ml->SetTimer(handleItemCallback, 1, 1, data, data);
 	}
 	else if (strcasecmp(eventName, "del") == 0)
 	{
+		CallbackData *data = amalloc(sizeof(*data));
+		data->player = p;
+		data->ship = ship;
+		data->item = item;
+		data->mult = 1;
 		lm->LogP(L_DRIVEL, "hscore_spawner", p, "Item del callback on %s", item->name);
-		handleItemCallback(p, ship, item, -1);
+		ml->SetTimer(handleItemCallback, 1, 1, data, data);
 	}
 	else
 	{
@@ -1213,7 +1256,8 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 		pd->FreePlayerData(playerDataKey);
 
 		ml->ClearTimer(itemCountChangedTimer, NULL);	
-		ml->ClearTimer(prizeTimerCallback, NULL);		
+		ml->ClearTimer(prizeTimerCallback, NULL);	
+		ml->ClearTimer(handleItemCallback, NULL);
 		
 		mm->ReleaseInterface(lm);
 		mm->ReleaseInterface(pd);

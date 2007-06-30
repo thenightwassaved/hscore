@@ -319,6 +319,8 @@ local void LinkAmmo()
 "  `max` int(11) NOT NULL default '0'," \
 "  `delay_write` tinyint(4) NOT NULL default '0'," \
 "  `ammo` int(10) unsigned NOT NULL default '0'," \
+"  `needs_ammo` tinyint(4) NOT NULL default '0'," \
+"  `min_ammo` int(10) NOT NULL default '0'," \
 "  `affects_sets` tinyint(4) NOT NULL default '0'," \
 "  `resend_sets` tinyint(4) NOT NULL default '0'," \
 "  PRIMARY KEY  (`id`)" \
@@ -659,8 +661,10 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 
 		item->delayStatusWrite = atoi(mysql->GetField(row, 10));	//delay_write
 		item->ammoID = atoi(mysql->GetField(row, 11));				//ammo
-		item->affectsSets = atoi(mysql->GetField(row, 12));			//affects_sets
-		item->resendSets = atoi(mysql->GetField(row, 13));			//resend_sets
+		item->needsAmmo = atoi(mysql->GetField(row, 12));			//needs_ammo
+		item->minAmmo = atoi(mysql->GetField(row, 13));				//min_ammo
+		item->affectsSets = atoi(mysql->GetField(row, 14));			//affects_sets
+		item->resendSets = atoi(mysql->GetField(row, 15));			//resend_sets
 
 		if (itemTypes != NULL) //parse itemTypes
 		{
@@ -1496,7 +1500,7 @@ local void LoadProperties()
 
 local void LoadItemList() //will call LoadProperties() and LoadEvents() when finished
 {
-	mysql->Query(loadItemsQueryCallback, NULL, 1, "SELECT id, name, short_description, long_description, buy_price, sell_price, exp_required, ships_allowed, item_types, max, delay_write, ammo, affects_sets, resend_sets FROM hs_items");
+	mysql->Query(loadItemsQueryCallback, NULL, 1, "SELECT id, name, short_description, long_description, buy_price, sell_price, exp_required, ships_allowed, item_types, max, delay_write, ammo, needs_ammo, min_ammo, affects_sets, resend_sets FROM hs_items");
 }
 
 local void LoadItemTypeList() //will call LoadItemList() when finished loading
