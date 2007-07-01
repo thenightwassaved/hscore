@@ -769,7 +769,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 		{
 			data = entry->data;
 			count = entry->count;
-			oldcount = entry->count;
+			oldCount = entry->count;
 			break;
 		}
 	}
@@ -823,11 +823,11 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 
 		if (userCount != 0)
 		{
-			if (oldcount < user->minAmmo && count >= user->minAmmo)
+			if (oldCount < user->minAmmo && count >= user->minAmmo)
 			{
 				DO_CBS(CB_AMMO_ADDED, p->arena, ammoAddedFunction, (p, ship, user));
 			}
-			else if (oldcount >= user->minAmmo && count < user->minAmmo)
+			else if (oldCount >= user->minAmmo && count < user->minAmmo)
 			{
 				DO_CBS(CB_AMMO_REMOVED, p->arena, ammoRemovedFunction, (p, ship, user));
 			}
