@@ -1020,7 +1020,7 @@ local int handleItemCallback(void *clos)
 		return FALSE;
 	}
 		
-	if (item->ammo && item->needsAmmo && items->getItemCount(p, item->ammo, ship) < item->minAmmo)
+	if (item->ammo && item->needsAmmo && items->getItemCount(p, item->ammo, ship) < item->minAmmo && mult > 0)
 	{
 		//doesn't have any ammo, so we don't want to prize/deprize
 		return FALSE;

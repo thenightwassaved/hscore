@@ -645,6 +645,7 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 			//empty the item types
 			LLEnum(&item->itemTypeEntries, afree);
 			LLEmpty(&item->itemTypeEntries);
+			LLEmpty(&item->ammoUsers);
 		}
 
 		astrncpy(item->name, mysql->GetField(row, 1), 17);			//name

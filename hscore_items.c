@@ -726,6 +726,8 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 	int count = 0;
 	int doInit = 0;
 	int recalcCache = 0;
+	int oldCount = 0;
+	Link *ammoLink;
 
 	if (item == NULL)
 	{
@@ -767,6 +769,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 		{
 			data = entry->data;
 			count = entry->count;
+			oldcount = entry->count;
 			break;
 		}
 	}
@@ -809,34 +812,30 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 	database->updateItemNoLock(p, ship, item, count, data);
 
 	//check other items that use this item as ammo
-	if (count == 0 || doInit)
+	for (ammoLink = LLGetHead(&item->ammoUsers); ammoLink; ammoLink = ammoLink->next)
 	{
-		Link *ammoLink;
-		for (ammoLink = LLGetHead(&item->ammoUsers); ammoLink; ammoLink = ammoLink->next)
+		Item *user = ammoLink->data;
+
+		if (!user->needsAmmo)
+			continue;
+		
+		int userCount = internalGetItemCount(p, user, ship);
+
+		if (userCount != 0)
 		{
-			Item *user = ammoLink->data;
-
-			if (!user->needsAmmo)
-				continue;
-			
-			int userCount = internalGetItemCount(p, user, ship);
-
-			if (userCount != 0)
+			if (oldcount < user->minAmmo && count >= user->minAmmo)
 			{
-				if (doInit)
-				{
-					DO_CBS(CB_AMMO_ADDED, p->arena, ammoAddedFunction, (p, ship, user));
-				}
-				else
-				{
-					DO_CBS(CB_AMMO_REMOVED, p->arena, ammoRemovedFunction, (p, ship, user));
-				}
-
-				recalcCache = 1;
+				DO_CBS(CB_AMMO_ADDED, p->arena, ammoAddedFunction, (p, ship, user));
 			}
+			else if (oldcount >= user->minAmmo && count < user->minAmmo)
+			{
+				DO_CBS(CB_AMMO_REMOVED, p->arena, ammoRemovedFunction, (p, ship, user));
+			}
+
+			recalcCache = 1;
 		}
 	}
-
+	
 	if (recalcCache)
 	{
 		recaclulateEntireCache(p, ship);
