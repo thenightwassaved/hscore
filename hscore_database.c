@@ -320,7 +320,7 @@ local void LinkAmmo()
 "  `delay_write` tinyint(4) NOT NULL default '0'," \
 "  `ammo` int(10) unsigned NOT NULL default '0'," \
 "  `needs_ammo` tinyint(4) NOT NULL default '0'," \
-"  `min_ammo` int(10) NOT NULL default '0'," \
+"  `min_ammo` int(11) NOT NULL default '0'," \
 "  `affects_sets` tinyint(4) NOT NULL default '0'," \
 "  `resend_sets` tinyint(4) NOT NULL default '0'," \
 "  PRIMARY KEY  (`id`)" \

@@ -1160,7 +1160,7 @@ local void triggerEventCallback(Player *p, Item *item, int ship, const char *eve
 		data->player = p;
 		data->ship = ship;
 		data->item = item;
-		data->mult = 1;
+		data->mult = -1;
 		lm->LogP(L_DRIVEL, "hscore_spawner", p, "Item del callback on %s", item->name);
 		ml->SetTimer(handleItemCallback, 1, 1, data, data);
 	}
