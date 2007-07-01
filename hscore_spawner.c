@@ -990,7 +990,7 @@ local int prizeTimerCallback(void *clos)
 	t.u.p = prizeData->player;
 	
 	game->GivePrize(&t, prizeData->prizeNumber, prizeData->count);
-	lm->LogP(L_DRIVEL, "hscore_spawner", prizeData->player, "Prizing %d of prize #%d", prizeData->count, prizeData->prizeNumber);
+	//lm->LogP(L_DRIVEL, "hscore_spawner", prizeData->player, "Prizing %d of prize #%d", prizeData->count, prizeData->prizeNumber);
 	
 	afree(clos);
 	
@@ -1124,7 +1124,7 @@ local void ammoAddedCallback(Player *p, int ship, Item *ammoUser) //warnings: ca
 		}
 	}
 	
-	lm->LogP(L_DRIVEL, "hscore_spawner", p, "Ammo added callback on %s", ammoUser->name);
+	//lm->LogP(L_DRIVEL, "hscore_spawner", p, "Ammo added callback on %s", ammoUser->name);
 	ml->SetTimer(handleItemCallback, 1, 1, data, data);	
 }
 
@@ -1152,7 +1152,7 @@ local void ammoRemovedCallback(Player *p, int ship, Item *ammoUser) //warnings: 
 		}
 	}	
 	
-	lm->LogP(L_DRIVEL, "hscore_spawner", p, "Ammo removed callback on %s", ammoUser->name);
+	//lm->LogP(L_DRIVEL, "hscore_spawner", p, "Ammo removed callback on %s", ammoUser->name);
 	ml->SetTimer(handleItemCallback, 1, 1, data, data);
 }
 
@@ -1165,7 +1165,7 @@ local void triggerEventCallback(Player *p, Item *item, int ship, const char *eve
 		data->ship = ship;
 		data->item = item;
 		data->mult = 1;
-		lm->LogP(L_DRIVEL, "hscore_spawner", p, "Item added callback on %s", item->name);
+		//lm->LogP(L_DRIVEL, "hscore_spawner", p, "Item added callback on %s", item->name);
 		ml->SetTimer(handleItemCallback, 1, 1, data, data);
 	}
 	else if (strcasecmp(eventName, "del") == 0)
@@ -1175,7 +1175,7 @@ local void triggerEventCallback(Player *p, Item *item, int ship, const char *eve
 		data->ship = ship;
 		data->item = item;
 		data->mult = -1;
-		lm->LogP(L_DRIVEL, "hscore_spawner", p, "Item del callback on %s", item->name);
+		//lm->LogP(L_DRIVEL, "hscore_spawner", p, "Item del callback on %s", item->name);
 		ml->SetTimer(handleItemCallback, 1, 1, data, data);
 	}
 	else
