@@ -273,96 +273,103 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 {
 	if (!(item->sellPrice == 0 && item->buyPrice != 0))
 	{
-		if (items->getItemCount(p, item, ship) >= count)
+		if (money->getMoney(p) >= -item->sellPrice * count)
 		{
-			Ihscorestoreman *storeman = mm->GetInterface(I_HSCORE_STOREMAN, p->arena);
-			int storemanOk;
-			LinkedList list;
-			LLInit(&list);
-			
-			if (!storeman)
+			if (items->getItemCount(p, item, ship) >= count)
 			{
-				storemanOk = 1;
-			}
-			else
-			{
-				storemanOk = storeman->canSellItem(p, item);
-				if (!storemanOk)
+				Ihscorestoreman *storeman = mm->GetInterface(I_HSCORE_STOREMAN, p->arena);
+				int storemanOk;
+				LinkedList list;
+				LLInit(&list);
+				
+				if (!storeman)
 				{
-					storeman->getStoreList(p, item, &list); //fills the linked list with stores that buy the item
-				}
-			}
-			mm->ReleaseInterface(storeman);
-
-			if (storemanOk)
-			{
-				int i;
-				Link *link;
-				database->lock();
-				for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
-				{
-					ItemTypeEntry *entry = link->data;
-					
-					if (items->getFreeItemTypeSpotsNoLock(p, entry->itemType, ship) + (entry->delta * count) < 0) //have no free spots
-					{
-						chat->SendMessage(p, "You do not have enough free %s spots.", entry->itemType->name);
-						database->unlock();
-						return;
-					}
-				}
-				database->unlock();
-
-				//trigger before it's sold!
-				items->triggerEventOnItem(p, item, ship, "sell");
-
-				items->addItem(p, item, ship, -count); //change the count BEFORE the "del" event
-
-				for (i = 0; i < count; i++)
-				{
-					items->triggerEventOnItem(p, item, ship, "del");
-				}
-
-				money->giveMoney(p, item->sellPrice * count, MONEY_TYPE_BUYSELL);
-
-				chat->SendMessage(p, "You sold %i of item %s for $%i.", count, item->name, item->sellPrice * count);
-			}
-			else
-			{
-				int storeCount = LLCount(&list);
-				if (storeCount == 0)
-				{
-					chat->SendMessage(p, "You cannot sell item %s at your current location. No known stores buy it!", item->name);
-				}
-				else if (storeCount == 1)
-				{
-					Store *store = LLGetHead(&list)->data;
-					chat->SendMessage(p, "You cannot sell item %s here. Go to %s to sell it!", item->name, store->name);
+					storemanOk = 1;
 				}
 				else
 				{
-					Link *link;
-					chat->SendMessage(p, "You cannot sell item %s here. The following stores buy it:", item->name);
-					for (link = LLGetHead(&list); link; link = link->next)
+					storemanOk = storeman->canSellItem(p, item);
+					if (!storemanOk)
 					{
-						Store *store = link->data;
-						
-						chat->SendMessage(p, "%s", store->name);
+						storeman->getStoreList(p, item, &list); //fills the linked list with stores that buy the item
 					}
 				}
-				
-				LLEmpty(&list);
+				mm->ReleaseInterface(storeman);
+
+				if (storemanOk)
+				{
+					int i;
+					Link *link;
+					database->lock();
+					for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
+					{
+						ItemTypeEntry *entry = link->data;
+						
+						if (items->getFreeItemTypeSpotsNoLock(p, entry->itemType, ship) + (entry->delta * count) < 0) //have no free spots
+						{
+							chat->SendMessage(p, "You do not have enough free %s spots.", entry->itemType->name);
+							database->unlock();
+							return;
+						}
+					}
+					database->unlock();
+
+					//trigger before it's sold!
+					items->triggerEventOnItem(p, item, ship, "sell");
+
+					items->addItem(p, item, ship, -count); //change the count BEFORE the "del" event
+
+					for (i = 0; i < count; i++)
+					{
+						items->triggerEventOnItem(p, item, ship, "del");
+					}
+
+					money->giveMoney(p, item->sellPrice * count, MONEY_TYPE_BUYSELL);
+
+					chat->SendMessage(p, "You sold %i of item %s for $%i.", count, item->name, item->sellPrice * count);
+				}
+				else
+				{
+					int storeCount = LLCount(&list);
+					if (storeCount == 0)
+					{
+						chat->SendMessage(p, "You cannot sell item %s at your current location. No known stores buy it!", item->name);
+					}
+					else if (storeCount == 1)
+					{
+						Store *store = LLGetHead(&list)->data;
+						chat->SendMessage(p, "You cannot sell item %s here. Go to %s to sell it!", item->name, store->name);
+					}
+					else
+					{
+						Link *link;
+						chat->SendMessage(p, "You cannot sell item %s here. The following stores buy it:", item->name);
+						for (link = LLGetHead(&list); link; link = link->next)
+						{
+							Store *store = link->data;
+							
+							chat->SendMessage(p, "%s", store->name);
+						}
+					}
+					
+					LLEmpty(&list);
+				}
+			}
+			else
+			{
+				if (count == 1)
+				{
+					chat->SendMessage(p, "You do not have any of item %s to sell", item->name);
+				}
+				else
+				{
+					chat->SendMessage(p, "You do not have that many of item %s to sell", item->name);
+				}
 			}
 		}
 		else
 		{
-			if (count == 1)
-			{
-				chat->SendMessage(p, "You do not have any of item %s to sell", item->name);
-			}
-			else
-			{
-				chat->SendMessage(p, "You do not have that many of item %s to sell", item->name);
-			}
+			chat->SendMessage(p, "You do not have enough money to sell item %s.", item->name);
 		}
 	}
 	else
@@ -421,7 +428,7 @@ local void buyShip(Player *p, int ship)
 	}
 }
 
-local void sellShip(Player *p, int ship, int force)
+local void sellShip(Player *p, int ship)
 {
 	int sellPrice = cfg->GetInt(p->arena->cfg, shipNames[ship], "SellPrice", 0);
 
@@ -430,17 +437,27 @@ local void sellShip(Player *p, int ship, int force)
 		PerPlayerData *playerData = database->getPerPlayerData(p);
 		if (playerData->hull[ship] != NULL)
 		{
-			if (force || !items->hasItemsLeftOnShip(p, ship))
+			int itemPrices = 0;
+			LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
+			Link *link;
+			
+			for (link = LLGetHead(inventoryList); link; link = link->next)
+			{
+				InventoryEntry *entry = link->data;
+				itemPrices += entry->item->sellPrice * entry->count;
+			}
+			
+			if (money->getMoney(p) >= -(sellPrice + itemPrices))
 			{
 				database->removeShip(p, ship);
 
-				money->giveMoney(p, sellPrice, MONEY_TYPE_BUYSELL);
+				money->giveMoney(p, sellPrice + itemPrices, MONEY_TYPE_BUYSELL);
 
-				chat->SendMessage(p, "You sold your %s for $%i.", shipNames[ship], sellPrice);
+				chat->SendMessage(p, "You sold your %s for $%i.", shipNames[ship], sellPrice + itemPrices);
 			}
 			else
 			{
-				chat->SendMessage(p, "Your ship still have items on it. Use ?sell -f %s to sell anyway", shipNames[ship]);
+				chat->SendMessage(p, "You do not have enough money to sell your %s. You need $%i", shipNames[ship], sellPrice + itemPrices);
 			}
 		}
 		else
@@ -617,10 +634,8 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 
 local helptext_t sellHelp =
 "Targets: none\n"
-"Args: <item> or [{-f}] <ship>\n"
-"Removes the item from your ship and refunds you the item's sell price.\n"
-"If selling a ship, the {-f} will force the ship to be sold, even if the ship\n"
-"is not empty, destroying all items onboard.\n";
+"Args: <item> or <ship>\n"
+"Removes the item from your ship and refunds you the item's sell price.\n";
 
 local void sellCommand(const char *command, const char *params, Player *p, const Target *target)
 {
@@ -644,8 +659,11 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 			if (*params == 'f')
 			{
 				force = 1;
+				
+				chat->SendMessage(p, "Force no longer accepted as a parameter!");
+				return;
 
-				params = strchr(params, ' ');
+				/*params = strchr(params, ' ');
 				if (params) //check so that params can still == NULL
 				{
 					params++; //we want *after* the space
@@ -654,7 +672,7 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 				{
 					chat->SendMessage(p, "Sell: invalid usage.");
 					return;
-				}
+				}*/
 			}
 			if (*params == 'c')
 			{
