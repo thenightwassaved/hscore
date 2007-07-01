@@ -990,7 +990,7 @@ local int prizeTimerCallback(void *clos)
 	t.u.p = prizeData->player;
 	
 	game->GivePrize(&t, prizeData->prizeNumber, prizeData->count);
-	lm->LogP(L_DRIVEL, "hscore_spawner", p, "Prizing %d of prize #%d", prizeData->count, prizeData->prizeNumber);
+	lm->LogP(L_DRIVEL, "hscore_spawner", prizeData->player, "Prizing %d of prize #%d", prizeData->count, prizeData->prizeNumber);
 	
 	afree(clos);
 	
@@ -1102,7 +1102,7 @@ local int handleItemCallback(void *clos)
 
 local void ammoAddedCallback(Player *p, int ship, Item *ammoUser) //warnings: cache is out of sync, and lock is held
 {
-	PlayerDataStruct *data = PPDATA(p, playerDataKey);
+	PlayerDataStruct *pdata = PPDATA(p, playerDataKey);
 	
 	CallbackData *data = amalloc(sizeof(*data));
 	data->player = p;
@@ -1119,7 +1119,7 @@ local void ammoAddedCallback(Player *p, int ship, Item *ammoUser) //warnings: ca
 	{
 		if (ammoUser->affectsSets)
 		{
-			data->dirty = 1;
+			pdata->dirty = 1;
 			return;
 		}
 	}
@@ -1130,7 +1130,7 @@ local void ammoAddedCallback(Player *p, int ship, Item *ammoUser) //warnings: ca
 
 local void ammoRemovedCallback(Player *p, int ship, Item *ammoUser) //warnings: cache is out of sync, and lock is held
 {
-	PlayerDataStruct *data = PPDATA(p, playerDataKey);
+	PlayerDataStruct *pdata = PPDATA(p, playerDataKey);
 	
 	CallbackData *data = amalloc(sizeof(*data));
 	data->player = p;
@@ -1147,7 +1147,7 @@ local void ammoRemovedCallback(Player *p, int ship, Item *ammoUser) //warnings: 
 	{
 		if (ammoUser->affectsSets)
 		{
-			data->dirty = 1;
+			pdata->dirty = 1;
 			return;
 		}
 	}	
