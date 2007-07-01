@@ -639,7 +639,6 @@ local helptext_t sellHelp =
 
 local void sellCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	int force = 0;
 	int count = 1;
 	const char *newParams;
 
@@ -658,7 +657,7 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 
 			if (*params == 'f')
 			{
-				force = 1;
+				//force = 1;
 				
 				chat->SendMessage(p, "Force no longer accepted as a parameter!");
 				return;
@@ -735,7 +734,7 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 			{
 				if (i != p->p_ship)
 				{
-					sellShip(p, i, force);
+					sellShip(p, i);
 				}
 				else
 				{
