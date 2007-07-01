@@ -900,27 +900,6 @@ local void itemCountChangedCallback(Player *p, Item *item, InventoryEntry *entry
 			data->dirty = 1;
 			return;
 		}
-
-		//if we didn't recompute, then check if the player has anything changeable that uses this item as ammo.
-		//if they do, recompute and flag dirty
-		//NOTE: only need to do it if count was or is 0
-		if (oldCount == 0 || newCount == 0)
-		{
-			Link *link;
-			for (link = LLGetHead(database->getItemList()); link; link = link->next)
-			{
-				Item *linkItem = link->data;
-
-				if (linkItem->ammo == item)
-				{
-					if (linkItem->affectsSets)
-					{
-						data->dirty = 1;
-						return;
-					}
-				}
-			}
-		}
 	}
 }
 
@@ -1011,6 +990,7 @@ local int prizeTimerCallback(void *clos)
 	t.u.p = prizeData->player;
 	
 	game->GivePrize(&t, prizeData->prizeNumber, prizeData->count);
+	lm->LogP(L_DRIVEL, "hscore_spawner", p, "Prizing %d of prize #%d", prizeData->count, prizeData->prizeNumber);
 	
 	afree(clos);
 	
@@ -1122,22 +1102,56 @@ local int handleItemCallback(void *clos)
 
 local void ammoAddedCallback(Player *p, int ship, Item *ammoUser) //warnings: cache is out of sync, and lock is held
 {
+	PlayerDataStruct *data = PPDATA(p, playerDataKey);
+	
 	CallbackData *data = amalloc(sizeof(*data));
 	data->player = p;
 	data->ship = ship;
 	data->item = ammoUser;
 	data->mult = 1;
+	
+	if (ammoUser->resendSets)
+	{
+		//resend the settings in a callback to avoid a deadlock
+		ml->SetTimer(itemCountChangedTimer, 0, 0, p, p);
+	}
+	else //check if it changed anything in clientset, and if it did, recompute and flag dirty
+	{
+		if (ammoUser->affectsSets)
+		{
+			data->dirty = 1;
+			return;
+		}
+	}
+	
 	lm->LogP(L_DRIVEL, "hscore_spawner", p, "Ammo added callback on %s", ammoUser->name);
-	ml->SetTimer(handleItemCallback, 1, 1, data, data);
+	ml->SetTimer(handleItemCallback, 1, 1, data, data);	
 }
 
 local void ammoRemovedCallback(Player *p, int ship, Item *ammoUser) //warnings: cache is out of sync, and lock is held
 {
+	PlayerDataStruct *data = PPDATA(p, playerDataKey);
+	
 	CallbackData *data = amalloc(sizeof(*data));
 	data->player = p;
 	data->ship = ship;
 	data->item = ammoUser;
 	data->mult = -1;
+	
+	if (ammoUser->resendSets)
+	{
+		//resend the settings in a callback to avoid a deadlock
+		ml->SetTimer(itemCountChangedTimer, 0, 0, p, p);
+	}
+	else //check if it changed anything in clientset, and if it did, recompute and flag dirty
+	{
+		if (ammoUser->affectsSets)
+		{
+			data->dirty = 1;
+			return;
+		}
+	}	
+	
 	lm->LogP(L_DRIVEL, "hscore_spawner", p, "Ammo removed callback on %s", ammoUser->name);
 	ml->SetTimer(handleItemCallback, 1, 1, data, data);
 }
