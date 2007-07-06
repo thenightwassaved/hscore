@@ -31,6 +31,7 @@ local void LinkAmmo();
 local void loadPropertiesQueryCallback(int status, db_res *result, void *passedData);
 local void loadEventsQueryCallback(int status, db_res *result, void *passedData);
 local void loadItemsQueryCallback(int status, db_res *result, void *passedData);
+local void loadItemTypeAssocQueryCallback(int status, db_res *result, void *passedData);
 local void loadItemTypesQueryCallback(int status, db_res *result, void *passedData);
 local void loadPlayerGlobalsQueryCallback(int status, db_res *result, void *passedData);
 local void loadPlayerShipItemsQueryCallback(int status, db_res *result, void *passedData);
@@ -62,6 +63,7 @@ local void LoadEvents();
 local void LoadProperties();
 local void LoadItemList();
 local void LoadItemTypeList();
+local void AssociateItemTypes();
 local void StorePlayerGlobals(Player *p);
 local void StorePlayerShips(Player *p, Arena *arena);
 local void StoreAllPerPlayerData();
@@ -405,6 +407,14 @@ local void LinkAmmo()
 "  UNIQUE KEY `index` (`player_id`,`arena`)" \
 ")"
 
+#define CREATE_ITEM_TYPE_ASSOC_TABLE \
+"CREATE TABLE IF NOT EXISTS `hs_item_type_assoc` (" \
+"  `item_id` int(10) unsigned NOT NULL," \
+"  `type_id` int(10) unsigned NOT NULL," \
+"  `qty` int(10) unsigned NOT NULL default '1'," \
+"  PRIMARY KEY  (`item_id`,`type_id`)" \
+")"
+
 local void initTables()
 {
 	mysql->Query(NULL, NULL, 0, CREATE_CATEGORIES_TABLE);
@@ -420,6 +430,7 @@ local void initTables()
 	mysql->Query(NULL, NULL, 0, CREATE_STORES_TABLE);
 	mysql->Query(NULL, NULL, 0, CREATE_TRANSACTIONS_TABLE);
 	mysql->Query(NULL, NULL, 0, CREATE_PLAYER_POINTS_TABLE);
+	mysql->Query(NULL, NULL, 0, CREATE_ITEM_TYPE_ASSOC_TABLE);
 }
 
 //+-------------------------+
@@ -616,7 +627,7 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 		Item *item = NULL;
 		int id = atoi(mysql->GetField(row, 0));
 
-		char itemTypes[256];
+		//char itemTypes[256];
 
 		lock();
 		for (link = LLGetHead(&itemList); link; link = link->next)
@@ -656,8 +667,6 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 		item->expRequired = atoi(mysql->GetField(row, 6));			//exp_required
 		item->shipsAllowed = atoi(mysql->GetField(row, 7));			//ships_allowed
 
-		astrncpy(itemTypes, mysql->GetField(row, 8), 255);			//item_types
-
 		item->max = atoi(mysql->GetField(row, 9));					//max
 
 		item->delayStatusWrite = atoi(mysql->GetField(row, 10));	//delay_write
@@ -666,71 +675,6 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 		item->minAmmo = atoi(mysql->GetField(row, 13));				//min_ammo
 		item->affectsSets = atoi(mysql->GetField(row, 14));			//affects_sets
 		item->resendSets = atoi(mysql->GetField(row, 15));			//resend_sets
-
-		if (itemTypes != NULL) //parse itemTypes
-		{
-			const char *tmp = NULL;
-			char word[64];
-			while (strsplit(itemTypes, ",", word, sizeof(word), &tmp))
-			{
-				//items should be in the format "item type id" or "item type id:count"
-				char *colonLoc = strchr(word, ':');
-				if (colonLoc == NULL)
-				{
-					//no count included
-					//word should be just "item type id"
-					ItemType *itemType = getItemTypeByIDNoLock(atoi(word));
-					if (itemType != NULL)
-					{
-						ItemTypeEntry *entry = amalloc(sizeof(*entry));
-						entry->itemType = itemType;
-						entry->delta = 1;
-
-						LLAdd(&item->itemTypeEntries, entry);
-					}
-					else
-					{
-						lm->Log(L_ERROR, "<hscore_database> bad item type %s on item %s", word, item->name);
-					}
-				}
-				else
-				{
-					//null terminate the item name
-					*colonLoc = '\0';
-
-					//make sure a count follows the colon
-					colonLoc++;
-					if (*colonLoc != '\0')
-					{
-						int count = atoi(colonLoc);
-						if (count != 0)
-						{
-							ItemType *itemType = getItemTypeByIDNoLock(atoi(word));
-							if (item != NULL)
-							{
-								ItemTypeEntry *entry = amalloc(sizeof(*entry));
-								entry->itemType = itemType;
-								entry->delta = count;
-
-								LLAdd(&item->itemTypeEntries, entry);
-							}
-							else
-							{
-								lm->Log(L_ERROR, "<hscore_database> bad item type %s on item %s", word, item->name);
-							}
-						}
-						else
-						{
-							lm->Log(L_ERROR, "<hscore_database> initial count of %d for %s on %s", count, word, item->name);
-						}
-					}
-					else
-					{
-						lm->Log(L_ERROR, "<hscore_database> colon on item type %s not followed by a string on item %s", word, item->name);
-					}
-				}
-			}
-		}
 
 		unlock();
 
@@ -745,6 +689,60 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 	//process the ammo ids
 	LinkAmmo();
 
+}
+
+local void loadItemTypeAssocQueryCallback(int status, db_res *result, void *passedData)
+{
+	int results;
+	db_row *row;
+	Item *item;
+
+	if (status != 0 || result == NULL)
+	{
+		lm->Log(L_ERROR, "<hscore_database> Unexpected database error during item type association.");
+		return;
+	}
+
+	results = mysql->GetRowCount(result);
+
+	if (results == 0)
+	{
+		lm->Log(L_WARN, "<hscore_database> No items returned from MySQL query.");
+	}
+
+	while ((row = mysql->GetRow(result)))
+	{
+		int item_id = atoi(mysql->GetField(row, 0));
+		int type_id = atoi(mysql->GetField(row, 1));
+		int qty = atoi(mysql->GetField(row, 2));
+		if(item == NULL || item->id != item_id)
+		{
+			item = getItemByIDNoLock(item_id);
+		}
+
+		if(item != NULL)
+		{
+			ItemType *itemType = getItemTypeByIDNoLock(type_id);
+			if (itemType != NULL)
+			{
+				ItemTypeEntry *entry = amalloc(sizeof(*entry));
+				entry->itemType = itemType;
+				entry->delta = qty;
+
+				LLAdd(&item->itemTypeEntries, entry);
+			}
+			else
+			{
+				lm->Log(L_ERROR, "<hscore_database> bad item type %d on item %s", type_id, item->name);
+			}
+		}
+		else
+		{
+			lm->Log(L_ERROR, "<hscore_database> tried to assign type %d to bad item %d", type_id, item_id);
+		}
+	}
+
+	lm->Log(L_DRIVEL, "<hscore_database> %i item types were assigned from MySQL.", results);
 }
 
 local void loadItemTypesQueryCallback(int status, db_res *result, void *passedData)
@@ -797,6 +795,7 @@ local void loadItemTypesQueryCallback(int status, db_res *result, void *passedDa
 
 	lm->Log(L_DRIVEL, "<hscore_database> %i item types were loaded from MySQL.", results);
 	LoadItemList(); //now that all the item types are in, load the items.
+	AssociateItemTypes(); //give items their types
 
 }
 
@@ -1507,6 +1506,11 @@ local void LoadItemList() //will call LoadProperties() and LoadEvents() when fin
 local void LoadItemTypeList() //will call LoadItemList() when finished loading
 {
 	mysql->Query(loadItemTypesQueryCallback, NULL, 1, "SELECT id, name, max FROM hs_item_types");
+}
+
+local void AssociateItemTypes()
+{
+	mysql->Query(loadItemTypeAssocQueryCallback, NULL, 1, "SELECT item_id, type_id, qty FROM hs_item_type_assoc ORDER BY item_id ASC");
 }
 
 //+-------------------+
