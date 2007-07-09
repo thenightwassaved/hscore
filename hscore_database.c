@@ -411,7 +411,7 @@ local void LinkAmmo()
 "CREATE TABLE IF NOT EXISTS `hs_item_type_assoc` (" \
 "  `item_id` int(10) unsigned NOT NULL," \
 "  `type_id` int(10) unsigned NOT NULL," \
-"  `qty` int(10) unsigned NOT NULL default '1'," \
+"  `qty` int(10) NOT NULL default '1'," \
 "  PRIMARY KEY  (`item_id`,`type_id`)" \
 ")"
 
