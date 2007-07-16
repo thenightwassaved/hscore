@@ -7,21 +7,9 @@
 #include "hscore_storeman.h"
 #include "hscore_database.h"
 #include "hscore_shipnames.h"
+#include "hscore_buysell_points.h"
 
 #define SEE_HIDDEN_CATEGORIES "seehiddencat"
-
-typedef struct PointsArenaData
-{
-	int usingPoints;
-	char arenaIdentifier[32];
-	int useGlobal;
-} PointsArenaData;
-
-typedef struct PointsPlayerData
-{
-	int globalPoints;
-	int shipPoints[8];
-} PointsPlayerData;
 
 local int adkey;
 local int pdkey;
@@ -52,6 +40,15 @@ local const char * getArenaIdentifier(Arena *arena)
 	}
 
 	return arenaIdent;
+}
+
+local void setSellingAllowed(Arena *a, int allowed)
+{
+	PointsArenaData *pad = P_ARENA_DATA(a, adkey);
+	if(allowed)
+		pad->sellingAllowed = 1;
+	else
+		pad->sellingAllowed = 0;
 }
 
 local int getShipPoints(Player *p, int ship)
@@ -141,6 +138,7 @@ local void loadArenaData(Arena *a)
 	pad->usingPoints = 1;
 	astrncpy(pad->arenaIdentifier, getArenaIdentifier(a), sizeof(pad->arenaIdentifier));
 	pad->useGlobal = cfg->GetInt(a->cfg, "Hyperspace", "UseGlobalPoints", 1);
+	pad->sellingAllowed = 1;
 }
 
 local void loadDefaultPoints(Player *p)
@@ -913,136 +911,145 @@ local helptext_t sellHelp =
 
 local void sellCommand(const char *command, const char *params, Player *p, const Target *target)
 {
-	int force = 0;
-	int count = 1;
-	const char *newParams;
+	PointsArenaData *pad = P_ARENA_DATA(p->arena, adkey);
 
-	char *next; //for strtol
-
-	while (params != NULL) //get the flags
+	if(pad->sellingAllowed)
 	{
-		if (*params == '-')
+		int force = 0;
+		int count = 1;
+		const char *newParams;
+
+		char *next; //for strtol
+
+		while (params != NULL) //get the flags
 		{
-			params++;
-			if (*params == '\0')
+			if (*params == '-')
+			{
+				params++;
+				if (*params == '\0')
+				{
+					newParams = params;
+					break;
+				}
+
+				if (*params == 'f')
+				{
+					force = 1;
+
+					params = strchr(params, ' ');
+					if (params) //check so that params can still == NULL
+					{
+						params++; //we want *after* the space
+					}
+					else
+					{
+						chat->SendMessage(p, "Sell: invalid usage.");
+						return;
+					}
+				}
+				if (*params == 'c')
+				{
+					params = strchr(params, ' ');
+					if (params) //check so that params can still == NULL
+					{
+						params++; //we want *after* the space
+					}
+					else
+					{
+						chat->SendMessage(p, "Sell: invalid usage.");
+						return;
+					}
+
+					count = strtol(params, &next, 0);
+
+					if (next == params)
+					{
+						chat->SendMessage(p, "Sell: bad count.");
+						return;
+					}
+
+					params = next;
+				}
+			}
+			else if (*params == ' ')
+			{
+				params++;
+			}
+			else if (*params == '\0')
 			{
 				newParams = params;
 				break;
 			}
-
-			if (*params == 'f')
+			else
 			{
-				force = 1;
+				newParams = params;
+				break;
+			}
+		}
 
-				params = strchr(params, ' ');
-				if (params) //check so that params can still == NULL
+		//finished parsing
+		if (count < 1)
+		{
+			chat->SendMessage(p, "Nice try.");
+			return;
+		}
+
+		if (strcasecmp(newParams, "") == 0) //no params
+		{
+			chat->SendMessage(p, "Please use ?buy to find the item you wish to sell");
+		}
+		else //has params
+		{
+			//check if they're asking for a ship
+			for (int i = 0; i < 8; i++)
+			{
+				if (strcasecmp(newParams, shipNames[i]) == 0)
 				{
-					params++; //we want *after* the space
-				}
-				else
-				{
-					chat->SendMessage(p, "Sell: invalid usage.");
+					if (i != p->p_ship)
+					{
+						sellShip(p, i, force);
+					}
+					else
+					{
+						chat->SendMessage(p, "You cannot sell the ship you are using. Switch to spec first.");
+					}
+
 					return;
 				}
 			}
-			if (*params == 'c')
+
+			//check for an item
+			Item *item = items->getItemByName(newParams, p->arena);
+			if (item != NULL)
 			{
-				params = strchr(params, ' ');
-				if (params) //check so that params can still == NULL
+				if (p->p_ship != SHIP_SPEC)
 				{
-					params++; //we want *after* the space
+					PerPlayerData *playerData = database->getPerPlayerData(p);
+					if (playerData->hull[p->p_ship] != NULL)
+					{
+						//check - counts
+						sellItem(p, item, count, p->p_ship);
+					}
+					else
+					{
+						chat->SendMessage(p, "No items can be loaded onto a %s in this arena.", shipNames[p->p_ship]);
+					}
 				}
 				else
 				{
-					chat->SendMessage(p, "Sell: invalid usage.");
-					return;
-				}
-
-				count = strtol(params, &next, 0);
-
-				if (next == params)
-				{
-					chat->SendMessage(p, "Sell: bad count.");
-					return;
-				}
-
-				params = next;
-			}
-		}
-		else if (*params == ' ')
-		{
-			params++;
-		}
-		else if (*params == '\0')
-		{
-			newParams = params;
-			break;
-		}
-		else
-		{
-			newParams = params;
-			break;
-		}
-	}
-
-	//finished parsing
-	if (count < 1)
-	{
-		chat->SendMessage(p, "Nice try.");
-		return;
-	}
-
-	if (strcasecmp(newParams, "") == 0) //no params
-	{
-		chat->SendMessage(p, "Please use ?buy to find the item you wish to sell");
-	}
-	else //has params
-	{
-		//check if they're asking for a ship
-		for (int i = 0; i < 8; i++)
-		{
-			if (strcasecmp(newParams, shipNames[i]) == 0)
-			{
-				if (i != p->p_ship)
-				{
-					sellShip(p, i, force);
-				}
-				else
-				{
-					chat->SendMessage(p, "You cannot sell the ship you are using. Switch to spec first.");
+					chat->SendMessage(p, "You cannot buy or sell items in spec.");
 				}
 
 				return;
 			}
+
+			//not a ship nor an item
+			chat->SendMessage(p, "No item %s in this arena.", params);
 		}
-
-		//check for an item
-		Item *item = items->getItemByName(newParams, p->arena);
-		if (item != NULL)
-		{
-			if (p->p_ship != SHIP_SPEC)
-			{
-				PerPlayerData *playerData = database->getPerPlayerData(p);
-				if (playerData->hull[p->p_ship] != NULL)
-				{
-					//check - counts
-					sellItem(p, item, count, p->p_ship);
-				}
-				else
-				{
-					chat->SendMessage(p, "No items can be loaded onto a %s in this arena.", shipNames[p->p_ship]);
-				}
-			}
-			else
-			{
-				chat->SendMessage(p, "You cannot buy or sell items in spec.");
-			}
-
-			return;
-		}
-
-		//not a ship nor an item
-		chat->SendMessage(p, "No item %s in this arena.", params);
+	}
+	else
+	{
+		chat->SendMessage(p, "You are not allowed to sell items at this time.");
 	}
 }
 
@@ -1111,6 +1118,12 @@ local void shipAddedCallback(Player *p, int ship)
 	}
 }
 
+local Ihscorebuysellpoints interface =
+{
+	INTERFACE_HEAD_INIT(I_HSCORE_BUYSELL_POINTS, "hscore_buysell_points")
+	setSellingAllowed
+};
+
 EXPORT const char info_hscore_buysell_points[] = "v1.0 Dr Brain/D1st0rt <d1st0rter@gmail.com>";
 
 EXPORT int MM_hscore_buysell_points(int action, Imodman *_mm, Arena *arena)
@@ -1149,6 +1162,8 @@ EXPORT int MM_hscore_buysell_points(int action, Imodman *_mm, Arena *arena)
 			return MM_FAIL;
 		}
 
+		mm->RegInterface(&interface, ALLARENAS);
+
 		pdkey = pd->AllocatePlayerData(sizeof(PointsPlayerData));
 		adkey = aman->AllocateArenaData(sizeof(PointsArenaData));
 		ml->SetTimer(periodicStoreTimer, 30000, 30000, NULL, NULL);
@@ -1159,6 +1174,11 @@ EXPORT int MM_hscore_buysell_points(int action, Imodman *_mm, Arena *arena)
 	}
 	else if (action == MM_UNLOAD)
 	{
+		if (mm->UnregInterface(&interface, ALLARENAS))
+		{
+			return MM_FAIL;
+		}
+
 		pd->FreePlayerData(pdkey);
 		aman->FreeArenaData(adkey);
 		ml->ClearTimer(periodicStoreTimer, NULL);
