@@ -138,15 +138,15 @@ void WarptoPlayer(Player *p, int tile_x, int tile_y)
 	game->WarpTo(&t, tile_x, tile_y);
 }
 
-EXPORT const char info_hs_warp[] = "v1.1 Dr Brain <drbrain@gmail.com>";
+EXPORT const char info_hscore_warp[] = "v1.1 Dr Brain <drbrain@gmail.com>";
 
-local Ihswarp myint =
+local Ihscorewarp myint =
 {
-	INTERFACE_HEAD_INIT(I_HS_WARP, "hs_warp")
+	INTERFACE_HEAD_INIT(I_HSCORE_WARP, "hscore_warp")
 	WarpPlayer, WarpPlayerExtra, WarpPlayerWithWeapon, CreateWarpPacket, WarptoPlayer
 };
 
-EXPORT int MM_hs_warp(int action, Imodman *_mm, Arena *arena)
+EXPORT int MM_hscore_warp(int action, Imodman *_mm, Arena *arena)
 {
 	if (action == MM_LOAD)
 	{

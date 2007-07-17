@@ -1,9 +1,9 @@
-#ifndef HS_WARP_H
-#define HS_WARP_H
+#ifndef HSCORE_WARP_H
+#define HSCORE_WARP_H
 
-#define I_HS_WARP "hs_warp-1"
+#define I_HSCORE_WARP "hscore_warp-1"
 
-typedef struct Ihswarp
+typedef struct Ihscorewarp
 {
 	INTERFACE_HEAD_DECL
 	void (*WarpPlayer)(Player *p, int dest_x, int dest_y, int v_x, int v_y); //pixels
@@ -12,6 +12,6 @@ typedef struct Ihswarp
 	void (*CreateWarpPacket)(Player *p, int dest_x, int dest_y, int v_x, int v_y, int rotation, int status, int bounty, struct S2CWeapons *packet);
 	void (*WarptoPlayer)(Player *p, int tile_x, int tile_y);
 
-} Ihswarp;
+} Ihscorewarp;
 
-#endif /* HS_WARP_H */
+#endif /* HSCORE_WARP_H */
