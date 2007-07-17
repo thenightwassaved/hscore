@@ -149,6 +149,7 @@ local Ihscoreitems *items;
 local Iclientset *clientset;
 local Ihscoredatabase *database;
 local Imainloop *ml;
+local Ihscorewarp *warp;
 
 local int playerDataKey;
 
@@ -1005,6 +1006,7 @@ local int handleItemCallback(void *clos)
 	Item *item = data->item;
 	int mult = data->mult;
 	Link *propLink;
+	int oldBounty = p->position.bounty
 	
 	afree(clos);
 	
@@ -1096,6 +1098,9 @@ local int handleItemCallback(void *clos)
 			ml->SetTimer(prizeTimerCallback, 1, 1, prizeData, prizeData);
 		}
 	}
+	
+	//set the bounty back
+	warp->WarpPlayerExtra(p, p->position.x, p->position.y, p->position.xspeed, p->position.yspeed, p->position.rotation, p->position.status, oldBounty);
 	
 	return FALSE;
 }
@@ -1230,8 +1235,9 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 		clientset = mm->GetInterface(I_CLIENTSET, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
 		ml = mm->GetInterface(I_MAINLOOP, ALLARENAS);
+		warp = mm->GetInterface(I_HSCORE_WARP);
 
-		if (!lm || !pd || !net || !game || !chat || !cfg || !items || !clientset || !database || !ml)
+		if (!lm || !pd || !net || !game || !chat || !cfg || !items || !clientset || !database || !ml || !warp)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(pd);
@@ -1243,6 +1249,7 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 			mm->ReleaseInterface(clientset);
 			mm->ReleaseInterface(database);
 			mm->ReleaseInterface(ml);
+			mm->ReleaseInterface(warp);
 
 			return MM_FAIL;
 		}
@@ -1283,6 +1290,7 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(clientset);
 		mm->ReleaseInterface(database);
 		mm->ReleaseInterface(ml);
+		mm->ReleaseInterface(warp);
 
 		return MM_OK;
 	}
