@@ -983,21 +983,6 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 	pd->Unlock();
 }
 
-local int prizeTimerCallback(void *clos)
-{
-	PrizeData *prizeData = clos;
-	Target t;
-	t.type = T_PLAYER;
-	t.u.p = prizeData->player;
-	
-	game->GivePrize(&t, prizeData->prizeNumber, prizeData->count);
-	//lm->LogP(L_DRIVEL, "hscore_spawner", prizeData->player, "Prizing %d of prize #%d", prizeData->count, prizeData->prizeNumber);
-	
-	afree(clos);
-	
-	return FALSE;
-}
-
 local int handleItemCallback(void *clos)
 {
 	CallbackData *data = clos;
@@ -1091,11 +1076,10 @@ local int handleItemCallback(void *clos)
 			
 		if (prizeNumber != -1)
 		{
-			PrizeData *prizeData = amalloc(sizeof(*prizeData));
-			prizeData->player = p;
-			prizeData->prizeNumber = mult*mult2*prizeNumber;
-			prizeData->count = count;
-			ml->SetTimer(prizeTimerCallback, 1, 1, prizeData, prizeData);
+			Target t;
+			t.type = T_PLAYER;
+			t.u.p = p;
+			game->GivePrize(&t, mult*mult2*prizeNumber, count);
 		}
 	}
 	
@@ -1276,8 +1260,7 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 
 		pd->FreePlayerData(playerDataKey);
 
-		ml->ClearTimer(itemCountChangedTimer, NULL);	
-		ml->ClearTimer(prizeTimerCallback, NULL);	
+		ml->ClearTimer(itemCountChangedTimer, NULL);
 		ml->ClearTimer(handleItemCallback, NULL);
 		
 		mm->ReleaseInterface(lm);
