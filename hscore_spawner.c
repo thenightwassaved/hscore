@@ -1006,7 +1006,7 @@ local int handleItemCallback(void *clos)
 	Item *item = data->item;
 	int mult = data->mult;
 	Link *propLink;
-	int oldBounty = p->position.bounty
+	int oldBounty = p->position.bounty;
 	
 	afree(clos);
 	
@@ -1235,7 +1235,7 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 		clientset = mm->GetInterface(I_CLIENTSET, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
 		ml = mm->GetInterface(I_MAINLOOP, ALLARENAS);
-		warp = mm->GetInterface(I_HSCORE_WARP);
+		warp = mm->GetInterface(I_HSCORE_WARP, ALLARENAS);
 
 		if (!lm || !pd || !net || !game || !chat || !cfg || !items || !clientset || !database || !ml || !warp)
 		{
