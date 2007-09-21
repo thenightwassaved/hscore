@@ -1444,6 +1444,9 @@ local void LoadPlayerGlobals(Player *p) //fetch globals from MySQL
 
 local void LoadPlayerShipItems(Player *p, Arena *arena) //fetch ship items from MySQL
 {
+	if (arena == NULL)
+		return;
+
 	if (areShipsLoaded(p))
 	{
 		PerPlayerData *playerData = getPerPlayerData(p);
@@ -1457,6 +1460,9 @@ local void LoadPlayerShipItems(Player *p, Arena *arena) //fetch ship items from 
 
 local void LoadPlayerShips(Player *p, Arena *arena) //fetch ships from MySQL. Will call LoadPlayerShipItems()
 {
+	if (arena == NULL)
+		return;
+
 	if (isLoaded(p))
 	{
 		PerPlayerData *playerData = getPerPlayerData(p);
@@ -1551,6 +1557,9 @@ local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST 
 {
 	PerPlayerData *playerData = getPerPlayerData(p);
 
+	if (arena == NULL)
+		return;
+	
 	if (areShipsLoaded(p))
 	{
 		int i;
