@@ -1187,6 +1187,24 @@ local void respawn(Player *p)
 	data->lastDeath = 0;
 }
 
+local int getFullEnergy(Player *p)
+{	
+	if (0 <= p->p_ship && p->p_ship <= 0)
+	{
+		ConfigHandle conf = p->arena->cfg;
+		const char *shipname = shipNames[p->p_ship];
+		int energy = items->getPropertySum(p, i, "energy");
+		int initEnergy = cfg->GetInt(conf, shipname, "InitialEnergy", 0);
+		int upEnergy = cfg->GetInt(conf, shipname, "UpgradeEnergy", 0);
+
+		return initEnergy + (upEnergy * energy);
+	}
+	else
+	{
+		return 0;
+	}
+}
+
 local void HSItemReloadCallback(void)
 {
 	Player *p;
@@ -1203,7 +1221,7 @@ local void HSItemReloadCallback(void)
 local Ihscorespawner interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_SPAWNER, "hscore_spawner")
-	respawn,
+	respawn, getMaxEnergy
 };
 
 EXPORT const char info_hscore_spawner[] = "v1.0 Dr Brain <drbrain@gmail.com>";
