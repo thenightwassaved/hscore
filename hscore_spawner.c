@@ -1193,7 +1193,7 @@ local int getFullEnergy(Player *p)
 	{
 		ConfigHandle conf = p->arena->cfg;
 		const char *shipname = shipNames[p->p_ship];
-		int energy = items->getPropertySum(p, i, "energy");
+		int energy = items->getPropertySum(p, p->p_ship, "energy");
 		int initEnergy = cfg->GetInt(conf, shipname, "InitialEnergy", 0);
 		int upEnergy = cfg->GetInt(conf, shipname, "UpgradeEnergy", 0);
 
@@ -1221,7 +1221,7 @@ local void HSItemReloadCallback(void)
 local Ihscorespawner interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_SPAWNER, "hscore_spawner")
-	respawn, getMaxEnergy
+	respawn, getFullEnergy
 };
 
 EXPORT const char info_hscore_spawner[] = "v1.0 Dr Brain <drbrain@gmail.com>";
