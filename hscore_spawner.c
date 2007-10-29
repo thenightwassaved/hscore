@@ -1189,7 +1189,7 @@ local void respawn(Player *p)
 
 local int getFullEnergy(Player *p)
 {	
-	if (0 <= p->p_ship && p->p_ship <= 0)
+	if (0 <= p->p_ship && p->p_ship <= 8)
 	{
 		ConfigHandle conf = p->arena->cfg;
 		const char *shipname = shipNames[p->p_ship];
