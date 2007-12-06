@@ -8,6 +8,7 @@
 #include "hscore_shipnames.h"
 
 #define SEE_HIDDEN_CATEGORIES "seehiddencat"
+#define MIN_COMMAND_DELAY 75
 
 //modules
 local Imodman *mm;
@@ -19,6 +20,21 @@ local Icapman *capman;
 local Ihscoremoney *money;
 local Ihscoreitems *items;
 local Ihscoredatabase *database;
+local Iplayerdata *pd; // Temporary. Remove when the command timeout is removed.
+
+
+local int bsDataKey;
+
+typedef struct BuySellData {
+
+    int lastCommand;
+
+} BuySellData;
+
+
+
+
+
 
 local void printAllCategories(Player *p)
 {
@@ -52,7 +68,7 @@ local void printCategoryItems(Player *p, Category *category) //call with lock he
 {
 	Link *link;
 	Link plink = {NULL, p};
-	LinkedList lst = { &plink, &plink };	
+	LinkedList lst = { &plink, &plink };
 	char messageType;
 
 	chat->SendMessage(p, "+----------------------------------+");
@@ -77,7 +93,7 @@ local void printCategoryItems(Player *p, Category *category) //call with lock he
 					shipMask[i] = ' ';
 				}
 			}
-			
+
 			if (money->getMoney(p) < item->buyPrice || money->getExp(p) < item->expRequired)
 			{
 				messageType =  MSG_SYSOPWARNING;
@@ -93,7 +109,7 @@ local void printCategoryItems(Player *p, Category *category) //call with lock he
 					messageType = MSG_SYSOPWARNING;
 				}
 			}
-			
+
 			chat->SendAnyMessage(&lst, messageType, 0, NULL, "| %-16s | %-9i | %-10i | %-5i | %-8s | %-3i | %-32s |", item->name, item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, item->shortDesc);
 		}
 	}
@@ -106,7 +122,7 @@ local void printShipList(Player *p)
 	int i;
 	Link plink = {NULL, p};
 	LinkedList lst = { &plink, &plink };
-	char messageType; 
+	char messageType;
 
 	chat->SendMessage(p, "+-----------+-----------+------------+--------+----------------------------------------------------+");
 	chat->SendMessage(p, "| Ship Name | Buy Price | Sell Price | Exp    | Ship Description                                   |");
@@ -137,7 +153,7 @@ local void printShipList(Player *p)
 		{
 			continue; //dont list the ship unless it can be bought.
 		}
-		
+
 		if(money->getMoney(p) >= buyPrice && money->getExp(p) >= expRequired)
 		{
 			messageType = MSG_ARENA;
@@ -146,8 +162,8 @@ local void printShipList(Player *p)
 		{
 			messageType = MSG_SYSOPWARNING;
 		}
-		
-		chat->SendAnyMessage(&lst, messageType, 0, NULL, "| %-9s | $%-8i | $%-9i | %-6i | %-50s |", shipNames[i], buyPrice, sellPrice, expRequired, description);		
+
+		chat->SendAnyMessage(&lst, messageType, 0, NULL, "| %-9s | $%-8i | $%-9i | %-6i | %-50s |", shipNames[i], buyPrice, sellPrice, expRequired, description);
 	}
 
 
@@ -170,7 +186,7 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 						int storemanOk;
 						LinkedList list;
 						LLInit(&list);
-						
+
 						if (!storeman)
 						{
 							storemanOk = 1;
@@ -193,7 +209,7 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 							for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
 							{
 								ItemTypeEntry *entry = link->data;
-								
+
 								if (items->getFreeItemTypeSpotsNoLock(p, entry->itemType, ship) - (entry->delta * count) < 0) //have no free spots
 								{
 									chat->SendMessage(p, "You do not have enough free %s spots.", entry->itemType->name);
@@ -235,11 +251,11 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 								for (link = LLGetHead(&list); link; link = link->next)
 								{
 									Store *store = link->data;
-									
+
 									chat->SendMessage(p, "%s", store->name);
 								}
 							}
-							
+
 							LLEmpty(&list);
 						}
 					}
@@ -281,7 +297,7 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 				int storemanOk;
 				LinkedList list;
 				LLInit(&list);
-				
+
 				if (!storeman)
 				{
 					storemanOk = 1;
@@ -304,7 +320,7 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 					for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
 					{
 						ItemTypeEntry *entry = link->data;
-						
+
 						if (items->getFreeItemTypeSpotsNoLock(p, entry->itemType, ship) + (entry->delta * count) < 0) //have no free spots
 						{
 							chat->SendMessage(p, "You do not have enough free %s spots.", entry->itemType->name);
@@ -347,11 +363,11 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 						for (link = LLGetHead(&list); link; link = link->next)
 						{
 							Store *store = link->data;
-							
+
 							chat->SendMessage(p, "%s", store->name);
 						}
 					}
-					
+
 					LLEmpty(&list);
 				}
 			}
@@ -440,13 +456,13 @@ local void sellShip(Player *p, int ship)
 			int itemPrices = 0;
 			LinkedList *inventoryList = &playerData->hull[ship]->inventoryEntryList;
 			Link *link;
-			
+
 			for (link = LLGetHead(inventoryList); link; link = link->next)
 			{
 				InventoryEntry *entry = link->data;
 				itemPrices += entry->item->sellPrice * entry->count;
 			}
-			
+
 			if (money->getMoney(p) >= -(sellPrice + itemPrices))
 			{
 				database->removeShip(p, ship);
@@ -487,6 +503,18 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 	const char *newParams;
 
 	char *next; //for strtol
+
+    // Ignore extremely fast requests...
+    // Ignore extremely fast requests...
+    BuySellData *objData = PPDATA(p, bsDataKey);
+    if(current_ticks() - objData->lastCommand < MIN_COMMAND_DELAY)
+    {
+        chat->SendMessage(p, "Command chaining is not supported with ?buy/?sell. Use -c instead. Type \"?man buy\" for details.");
+        return; // Silently discard quick commands.
+    } else {
+        objData->lastCommand = current_ticks();
+    }
+
 
 	while (params != NULL) //get the flags
 	{
@@ -584,18 +612,18 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 					matches++;
 				}
 			}
-			
+
 			if (matches == 1)
 			{
 				printCategoryItems(p, category);
-				
+
 				database->unlock();
 				return;
 			}
 			else if (matches > 1)
 			{
 				chat->SendMessage(p, "Too many partial matches! Try typing more of the name!");
-				
+
 				database->unlock();
 				return;
 			}
@@ -644,6 +672,16 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 
 	char *next; //for strtol
 
+    // Ignore extremely fast requests...
+    BuySellData *objData = PPDATA(p, bsDataKey);
+    if(current_ticks() - objData->lastCommand < MIN_COMMAND_DELAY)
+    {
+        chat->SendMessage(p, "Command chaining is not supported with ?buy/?sell. Use -c instead. Type \"?man buy\" for details.");
+        return; // Silently discard quick commands.
+    } else {
+        objData->lastCommand = current_ticks();
+    }
+
 	while (params != NULL) //get the flags
 	{
 		if (*params == '-')
@@ -658,7 +696,7 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 			if (*params == 'f')
 			{
 				//force = 1;
-				
+
 				chat->SendMessage(p, "Force no longer accepted as a parameter!");
 				return;
 
@@ -778,7 +816,7 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 local void shipAddedCallback(Player *p, int ship)
 {
 	/* cfghelp: All:InitItem, arena, string, mod: hscore_buysell
-	 * Comma seperated list of items to add when the ship is bought. 
+	 * Comma seperated list of items to add when the ship is bought.
 	 * There should be no spaces between the commas ('item1,item2,...').*/
 	const char *initItem = cfg->GetStr(p->arena->cfg, shipNames[ship], "InitItems");
 
@@ -856,6 +894,7 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 		money = mm->GetInterface(I_HSCORE_MONEY, ALLARENAS);
 		items = mm->GetInterface(I_HSCORE_ITEMS, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
+		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
 
 		if (!lm || !chat || !cfg || !cmd || !capman || !money || !items || !database)
 		{
@@ -867,9 +906,12 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 			mm->ReleaseInterface(money);
 			mm->ReleaseInterface(items);
 			mm->ReleaseInterface(database);
+			mm->ReleaseInterface(pd);
 
 			return MM_FAIL;
 		}
+
+		bsDataKey = pd->AllocatePlayerData(sizeof(BuySellData));
 
 		return MM_OK;
 	}
@@ -883,6 +925,9 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(money);
 		mm->ReleaseInterface(items);
 		mm->ReleaseInterface(database);
+		mm->ReleaseInterface(pd);
+
+
 
 		return MM_OK;
 	}
@@ -892,6 +937,7 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 		cmd->AddCommand("sell", sellCommand, arena, sellHelp);
 
 		mm->RegCallback(CB_SHIP_ADDED, shipAddedCallback, arena);
+
 
 		return MM_OK;
 	}
