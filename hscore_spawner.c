@@ -366,6 +366,9 @@ local void addOverrides(Player *p)
 			int bomblevel = items->getPropertySum(p, i, "bomblevel");
 			if (bomblevel > 0) clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBombs, bomblevel);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialBombs);
+			
+			
+			lm->LogP(L_DRIVEL, "hscore_spawner", p, "bombs = %d", bomblevel);
 
 
 
