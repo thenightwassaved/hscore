@@ -24,6 +24,7 @@ typedef struct CallbackData
 	int ship;
 	Item *item;
 	int mult;
+	int force;
 } CallbackData;
 
 typedef struct PlayerDataStruct
@@ -992,6 +993,7 @@ local int handleItemCallback(void *clos)
 	int ship = data->ship;
 	Item *item = data->item;
 	int mult = data->mult;
+	int force = data->force;
 	Link *propLink;
 	int oldBounty = p->position.bounty;
 	int prized = 0;
@@ -1014,7 +1016,7 @@ local int handleItemCallback(void *clos)
 	{
 		// needs ammo
 		int count = items->getItemCount(p, item->ammo, ship);
-		if (count < item->minAmmo)
+		if (!force && count < item->minAmmo)
 		{
 			// no ammo present
 			return FALSE;
@@ -1110,6 +1112,7 @@ local void ammoAddedCallback(Player *p, int ship, Item *ammoUser) //warnings: ca
 	data->ship = ship;
 	data->item = ammoUser;
 	data->mult = 1;
+	data->force = 1;
 
 	if (ammoUser->resendSets)
 	{
@@ -1138,6 +1141,7 @@ local void ammoRemovedCallback(Player *p, int ship, Item *ammoUser) //warnings: 
 	data->ship = ship;
 	data->item = ammoUser;
 	data->mult = -1;
+	data->force = 1;
 
 	if (ammoUser->resendSets)
 	{
@@ -1166,6 +1170,7 @@ local void triggerEventCallback(Player *p, Item *item, int ship, const char *eve
 		data->ship = ship;
 		data->item = item;
 		data->mult = 1;
+		data->force = 0;
 		//lm->LogP(L_DRIVEL, "hscore_spawner", p, "Item added callback on %s", item->name);
 		ml->SetTimer(handleItemCallback, 0, 0, data, data);
 	}
@@ -1176,6 +1181,7 @@ local void triggerEventCallback(Player *p, Item *item, int ship, const char *eve
 		data->ship = ship;
 		data->item = item;
 		data->mult = -1;
+		data->force = 0;
 		//lm->LogP(L_DRIVEL, "hscore_spawner", p, "Item del callback on %s", item->name);
 		ml->SetTimer(handleItemCallback, 0, 0, data, data);
 	}
