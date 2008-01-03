@@ -1160,7 +1160,7 @@ local void triggerEventCallback(Player *p, Item *item, int ship, const char *eve
 		data->item = item;
 		data->mult = 1;
 		//lm->LogP(L_DRIVEL, "hscore_spawner", p, "Item added callback on %s", item->name);
-		ml->SetTimer(handleItemCallback, 1, 1, data, data);
+		ml->SetTimer(handleItemCallback, 0, 0, data, data);
 	}
 	else if (strcasecmp(eventName, "del") == 0)
 	{
@@ -1170,7 +1170,7 @@ local void triggerEventCallback(Player *p, Item *item, int ship, const char *eve
 		data->item = item;
 		data->mult = -1;
 		//lm->LogP(L_DRIVEL, "hscore_spawner", p, "Item del callback on %s", item->name);
-		ml->SetTimer(handleItemCallback, 1, 1, data, data);
+		ml->SetTimer(handleItemCallback, 0, 0, data, data);
 	}
 	else
 	{

@@ -352,54 +352,61 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 				newItemCount = getItemCount(t, item, ship) + count;
 				if (ignore || item->max == 0 || newItemCount <= item->max)
 				{
-					Link *link;
-					database->lock();
-					for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
+					if (ignore || (item->shipsAllowed >> ship) & 0x1)
 					{
-						ItemTypeEntry *entry = link->data;
-
-						if (entry->itemType != NULL)
+						Link *link;
+						database->lock();
+						for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
 						{
-							if (!ignore && getFreeItemTypeSpotsNoLock(t, entry->itemType, ship) - (entry->delta * count) < 0) //have no free spots
-							{
-								chat->SendMessage(p, "Does not have enough free %s spots.", entry->itemType->name);
+							ItemTypeEntry *entry = link->data;
 
-								database->unlock();
-								return;
+							if (entry->itemType != NULL)
+							{
+								if (!ignore && getFreeItemTypeSpotsNoLock(t, entry->itemType, ship) - (entry->delta * count) < 0) //have no free spots
+								{
+									chat->SendMessage(p, "Does not have enough free %s spots.", entry->itemType->name);
+
+									database->unlock();
+									return;
+								}
 							}
 						}
-					}
-					database->unlock();
+						database->unlock();
 
-					addItem(t, item, ship, count);
-					if (ship == t->p_ship)
-					{
-						if (count > 0)
+						addItem(t, item, ship, count);
+						if (ship == t->p_ship)
 						{
-							int i;
-							for (i = 0; i < count; i++)
+							if (count > 0)
 							{
-								triggerEventOnItem(t, item, ship, "add");
+								int i;
+								for (i = 0; i < count; i++)
+								{
+									triggerEventOnItem(t, item, ship, "add");
+								}
 							}
+							else
+							{
+								int i;
+								for (i = 0; i < -count; i++)
+								{
+									triggerEventOnItem(t, item, ship, "del");
+								}
+							}
+						}
+
+						if (!quiet)
+						{
+							chat->SendMessage(t, "You were granted %i of item %s on your %s.", count, item->name, shipNames[ship]);
+							chat->SendMessage(p, "You granted %i of item %s to player %s", count, item->name, t->name);
 						}
 						else
 						{
-							int i;
-							for (i = 0; i < -count; i++)
-							{
-								triggerEventOnItem(t, item, ship, "del");
-							}
+							chat->SendMessage(p, "You quietly granted %i of item %s to player %s", count, item->name, t->name);
 						}
-					}
-
-					if (!quiet)
-					{
-						chat->SendMessage(t, "You were granted %i of item %s on your %s.", count, item->name, shipNames[ship]);
-						chat->SendMessage(p, "You granted %i of item %s to player %s", count, item->name, t->name);
 					}
 					else
 					{
-						chat->SendMessage(p, "You quietly granted %i of item %s to player %s", count, item->name, t->name);
+						chat->SendMessage(p, "Item %s not allowed on ship %d.", item->name, ship);
 					}
 				}
 				else
@@ -414,7 +421,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 		}
 		else
 		{
-			chat->SendMessage(p, "Whoa there, bud. The -f is only for arena and freq messages.");
+			chat->SendMessage(p, "Whoa there, bud. The -f is only for arena and freq targets.");
 		}
 	}
 	else //not private
@@ -429,6 +436,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 			for (link = LLGetHead(&set); link; link = link->next)
 			{
 				Player *t = link->data;
+				int ok = 1;
 
 				if (database->areShipsLoaded(t))
 				{
@@ -436,7 +444,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					{
 						if (t->p_ship != SHIP_SPEC)
 						{
-							int newItemCount = getItemCount(t, item, ship) + count;
+							int newItemCount = getItemCount(t, item, t->p_ship) + count;
 							if (item->max == 0 || newItemCount <= item->max)
 							{
 								Link *link;
@@ -447,21 +455,24 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 
 									if (entry->itemType != NULL)
 									{
-										if (!ignore && getFreeItemTypeSpotsNoLock(t, entry->itemType, ship) - (entry->delta * count) < 0) //have no free spots
+										if (!ignore && getFreeItemTypeSpotsNoLock(t, entry->itemType, t->p_ship) - (entry->delta * count) < 0) //have no free spots
 										{
 											chat->SendMessage(p, "Player %s does not have enough free %s spots.", t->name, entry->itemType->name);
 
-											database->unlock();
-											return;
+											ok = 0;
+											break;
 										}
 									}
 								}
 								database->unlock();
 
-								addItem(t, item, t->p_ship, count);
-								if (!quiet)
+								if (ok)
 								{
-									chat->SendMessage(t, "You were granted %i of item %s on your %s.", count, item->name, shipNames[t->p_ship]);
+									addItem(t, item, t->p_ship, count);
+									if (!quiet)
+									{
+										chat->SendMessage(t, "You were granted %i of item %s on your %s.", count, item->name, shipNames[t->p_ship]);
+									}
 								}
 							}
 							else
@@ -476,12 +487,8 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					}
 					else
 					{
-						addItem(t, item, ship, count);
-						triggerEventOnItem(t, item, ship, "init");
-						if (!quiet)
-						{
-							chat->SendMessage(t, "You were granted %i of item %s on your %s.", count, item->name, shipNames[ship]);
-						}
+						chat->SendMessage(p, "Invalid usage. Too complex!");
+						return;
 					}
 				}
 				else
@@ -788,27 +795,34 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 		count = 0; //no negative counts make sense
 	}
 
-	//recalc the related entries
-	for (propLink = LLGetHead(&item->propertyList); propLink; propLink = propLink->next)
+	if (item->ammo != NULL)
 	{
-		Property *prop = propLink->data;
-
-		//cache it
-		int *propertySum = (int*)HashGetOne(playerData->hull[ship]->propertySums, prop->name);
-		if (propertySum != NULL)
+		//recalc the related entries
+		for (propLink = LLGetHead(&item->propertyList); propLink; propLink = propLink->next)
 		{
-			int propDifference = prop->value * amount;
-			*propertySum += propDifference;
-		}
-		else
-		{
-			//not in cache already
+			Property *prop = propLink->data;
 
-			//it's too much work to generate the entire entry only to update it.
-			//instead we'll just leave it out of the cache, and it can be fully generated when needed
+			//cache it
+			int *propertySum = (int*)HashGetOne(playerData->hull[ship]->propertySums, prop->name);
+			if (propertySum != NULL)
+			{
+				int propDifference = prop->value * amount;
+				*propertySum += propDifference;
+			}
+			else
+			{
+				//not in cache already
+
+				//it's too much work to generate the entire entry only to update it.
+				//instead we'll just leave it out of the cache, and it can be fully generated when needed
+			}
 		}
 	}
-
+	else
+	{
+		recalcCache = 1;
+	}
+	
 	database->updateItemNoLock(p, ship, item, count, data);
 
 	//check other items that use this item as ammo
