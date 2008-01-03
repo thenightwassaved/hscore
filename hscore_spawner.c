@@ -888,8 +888,6 @@ local void itemCountChangedCallback(Player *p, Item *item, InventoryEntry *entry
 
 	if (item->resendSets)
 	{
-		Player *p = clos;
-		PlayerDataStruct *data = PPDATA(p, playerDataKey);
 		data->dirty = 0;
 		addOverrides(p);
 		clientset->SendClientSettings(p);
@@ -1117,8 +1115,9 @@ local void ammoAddedCallback(Player *p, int ship, Item *ammoUser) //warnings: ca
 
 	if (ammoUser->resendSets)
 	{
-		//resend the settings in a callback to avoid a deadlock
-		ml->SetTimer(itemCountChangedTimer, 0, 0, p, p);
+		pdata->dirty = 0;
+		addOverrides(p);
+		clientset->SendClientSettings(p);
 	}
 	else //check if it changed anything in clientset, and if it did, recompute and flag dirty
 	{
@@ -1146,8 +1145,9 @@ local void ammoRemovedCallback(Player *p, int ship, Item *ammoUser) //warnings: 
 
 	if (ammoUser->resendSets)
 	{
-		//resend the settings in a callback to avoid a deadlock
-		ml->SetTimer(itemCountChangedTimer, 0, 0, p, p);
+		pdata->dirty = 0;
+		addOverrides(p);
+		clientset->SendClientSettings(p);
 	}
 	else //check if it changed anything in clientset, and if it did, recompute and flag dirty
 	{
