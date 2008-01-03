@@ -801,7 +801,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 		count = 0; //no negative counts make sense
 	}
 
-	if (item->ammo != NULL)
+	if (item->ammo == NULL)
 	{
 		//recalc the related entries
 		for (propLink = LLGetHead(&item->propertyList); propLink; propLink = propLink->next)
