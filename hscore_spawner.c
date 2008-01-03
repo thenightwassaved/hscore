@@ -185,6 +185,8 @@ local void spawnPlayer(Player *p)
 	energyViewing = items->getPropertySum(p, p->pkt.ship, "energyviewing");
 	if (energyViewing) game->SetPlayerEnergyViewing(p, ENERGY_SEE_ALL);
 	else game->ResetPlayerEnergyViewing(p);
+	
+	lm->LogP(L_DRIVEL, "hscore_spawner", p, "spawning with (%d,%d,%d,%d)", bounce, prox, multifire, shrapnel);
 }
 
 local void loadOverrides()
@@ -1008,10 +1010,15 @@ local int handleItemCallback(void *clos)
 		return FALSE;
 	}
 
-	if (item->ammo && item->needsAmmo && items->getItemCount(p, item->ammo, ship) < item->minAmmo && mult > 0)
+	if (item->ammo && item->needsAmmo)
 	{
-		//doesn't have any ammo, so we don't want to prize/deprize
-		return FALSE;
+		// needs ammo
+		int count = items->getItemCount(p, item->ammo, ship);
+		if (count < item->minAmmo)
+		{
+			// no ammo present
+			return FALSE;
+		}
 	}
 
 	for (propLink = LLGetHead(&item->propertyList); propLink; propLink = propLink->next)

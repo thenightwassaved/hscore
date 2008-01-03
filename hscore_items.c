@@ -406,7 +406,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 					}
 					else
 					{
-						chat->SendMessage(p, "Item %s not allowed on ship %d.", item->name, ship);
+						chat->SendMessage(p, "Item %s not allowed on ship %d.", item->name, ship + 1);
 					}
 				}
 				else
@@ -465,6 +465,12 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 									}
 								}
 								database->unlock();
+								
+								if ()
+								{
+									chat->SendMessage(p, "Player %s cannot hold item %s on ship %d.", item->name, t->p_ship + 1);
+									ok = 0;
+								}
 
 								if (ok)
 								{
