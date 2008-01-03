@@ -845,6 +845,8 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 
 		if (userCount != 0)
 		{
+			recaclulateEntireCache(p, ship);
+			
 			if (oldCount < user->minAmmo && count >= user->minAmmo)
 			{
 				DO_CBS(CB_AMMO_ADDED, p->arena, ammoAddedFunction, (p, ship, user));
@@ -854,7 +856,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 				DO_CBS(CB_AMMO_REMOVED, p->arena, ammoRemovedFunction, (p, ship, user));
 			}
 
-			recalcCache = 1;
+			recalcCache = 0;
 		}
 	}
 	
