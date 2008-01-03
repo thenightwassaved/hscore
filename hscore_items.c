@@ -466,7 +466,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 								}
 								database->unlock();
 								
-								if ()
+								if (!ignore && !((item->shipsAllowed >> ship) & 0x1))
 								{
 									chat->SendMessage(p, "Player %s cannot hold item %s on ship %d.", item->name, t->p_ship + 1);
 									ok = 0;
