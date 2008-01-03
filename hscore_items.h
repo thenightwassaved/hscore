@@ -20,12 +20,14 @@ typedef struct Ihscoreitems
 	INTERFACE_HEAD_DECL
 
 	int (*getItemCount)(Player *p, Item *item, int ship);
+	int (*getItemCountNoLock)(Player *p, Item *item, int ship);
 	int (*addItem)(Player *p, Item *item, int ship, int amount);
 
 	Item * (*getItemByName)(const char *name, Arena *arena);
 	Item * (*getItemByPartialName)(const char *name, Arena *arena);	
 
 	int (*getPropertySum)(Player *p, int ship, const char *prop); //properties ARE case sensitive
+	int (*getPropertySumNoLock)(Player *p, int ship, const char *prop); 
 
 	void (*triggerEvent)(Player *p, int ship, const char *event);
 	void (*triggerEventOnItem)(Player *p, Item *item, int ship, const char *event);

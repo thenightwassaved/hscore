@@ -26,17 +26,19 @@ local Imainloop *ml;
 local Iconfig *cfg;
 
 //a few internal functions
-local int internalGetItemCount(Player *p, Item *item, int ship);
+
 local void internalTriggerEvent(Player *p, int ship, const char *event);
 local void internalTriggerEventOnItem(Player *p, Item *item, int ship, const char *event);
 local void recaclulateEntireCache(Player *p, int ship);
 
 //interface prototypes
 local int getItemCount(Player *p, Item *item, int ship);
+local int getItemCountNoLock(Player *p, Item *item, int ship);
 local int addItem(Player *p, Item *item, int ship, int amount);
 local Item * getItemByName(const char *name, Arena *arena);
 local Item * getItemByPartialName(const char *name, Arena *arena);
 local int getPropertySum(Player *p, int ship, const char *prop);
+local int getPropertySumNoLock(Player *p, int ship, const char *prop);
 local void triggerEvent(Player *p, int ship, const char *event);
 local void triggerEventOnItem(Player *p, Item *item, int ship, const char *event);
 local int getFreeItemTypeSpotsNoLock(Player *p, ItemType *type, int ship);
@@ -679,12 +681,12 @@ local int getItemCount(Player *p, Item *item, int ship) //call without lock held
 {
 	int count;
 	database->lock();
-	count = internalGetItemCount(p, item, ship);
+	count = getItemCountNoLock(p, item, ship);
 	database->unlock();
 	return count;
 }
 
-local int internalGetItemCount(Player *p, Item *item, int ship) //call with lock held
+local int getItemCountNoLock(Player *p, Item *item, int ship) //call with lock held
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
 	Link *link;
@@ -839,7 +841,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 		if (!user->needsAmmo)
 			continue;
 		
-		int userCount = internalGetItemCount(p, user, ship);
+		int userCount = getItemCountNoLock(p, user, ship);
 
 		if (userCount != 0)
 		{
@@ -943,7 +945,16 @@ local Item * getItemByPartialName(const char *name, Arena *arena) //call with no
 	}
 }
 
-local int getPropertySum(Player *p, int ship, const char *propString) //call with no lock
+local int getPropertySum(Player *p, int ship, const char *propString)
+{
+	int sum;
+	database->lock();
+	sum = getPropertySumNoLock(p, ship, propString);
+	database->unlock();
+	return sum;
+}
+
+local int getPropertySumNoLock(Player *p, int ship, const char *propString) //call with no lock
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
 	int *propertySum;
@@ -976,8 +987,6 @@ local int getPropertySum(Player *p, int ship, const char *propString) //call wit
 		return 0;
 	}
 
-	database->lock();
-
 	//check if it's in the cache
 	propertySum = (int*)HashGetOne(playerData->hull[ship]->propertySums, propString);
 	if (propertySum != NULL)
@@ -999,7 +1008,7 @@ local int getPropertySum(Player *p, int ship, const char *propString) //call wit
 
 		if (item->ammo != NULL && item->needsAmmo)
 		{
-			int itemCount = internalGetItemCount(p, item->ammo, ship);
+			int itemCount = getItemCountNoLock(p, item->ammo, ship);
 
 			if (itemCount < item->minAmmo)
 			{
@@ -1018,7 +1027,6 @@ local int getPropertySum(Player *p, int ship, const char *propString) //call wit
 			}
 		}
 	}
-	database->unlock();
 
 	//cache it
 	propertySum = amalloc(sizeof(*propertySum));
@@ -1115,7 +1123,7 @@ local void internalTriggerEvent(Player *p, int ship, const char *eventName) //ca
 		Item *item = entry->item;
 		link = link->next;
 		
-		if (item->ammo && item->needsAmmo && internalGetItemCount(p, item->ammo, ship) < item->minAmmo)
+		if (item->ammo && item->needsAmmo && getItemCountNoLock(p, item->ammo, ship) < item->minAmmo)
 		{
 			continue;
 		}
@@ -1194,7 +1202,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 			Link *eventLink;
 			foundItem = 1;
 			
-			if (item->ammo && item->needsAmmo && internalGetItemCount(p, item->ammo, ship) < item->minAmmo)
+			if (item->ammo && item->needsAmmo && getItemCountNoLock(p, item->ammo, ship) < item->minAmmo)
 			{
 				break;
 			}
@@ -1218,7 +1226,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 	{
 		Link *eventLink;
 		
-		if (triggerItem->ammo && triggerItem->needsAmmo &&internalGetItemCount(p, triggerItem->ammo, ship) < triggerItem->minAmmo)
+		if (triggerItem->ammo && triggerItem->needsAmmo && getItemCountNoLock(p, triggerItem->ammo, ship) < triggerItem->minAmmo)
 		{
 			//nothing
 		}
@@ -1380,7 +1388,7 @@ local void recaclulateEntireCache(Player *p, int ship)
 
 		if (item->ammo != NULL && item->needsAmmo)
 		{
-			int itemCount = internalGetItemCount(p, item->ammo, ship);
+			int itemCount = getItemCountNoLock(p, item->ammo, ship);
 
 			if (itemCount < item->minAmmo)
 			{
@@ -1420,9 +1428,9 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 local Ihscoreitems interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_ITEMS, "hscore_items")
-	getItemCount, addItem, getItemByName, getItemByPartialName, getPropertySum,
-	triggerEvent, triggerEventOnItem, getFreeItemTypeSpotsNoLock, hasItemsLeftOnShip,
-	recaclulateEntireCache,
+	getItemCount, getItemCountNoLock, addItem, getItemByName, getItemByPartialName, 
+	getPropertySum, getPropertySumNoLock, triggerEvent, triggerEventOnItem, getFreeItemTypeSpotsNoLock, 
+	hasItemsLeftOnShip, recaclulateEntireCache,
 };
 
 EXPORT const char info_hscore_items[] = "v1.0 Dr Brain <drbrain@gmail.com>";
