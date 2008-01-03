@@ -8,7 +8,6 @@
 #include "hscore_shipnames.h"
 
 #define SEE_HIDDEN_CATEGORIES "seehiddencat"
-#define MIN_COMMAND_DELAY 75
 
 //modules
 local Imodman *mm;
@@ -20,21 +19,6 @@ local Icapman *capman;
 local Ihscoremoney *money;
 local Ihscoreitems *items;
 local Ihscoredatabase *database;
-local Iplayerdata *pd; // Temporary. Remove when the command timeout is removed.
-
-
-local int bsDataKey;
-
-typedef struct BuySellData {
-
-    int lastCommand;
-
-} BuySellData;
-
-
-
-
-
 
 local void printAllCategories(Player *p)
 {
@@ -504,18 +488,6 @@ local void buyCommand(const char *command, const char *params, Player *p, const 
 
 	char *next; //for strtol
 
-    // Ignore extremely fast requests...
-    // Ignore extremely fast requests...
-    BuySellData *objData = PPDATA(p, bsDataKey);
-    if(current_ticks() - objData->lastCommand < MIN_COMMAND_DELAY)
-    {
-        chat->SendMessage(p, "Command chaining is not supported with ?buy/?sell. Use -c instead. Type \"?man buy\" for details.");
-        return; // Silently discard quick commands.
-    } else {
-        objData->lastCommand = current_ticks();
-    }
-
-
 	while (params != NULL) //get the flags
 	{
 		if (*params == '-')
@@ -671,16 +643,6 @@ local void sellCommand(const char *command, const char *params, Player *p, const
 	const char *newParams;
 
 	char *next; //for strtol
-
-    // Ignore extremely fast requests...
-    BuySellData *objData = PPDATA(p, bsDataKey);
-    if(current_ticks() - objData->lastCommand < MIN_COMMAND_DELAY)
-    {
-        chat->SendMessage(p, "Command chaining is not supported with ?buy/?sell. Use -c instead. Type \"?man buy\" for details.");
-        return; // Silently discard quick commands.
-    } else {
-        objData->lastCommand = current_ticks();
-    }
 
 	while (params != NULL) //get the flags
 	{
@@ -894,7 +856,6 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 		money = mm->GetInterface(I_HSCORE_MONEY, ALLARENAS);
 		items = mm->GetInterface(I_HSCORE_ITEMS, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
-		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
 
 		if (!lm || !chat || !cfg || !cmd || !capman || !money || !items || !database)
 		{
@@ -906,12 +867,9 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 			mm->ReleaseInterface(money);
 			mm->ReleaseInterface(items);
 			mm->ReleaseInterface(database);
-			mm->ReleaseInterface(pd);
 
 			return MM_FAIL;
 		}
-
-		bsDataKey = pd->AllocatePlayerData(sizeof(BuySellData));
 
 		return MM_OK;
 	}
@@ -925,9 +883,6 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(money);
 		mm->ReleaseInterface(items);
 		mm->ReleaseInterface(database);
-		mm->ReleaseInterface(pd);
-
-
 
 		return MM_OK;
 	}
@@ -937,7 +892,6 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 		cmd->AddCommand("sell", sellCommand, arena, sellHelp);
 
 		mm->RegCallback(CB_SHIP_ADDED, shipAddedCallback, arena);
-
 
 		return MM_OK;
 	}

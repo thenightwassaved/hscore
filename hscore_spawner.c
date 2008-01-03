@@ -186,8 +186,6 @@ local void spawnPlayer(Player *p)
 	energyViewing = items->getPropertySum(p, p->pkt.ship, "energyviewing");
 	if (energyViewing) game->SetPlayerEnergyViewing(p, ENERGY_SEE_ALL);
 	else game->ResetPlayerEnergyViewing(p);
-	
-	lm->LogP(L_DRIVEL, "hscore_spawner", p, "spawning with (%d,%d,%d,%d)", bounce, prox, multifire, shrapnel);
 }
 
 local void loadOverrides()
@@ -366,10 +364,6 @@ local void addOverrides(Player *p)
 			int bomblevel = items->getPropertySumNoLock(p, i, "bomblevel");
 			if (bomblevel > 0) clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBombs, bomblevel);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialBombs);
-			
-			
-			lm->LogP(L_DRIVEL, "hscore_spawner", p, "bombs = %d", bomblevel);
-
 
 
 
