@@ -49,7 +49,6 @@ typedef struct Property
 {
 	char name[17];
 	int value;
-	int absolute;
 } Property;
 
 typedef struct ItemType
@@ -74,8 +73,7 @@ typedef struct Item
 	int buyPrice;
 	int sellPrice;
 
-	int expRequired; // requirement to own
-	int shipExpRequired; // requirement to own
+	int expRequired; //requirement to own
 
 	int shipsAllowed; //bit positions represent each ship. bit 0 = warbird.
 
@@ -86,8 +84,6 @@ typedef struct Item
 	LinkedList itemTypeEntries;
 
 	int max;
-	
-	int mass;
 
 	//if changes to this item should be delayed until a complete save (like on exit).
 	//This is a necessity when dealing with ammo. We don't want to update MySQL every
@@ -130,11 +126,7 @@ typedef struct ShipHull
 
 	//if we compile a hashmap of properties, it can go in here.
 	HashTable *propertySums;
-	
-	int exp; // hull experience
 
-	int locked; // if this ship is immutable
-	
 	int id; //MySQL use only
 } ShipHull;
 
