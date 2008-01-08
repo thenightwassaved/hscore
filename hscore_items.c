@@ -129,7 +129,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 		strcat(itemTypes, buf);
 	}
 	database->unlock();
-	
+
 	//get the ammo string
 	if (item->ammo != NULL)
 	{
@@ -492,7 +492,7 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 									}
 								}
 								database->unlock();
-								
+
 								if (!ignore && !((item->shipsAllowed >> ship) & 0x1))
 								{
 									chat->SendMessage(p, "Player %s cannot hold item %s on ship %d.", t->name, item->name, t->p_ship + 1);
@@ -854,7 +854,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 				{
 					// there's no good way to update an absolute value in the cache, so remove it.
 					HashRemove(playerData->hull[ship]->propertySums, prop->name, propertySum);
-					
+
 				}
 				else
 				{
@@ -875,7 +875,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 	{
 		recalcCache = 1;
 	}
-	
+
 	database->updateItemNoLock(p, ship, item, count, data);
 
 	//check other items that use this item as ammo
@@ -885,13 +885,13 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 
 		if (!user->needsAmmo)
 			continue;
-		
+
 		int userCount = getItemCountNoLock(p, user, ship);
 
 		if (userCount != 0)
 		{
 			recaclulateEntireCache(p, ship);
-			
+
 			if (oldCount < user->minAmmo && count >= user->minAmmo)
 			{
 				DO_CBS(CB_AMMO_ADDED, p->arena, ammoAddedFunction, (p, ship, user));
@@ -904,7 +904,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 			recalcCache = 0;
 		}
 	}
-	
+
 	if (recalcCache)
 	{
 		recaclulateEntireCache(p, ship);
@@ -1043,7 +1043,7 @@ local int getPropertySumNoLock(Player *p, int ship, const char *propString, int 
 		{
 			def = 0;
 		}
-		
+
 		return propertySum->value + def;
 	}
 
@@ -1085,6 +1085,11 @@ local int getPropertySumNoLock(Player *p, int ship, const char *propString, int 
 	propertySum->value = count;
 	propertySum->absolute = absolute;
 	HashAdd(playerData->hull[ship]->propertySums, propString, propertySum);
+
+	if (absolute)
+	{
+		def = 0;
+	}
 
 	//then return
 	return count + def;
@@ -1175,7 +1180,7 @@ local void internalTriggerEvent(Player *p, int ship, const char *eventName) //ca
 		InventoryEntry *entry = link->data;
 		Item *item = entry->item;
 		link = link->next;
-		
+
 		if (item->ammo && item->needsAmmo && getItemCountNoLock(p, item->ammo, ship) < item->minAmmo)
 		{
 			continue;
@@ -1254,7 +1259,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 		{
 			Link *eventLink;
 			foundItem = 1;
-			
+
 			if (item->ammo && item->needsAmmo && getItemCountNoLock(p, item->ammo, ship) < item->minAmmo)
 			{
 				break;
@@ -1278,7 +1283,7 @@ local void internalTriggerEventOnItem(Player *p, Item *triggerItem, int ship, co
 	if (!foundItem)
 	{
 		Link *eventLink;
-		
+
 		if (triggerItem->ammo && triggerItem->needsAmmo && getItemCountNoLock(p, triggerItem->ammo, ship) < triggerItem->minAmmo)
 		{
 			//nothing
@@ -1484,8 +1489,8 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 local Ihscoreitems interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_ITEMS, "hscore_items")
-	getItemCount, getItemCountNoLock, addItem, getItemByName, getItemByPartialName, 
-	getPropertySum, getPropertySumNoLock, triggerEvent, triggerEventOnItem, getFreeItemTypeSpotsNoLock, 
+	getItemCount, getItemCountNoLock, addItem, getItemByName, getItemByPartialName,
+	getPropertySum, getPropertySumNoLock, triggerEvent, triggerEventOnItem, getFreeItemTypeSpotsNoLock,
 	hasItemsLeftOnShip, recaclulateEntireCache,
 };
 
