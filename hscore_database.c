@@ -666,15 +666,15 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 		item->sellPrice = atoi(mysql->GetField(row, 5));			//sell_price
 		item->expRequired = atoi(mysql->GetField(row, 6));			//exp_required
 		item->shipsAllowed = atoi(mysql->GetField(row, 7));			//ships_allowed
-
-		item->max = atoi(mysql->GetField(row, 9));					//max
-
-		item->delayStatusWrite = atoi(mysql->GetField(row, 10));	//delay_write
-		item->ammoID = atoi(mysql->GetField(row, 11));				//ammo
-		item->needsAmmo = atoi(mysql->GetField(row, 12));			//needs_ammo
-		item->minAmmo = atoi(mysql->GetField(row, 13));				//min_ammo
-		item->affectsSets = atoi(mysql->GetField(row, 14));			//affects_sets
-		item->resendSets = atoi(mysql->GetField(row, 15));			//resend_sets
+		
+		item->max = atoi(mysql->GetField(row, 8));					//max
+		
+		item->delayStatusWrite = atoi(mysql->GetField(row, 9));		//delay_write
+		item->ammoID = atoi(mysql->GetField(row, 10));				//ammo
+		item->needsAmmo = atoi(mysql->GetField(row, 11));			//needs_ammo
+		item->minAmmo = atoi(mysql->GetField(row, 12));				//min_ammo
+		item->affectsSets = atoi(mysql->GetField(row, 13));			//affects_sets
+		item->resendSets = atoi(mysql->GetField(row, 14));			//resend_sets
 
 		unlock();
 
