@@ -1074,7 +1074,7 @@ local int getPropertySumNoLock(Player *p, int ship, const char *propString, int 
 			if (strcmp(prop->name, propString) == 0)
 			{
 				count += prop->value * entry->count;
-				absolute = absolute && prop->absolute;
+				absolute = absolute || prop->absolute;
 				break;
 			}
 		}
@@ -1466,7 +1466,7 @@ local void recaclulateEntireCache(Player *p, int ship)
 			if (propertySum != NULL)
 			{
 				propertySum->value += propDifference;
-				propertySum->absolute = propertySum->absolute && prop->absolute;
+				propertySum->absolute = propertySum->absolute || prop->absolute;
 			}
 			else
 			{
