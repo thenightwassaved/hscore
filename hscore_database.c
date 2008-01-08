@@ -295,6 +295,7 @@ local void LinkAmmo()
 "  `item_id` int(10) unsigned NOT NULL default '0'," \
 "  `name` varchar(32) NOT NULL default ''," \
 "  `value` int(11) NOT NULL default '0'," \
+"  `absolute` tinyint(4) NOT NULL default '0'," \
 "  `id` int(10) unsigned NOT NULL auto_increment," \
 "  PRIMARY KEY  (`id`)" \
 ")"
@@ -317,7 +318,6 @@ local void LinkAmmo()
 "  `sell_price` int(11) NOT NULL default '0'," \
 "  `exp_required` int(11) NOT NULL default '0'," \
 "  `ships_allowed` int(11) NOT NULL default '0'," \
-"  `item_types` varchar(250) NOT NULL default ''," \
 "  `max` int(11) NOT NULL default '0'," \
 "  `delay_write` tinyint(4) NOT NULL default '0'," \
 "  `ammo` int(10) unsigned NOT NULL default '0'," \
@@ -513,7 +513,7 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 			}
 
 			property->value = atoi(mysql->GetField(row, 2));		//value
-			property->absolute = 0; //FIXME
+			property->absolute = atoi(mysql->GetField(row, 3));		//absolute
 		}
 		else
 		{
@@ -1501,12 +1501,12 @@ local void LoadEvents()
 
 local void LoadProperties()
 {
-	mysql->Query(loadPropertiesQueryCallback, NULL, 1, "SELECT item_id, name, value FROM hs_item_properties");
+	mysql->Query(loadPropertiesQueryCallback, NULL, 1, "SELECT item_id, name, value, absolute FROM hs_item_properties");
 }
 
 local void LoadItemList() //will call LoadProperties() and LoadEvents() when finished
 {
-	mysql->Query(loadItemsQueryCallback, NULL, 1, "SELECT id, name, short_description, long_description, buy_price, sell_price, exp_required, ships_allowed, item_types, max, delay_write, ammo, needs_ammo, min_ammo, affects_sets, resend_sets FROM hs_items");
+	mysql->Query(loadItemsQueryCallback, NULL, 1, "SELECT id, name, short_description, long_description, buy_price, sell_price, exp_required, ships_allowed, max, delay_write, ammo, needs_ammo, min_ammo, affects_sets, resend_sets FROM hs_items");
 }
 
 local void LoadItemTypeList() //will call LoadItemList() when finished loading
