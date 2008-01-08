@@ -513,7 +513,7 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 			}
 
 			property->value = atoi(mysql->GetField(row, 2));		//value
-
+			property->absolute = 0; //FIXME
 		}
 		else
 		{

@@ -60,6 +60,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 	int first = 1;
 
 	char buf[256];
+	char ammoString[32];
 	const char *temp = NULL;
 	Link *link;
 
@@ -81,8 +82,8 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 
 	chat->SendMessage(p, "+------------------+");
 	chat->SendMessage(p, "| %-16s |", item->name);
-	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+---------------------------------------------------+");
-	chat->SendMessage(p, "| Buy Price | Sell Price | Exp   | Ships    | Max | Item Types                                        |");
+	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+------------------+-----+--------------------------+");
+	chat->SendMessage(p, "| Buy Price | Sell Price | Exp   | Ships    | Max | Ammo             | Item Types                     |");
 
 	//calculate ship mask
 	for (i = 0; i < 8; i++)
@@ -128,9 +129,26 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 		strcat(itemTypes, buf);
 	}
 	database->unlock();
+	
+	//get the ammo string
+	if (item->ammo != NULL)
+	{
+		if (item->minAmmo != 1)
+		{
+			sprintf(ammoString, "%d %s", item->minAmmo, item->ammo->name);
+		}
+		else
+		{
+			sprintf(ammoString, "%s", item->ammo->name);
+		}
+	}
+	else
+	{
+		sprintf(ammoString, "            None");
+	}
 
-	chat->SendMessage(p, "| $%-8i | $%-9i | %-5i | %s | %-3i | %-49s |", item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, itemTypes);
-	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+---------------------------------------------------+");
+	chat->SendMessage(p, "| $%-8i | $%-9i | %-5i | %s | %-3i | %s | %-30s |", item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, ammoString, itemTypes);
+	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+------------------+--------------------------------+");
 
 	//print description
 	while (strsplit(item->longDesc, "ß", buf, 256, &temp))
@@ -149,7 +167,14 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 		while (link)
 		{
 			Property *prop = link->data;
-			chat->SendMessage(p, "| %-16s | %-14i |", prop->name, prop->value);
+			if (prop->absolute)
+			{
+				chat->SendMessage(p, "| %-16s | =%-13i |", prop->name, prop->value);
+			}
+			else
+			{
+				chat->SendMessage(p, "| %-16s | %-14i |", prop->name, prop->value);
+			}
 			link = link->next;
 		}
 		chat->SendMessage(p, "+------------------+----------------+");
@@ -546,7 +571,14 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event, LinkedList *u
 	//do the message
 	if (event->message[0] != '\0')
 	{
-		chat->SendMessage(p, "%s", event->message);
+		if (action == ACTION_ARENA_MESSAGE)
+		{
+			chat->SendArenaMessage(p->arena, "%s", event->message);
+		}
+		else
+		{
+			chat->SendMessage(p, "%s", event->message);
+		}
 	}
 
 	//do the action
@@ -670,6 +702,10 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event, LinkedList *u
 	else if (action == ACTION_CALLBACK) //calls a callback passing an eventid of event->data.
 	{
 		DO_CBS(CB_EVENT_ACTION, p->arena, eventActionFunction, (p, event->data));
+	}
+	else if (action == ACTION_ARENA_MESSAGE)
+	{
+		// Do nothing. it was already taken care of above.
 	}
 	else
 	{
@@ -811,11 +847,20 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 			Property *prop = propLink->data;
 
 			//cache it
-			int *propertySum = (int*)HashGetOne(playerData->hull[ship]->propertySums, prop->name);
+			PropertyCacheEntry *propertySum = (PropertyCacheEntry*)HashGetOne(playerData->hull[ship]->propertySums, prop->name);
 			if (propertySum != NULL)
 			{
-				int propDifference = prop->value * amount;
-				*propertySum += propDifference;
+				if (prop->absolute)
+				{
+					// there's no good way to update an absolute value in the cache, so remove it.
+					HashRemove(playerData->hull[ship]->propertySums, prop->name, propertySum);
+					
+				}
+				else
+				{
+					int propDifference = prop->value * amount;
+					propertySum->value += propDifference;
+				}
 			}
 			else
 			{
@@ -947,22 +992,23 @@ local Item * getItemByPartialName(const char *name, Arena *arena) //call with no
 	}
 }
 
-local int getPropertySum(Player *p, int ship, const char *propString)
+local int getPropertySum(Player *p, int ship, const char *propString, int def)
 {
 	int sum;
 	database->lock();
-	sum = getPropertySumNoLock(p, ship, propString);
+	sum = getPropertySumNoLock(p, ship, propString, def);
 	database->unlock();
 	return sum;
 }
 
-local int getPropertySumNoLock(Player *p, int ship, const char *propString) //call with no lock
+local int getPropertySumNoLock(Player *p, int ship, const char *propString, int def) //call with no lock
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
-	int *propertySum;
+	PropertyCacheEntry *propertySum;
 	Link *link;
 	LinkedList *inventoryList;
 	int count = 0;
+	int absolute = 0;
 
 	if (propString == NULL)
 	{
@@ -990,16 +1036,19 @@ local int getPropertySumNoLock(Player *p, int ship, const char *propString) //ca
 	}
 
 	//check if it's in the cache
-	propertySum = (int*)HashGetOne(playerData->hull[ship]->propertySums, propString);
+	propertySum = (PropertyCacheEntry*)HashGetOne(playerData->hull[ship]->propertySums, propString);
 	if (propertySum != NULL)
 	{
-		database->unlock();
-		return *propertySum;
+		if (propertySum->absolute)
+		{
+			def = 0;
+		}
+		
+		return propertySum->value + def;
 	}
 
 	//not in the cache, look it up
 	inventoryList = &playerData->hull[ship]->inventoryEntryList;
-
 
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
@@ -1025,6 +1074,7 @@ local int getPropertySumNoLock(Player *p, int ship, const char *propString) //ca
 			if (strcmp(prop->name, propString) == 0)
 			{
 				count += prop->value * entry->count;
+				absolute = absolute && prop->absolute;
 				break;
 			}
 		}
@@ -1032,11 +1082,12 @@ local int getPropertySumNoLock(Player *p, int ship, const char *propString) //ca
 
 	//cache it
 	propertySum = amalloc(sizeof(*propertySum));
-	*propertySum = count;
+	propertySum->value = count;
+	propertySum->absolute = absolute;
 	HashAdd(playerData->hull[ship]->propertySums, propString, propertySum);
 
 	//then return
-	return count;
+	return count + def;
 }
 
 local void processUpdateList(Player *p, int ship, LinkedList *updateList) //call with lock
@@ -1343,8 +1394,9 @@ local int hasItemsLeftOnShip(Player *p, int ship) //lock doesn't matter
 
 local int zeroCacheEntry(const char *key, void *val, void *clos)
 {
-	int *cacheEntry = val;
-	*cacheEntry = 0;
+	PropertyCacheEntry *cacheEntry = val;
+	cacheEntry->value = 0;
+	cacheEntry->absolute = 0;
 
 	return 0;
 }
@@ -1405,16 +1457,18 @@ local void recaclulateEntireCache(Player *p, int ship)
 			int propDifference = prop->value * entry->count;
 
 			//get it out of the cache
-			int *propertySum = (int*)HashGetOne(table, prop->name);
+			PropertyCacheEntry *propertySum = (PropertyCacheEntry*)HashGetOne(table, prop->name);
 			if (propertySum != NULL)
 			{
-				*propertySum += propDifference;
+				propertySum->value += propDifference;
+				propertySum->absolute = propertySum->absolute && prop->absolute;
 			}
 			else
 			{
 				//no cache entry; create one
 				propertySum = amalloc(sizeof(*propertySum));
-				*propertySum = propDifference;
+				propertySum->value = propDifference;
+				propertySum->absolute = prop->absolute;
 				HashAdd(playerData->hull[ship]->propertySums, prop->name, propertySum);
 			}
 		}

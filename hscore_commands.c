@@ -78,12 +78,19 @@ local void shipsCommand(const char *command, const char *params, Player *p, cons
 
 local int printCacheEntry(const char *key, void *val, void *clos)
 {
-	int *cacheEntry = val;
+	PropertyCacheEntry *cacheEntry = val;
 	Player *p = clos;
 
-	if (cacheEntry != NULL && *cacheEntry != 0)
+	if (cacheEntry != NULL)
 	{
-		chat->SendMessage(p, "| %-16s | %14i |", key, *cacheEntry);
+		if (cacheEntry->absolute)
+		{
+			chat->SendMessage(p, "| %-16s | =%13i |", key, cacheEntry->value);
+		}
+		else if (cacheEntry->value != 0)
+		{
+			chat->SendMessage(p, "| %-16s | %14i |", key, cacheEntry->value);
+		}
 	}
 
 	return 0;
@@ -344,9 +351,9 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 		{
 			chat->SendMessage(p, "+------------------+");
 			chat->SendMessage(p, "| %-16s |", shipNames[ship]);
-			chat->SendMessage(p, "+------------------+-------+------------+-----------------------------------------------------+");
-			chat->SendMessage(p, "| Item Name        | Count | Ammo Count | Item Types                                          |");
-			chat->SendMessage(p, "+------------------+-------+------------+-----------------------------------------------------+");
+			chat->SendMessage(p, "+------------------+-------+------------+-------------------------------------------------+");
+			chat->SendMessage(p, "| Item Name        | Count | Ammo   | Item Types                                          |");
+			chat->SendMessage(p, "+------------------+-------+------------+-------------------------------------------------+");
 
 			Link *link;
 
@@ -358,12 +365,11 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 				int first = 1;
 				char itemTypes[256];
 				char buf[256];
+				char ammoString[20];
 				Link *itemTypeLink;
 
-				int ammoCount = 0;
 				if (item->ammo != NULL)
 				{
-
 					Link *ammoLink;
 					for (ammoLink = LLGetHead(&playerData->hull[ship]->inventoryEntryList); ammoLink; ammoLink = ammoLink->next)
 					{
@@ -371,10 +377,13 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 
 						if (ammoEntry->item == item->ammo)
 						{
-
-							ammoCount = ammoEntry->count;
+							sprintf(ammoString, "%6i", ammoEntry->count);
 						}
 					}
+				}
+				else
+				{
+					sprintf(ammoString, "      ");
 				}
 
 				itemTypes[0] = '\0';
@@ -410,7 +419,7 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 					strcat(itemTypes, buf);
 				}
 				
-				chat->SendMessage(p, "| %-16s | %5i | %10i | %-51s |", item->name, entry->count, ammoCount, itemTypes);
+				chat->SendMessage(p, "| %-16s | %5i | %s | %-51s |", item->name, entry->count, ammoString, itemTypes);
 			}
 			
 			if (!verbose)

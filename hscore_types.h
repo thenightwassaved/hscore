@@ -32,7 +32,10 @@ typedef enum EventAction
 	ACTION_SHIP_RESET,
 
 	//calls a callback passing an eventid of event->data.
-	ACTION_CALLBACK
+	ACTION_CALLBACK,
+	
+	//sends the event's message as an arena-wide message
+	ACTION_ARENA_MESSAGE,
 } EventAction;
 
 typedef struct Event
@@ -49,6 +52,7 @@ typedef struct Property
 {
 	char name[17];
 	int value;
+	int absolute;
 } Property;
 
 typedef struct ItemType
@@ -117,6 +121,12 @@ typedef struct InventoryEntry
 
 	int data; //persistent int for use by the event system.
 } InventoryEntry;
+
+typedef struct PropertyCacheEntry
+{
+	int value;
+	int absolute;
+} PropertyCacheEntry;
 
 typedef struct ShipHull
 {
