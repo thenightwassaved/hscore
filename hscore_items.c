@@ -82,7 +82,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 
 	chat->SendMessage(p, "+------------------+");
 	chat->SendMessage(p, "| %-16s |", item->name);
-	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+------------------+-----+--------------------------+");
+	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+------------------+--------------------------------+");
 	chat->SendMessage(p, "| Buy Price | Sell Price | Exp   | Ships    | Max | Ammo             | Item Types                     |");
 
 	//calculate ship mask
@@ -144,10 +144,10 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 	}
 	else
 	{
-		sprintf(ammoString, "            None");
+		sprintf(ammoString, "None");
 	}
 
-	chat->SendMessage(p, "| $%-8i | $%-9i | %-5i | %s | %-3i | %s | %-30s |", item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, ammoString, itemTypes);
+	chat->SendMessage(p, "| $%-8i | $%-9i | %-5i | %s | %-3i | %-16s | %-30s |", item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, ammoString, itemTypes);
 	chat->SendMessage(p, "+-----------+------+-----+-------+----------+-----+------------------+--------------------------------+");
 
 	//print description
