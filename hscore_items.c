@@ -168,15 +168,15 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 		while (link)
 		{
 			Property *prop = link->data;
-			char absoluteChar = prop->absolute ? '=' : ' ';
+			char ignoreCountChar = prop->ignoreCount ? '!' : ' ';
 			
-			if (prop->ignoreCount)
+			if (prop->absolute)
 			{
-				sprintf(propString, "%c%i!", absoluteChar, prop->value);
+				sprintf(propString, "%=i%c", prop->value, ignoreCountChar);
 			}
 			else
 			{
-				sprintf(propString, "%c%i", absoluteChar, prop->value);
+				sprintf(propString, "%i%c", prop->value, ignoreCountChar);
 			}
 			
 			chat->SendMessage(p, "| %-16s | %-14s |", prop->name, propString);
