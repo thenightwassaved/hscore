@@ -170,16 +170,16 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 			Property *prop = link->data;
 			char absoluteChar = prop->absolute ? '=' : ' ';
 			
-			sprintf(propString, "%c%i", absoluteChar, prop->value);
-			
 			if (prop->ignoreCount)
 			{
-				chat->SendMessage(p, "| %-16s | %-13s! |", prop->name, propString);
+				sprintf(propString, "%c%i!", absoluteChar, prop->value);
 			}
 			else
 			{
-				chat->SendMessage(p, "| %-16s | %-14s |", prop->name, propString);
+				sprintf(propString, "%c%i", absoluteChar, prop->value);
 			}
+			
+			chat->SendMessage(p, "| %-16s | %-14s |", prop->name, propString);
 			link = link->next;
 		}
 		chat->SendMessage(p, "+------------------+----------------+");
