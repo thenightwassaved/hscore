@@ -172,7 +172,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 			
 			if (prop->absolute)
 			{
-				sprintf(propString, "%=i%c", prop->value, ignoreCountChar);
+				sprintf(propString, "=%i%c", prop->value, ignoreCountChar);
 			}
 			else
 			{
