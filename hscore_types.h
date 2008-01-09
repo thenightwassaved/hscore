@@ -53,6 +53,7 @@ typedef struct Property
 	char name[17];
 	int value;
 	int absolute;
+	int ignoreCount;
 } Property;
 
 typedef struct ItemType

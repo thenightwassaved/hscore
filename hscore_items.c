@@ -61,6 +61,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 
 	char buf[256];
 	char ammoString[32];
+	char propString[32];
 	const char *temp = NULL;
 	Link *link;
 
@@ -167,13 +168,17 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 		while (link)
 		{
 			Property *prop = link->data;
-			if (prop->absolute)
+			char absoluteChar = prop->absolute ? '=' : ' ';
+			
+			sprintf(propString, "%c%i", absoluteChar, prop->value);
+			
+			if (prop->ignoreCount)
 			{
-				chat->SendMessage(p, "| %-16s | =%-13i |", prop->name, prop->value);
+				chat->SendMessage(p, "| %-16s | %-13s! |", prop->name, propString);
 			}
 			else
 			{
-				chat->SendMessage(p, "| %-16s | %-14i |", prop->name, prop->value);
+				chat->SendMessage(p, "| %-16s | %-14s |", prop->name, propString);
 			}
 			link = link->next;
 		}
@@ -850,11 +855,10 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 			PropertyCacheEntry *propertySum = (PropertyCacheEntry*)HashGetOne(playerData->hull[ship]->propertySums, prop->name);
 			if (propertySum != NULL)
 			{
-				if (prop->absolute)
+				if (prop->absolute || prop->ignoreCount)
 				{
-					// there's no good way to update an absolute value in the cache, so remove it.
+					// there's no good way to update these cases, so remove it and it'll get recalculated
 					HashRemove(playerData->hull[ship]->propertySums, prop->name, propertySum);
-
 				}
 				else
 				{
@@ -1073,7 +1077,15 @@ local int getPropertySumNoLock(Player *p, int ship, const char *propString, int 
 
 			if (strcmp(prop->name, propString) == 0)
 			{
-				count += prop->value * entry->count;
+				if (prop->ignoreCount)
+				{
+					count += prop->value;
+				}
+				else
+				{
+					count += prop->value * entry->count;
+				}
+				
 				absolute = absolute || prop->absolute;
 				break;
 			}

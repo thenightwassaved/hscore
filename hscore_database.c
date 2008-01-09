@@ -296,6 +296,7 @@ local void LinkAmmo()
 "  `name` varchar(32) NOT NULL default ''," \
 "  `value` int(11) NOT NULL default '0'," \
 "  `absolute` tinyint(4) NOT NULL default '0'," \
+"  `ignore_count` tinyint(4) NOT NULL default '0'," \
 "  `id` int(10) unsigned NOT NULL auto_increment," \
 "  PRIMARY KEY  (`id`)" \
 ")"
@@ -514,6 +515,7 @@ local void loadPropertiesQueryCallback(int status, db_res *result, void *passedD
 
 			property->value = atoi(mysql->GetField(row, 2));		//value
 			property->absolute = atoi(mysql->GetField(row, 3));		//absolute
+			property->ignoreCount = atoi(mysql->GetField(row, 4));	//ignore_count
 		}
 		else
 		{
@@ -1501,7 +1503,7 @@ local void LoadEvents()
 
 local void LoadProperties()
 {
-	mysql->Query(loadPropertiesQueryCallback, NULL, 1, "SELECT item_id, name, value, absolute FROM hs_item_properties");
+	mysql->Query(loadPropertiesQueryCallback, NULL, 1, "SELECT item_id, name, value, absolute, ignore_count FROM hs_item_properties");
 }
 
 local void LoadItemList() //will call LoadProperties() and LoadEvents() when finished
