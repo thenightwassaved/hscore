@@ -1471,7 +1471,16 @@ local void recaclulateEntireCache(Player *p, int ship)
 		{
 			Property *prop = propLink->data;
 
-			int propDifference = prop->value * entry->count;
+			int propDifference;
+
+			if (prop->ignoreCount)
+			{
+				propDifference = prop->value;
+			}
+			else
+			{
+				propDifference = prop->value * entry->count;
+			}
 
 			//get it out of the cache
 			PropertyCacheEntry *propertySum = (PropertyCacheEntry*)HashGetOne(table, prop->name);
