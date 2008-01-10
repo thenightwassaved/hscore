@@ -77,7 +77,7 @@ local void compressPrice(char * buffer, int price)
 		return;
 	}
 	
-	sprintf(buffer, "%lf%c", digits, power);
+	sprintf(buffer, "%lg%c", digits, power);
 }
 
 local void printCategoryItems(Player *p, Category *category) //call with lock held
