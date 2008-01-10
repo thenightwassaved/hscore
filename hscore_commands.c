@@ -368,6 +368,8 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 				char ammoString[20];
 				Link *itemTypeLink;
 
+				sprintf(ammoString, "      ");
+
 				if (item->ammo != NULL)
 				{
 					Link *ammoLink;
@@ -378,12 +380,9 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 						if (ammoEntry->item == item->ammo)
 						{
 							sprintf(ammoString, "%6i", ammoEntry->count);
+							break;
 						}
 					}
-				}
-				else
-				{
-					sprintf(ammoString, "      ");
 				}
 
 				itemTypes[0] = '\0';
