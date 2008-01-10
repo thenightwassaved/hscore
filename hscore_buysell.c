@@ -48,18 +48,51 @@ local void printAllCategories(Player *p)
 	chat->SendMessage(p, "+----------------------------------+------------------------------------------------------------------+");
 }
 
+local void compressPrice(char * buffer, int price)
+{
+	double digits;
+	char power;
+	if (price >= 1000000000)
+	{
+		// billion
+		power = 'B';
+		digits = ((double)price) / 1000000000L;
+	}
+	if (price >= 1000000)
+	{
+		// million
+		power = 'M';
+		digits = ((double)price) / 1000000L;
+	}
+	else if (price >= 1000)
+	{
+		// thousand
+		power = 'k';
+		digits = ((double)price) / 1000L;
+	}
+	else
+	{
+		sprintf(buffer, "%i", price);
+		return;
+	}
+	
+	sprintf(buffer, "%lf%c", digits, power);
+}
+
 local void printCategoryItems(Player *p, Category *category) //call with lock held
 {
 	Link *link;
 	Link plink = {NULL, p};
 	LinkedList lst = { &plink, &plink };
 	char messageType;
+	char buyString[16];
+	char sellString[16];
 
 	chat->SendMessage(p, "+----------------------------------+");
 	chat->SendMessage(p, "| %-32s |", category->name);
-	chat->SendMessage(p, "+------------------+-----------+---+--------+-------+----------+-----+----------------------------------+");
-	chat->SendMessage(p, "| Item Name        | Buy Price | Sell Price | Exp   | Ships    | Max | Item Description                 |");
-	chat->SendMessage(p, "+------------------+-----------+------------+-------+----------+-----+----------------------------------+");
+	chat->SendMessage(p, "+------------------+--------+------+-+-------+----------+-----+------+----------------------------------+");
+	chat->SendMessage(p, "| Item Name        | Buy    | Sell   | Exp   | Ships    | Max | Ammo | Item Description                 |");
+	chat->SendMessage(p, "+------------------+--------+--------+-------+----------+-----+------+----------------------------------+");
 
 	if (!category->hidden || capman->HasCapability(p, SEE_HIDDEN_CATEGORIES))
 	{
@@ -77,6 +110,9 @@ local void printCategoryItems(Player *p, Category *category) //call with lock he
 					shipMask[i] = ' ';
 				}
 			}
+			
+			compressPrice(buyString, item->buyPrice);
+			compressPrice(sellString, item->sellPrice);
 
 			if (money->getMoney(p) < item->buyPrice || money->getExp(p) < item->expRequired)
 			{
@@ -94,11 +130,11 @@ local void printCategoryItems(Player *p, Category *category) //call with lock he
 				}
 			}
 
-			chat->SendAnyMessage(&lst, messageType, 0, NULL, "| %-16s | %-9i | %-10i | %-5i | %-8s | %-3i | %-32s |", item->name, item->buyPrice, item->sellPrice, item->expRequired, shipMask, item->max, item->shortDesc);
+			chat->SendAnyMessage(&lst, messageType, 0, NULL, "| %-16s | %-6s | %-6s | %-5i | %-8s | %-3i | %-4i | %-32s |", item->name, buyString, sellString, item->expRequired, shipMask, item->max, item->minAmmo, item->shortDesc);
 		}
 	}
 
-	chat->SendMessage(p, "+------------------+-----------+------------+-------+----------+-----+----------------------------------+");
+	chat->SendMessage(p, "+------------------+--------+--------+-------+----------+-----+------+----------------------------------+");
 }
 
 local void printShipList(Player *p)
