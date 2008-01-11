@@ -772,6 +772,12 @@ local int getItemCountNoLock(Player *p, Item *item, int ship) //call with lock h
 	return 0; //don't have it
 }
 
+local int deleteCacheEntry(const char *key, void *val, void *clos)
+{
+	afree(val);
+	return 1;
+}
+
 local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
@@ -877,8 +883,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 	else
 	{
 		// Empty the cache. it'll get rebuilt later
-		HashEnum(playerData->hull[ship]->propertySums, hash_enum_afree, 0);
-		HashEnum(playerData->hull[ship]->propertySums, hash_enum_remove, 0);
+		HashEnum(playerData->hull[ship]->propertySums, deleteCacheEntry, 0);
 	}
 
 	database->updateItemNoLock(p, ship, item, count, data);
