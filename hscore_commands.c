@@ -131,7 +131,6 @@ local void cacheCommand(const char *command, const char *params, Player *p, cons
 	if (database->areShipsLoaded(t))
 	{
 		PerPlayerData *playerData = database->getPerPlayerData(t);
-		Link *link;
 
 		if (playerData->hull[ship] != NULL)
 		{
