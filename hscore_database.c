@@ -251,6 +251,11 @@ local void LinkAmmo()
 				lm->Log(L_ERROR, "<hscore_database> No ammo matched id %i requested by item id %i.", item->ammoID, item->id);
 			}
 		}
+		else
+		{
+			// force it, for reloaditems
+			item->ammo = NULL;
+		}
 	}
 	unlock();
 }

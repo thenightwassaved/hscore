@@ -781,7 +781,6 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 	int data = 0;
 	int count = 0;
 	int doInit = 0;
-	int recalcCache = 0;
 	int oldCount = 0;
 	Link *ammoLink;
 
@@ -877,7 +876,9 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 	}
 	else
 	{
-		recalcCache = 1;
+		// Empty the cache. it'll get rebuilt later
+		HashEnum(playerData->hull[ship]->propertySums, hash_enum_afree, 0);
+		HashEnum(playerData->hull[ship]->propertySums, hash_enum_remove, 0);
 	}
 
 	database->updateItemNoLock(p, ship, item, count, data);
@@ -904,14 +905,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 			{
 				DO_CBS(CB_AMMO_REMOVED, p->arena, ammoRemovedFunction, (p, ship, user));
 			}
-
-			recalcCache = 0;
 		}
-	}
-
-	if (recalcCache)
-	{
-		recaclulateEntireCache(p, ship);
 	}
 
 	if (doInit)
