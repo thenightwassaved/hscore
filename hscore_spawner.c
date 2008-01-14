@@ -449,7 +449,7 @@ local void addOverrides(Player *p)
 
 
 			int initShrapRate = cfg->GetInt(conf, shipname, "ShrapnelRate", 0);
-			int shraprate = items->getPropetySumNoLock(p, i, "shraprate", initShrapRate);
+			int shraprate = items->getPropertySumNoLock(p, i, "shraprate", initShrapRate);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].ShrapnelRate, shraprate);
 
 			int initMaxMines = cfg->GetInt(conf, shipname, "MaxMines", 0);
@@ -525,7 +525,7 @@ local void addOverrides(Player *p)
 			clientset->PlayerOverride(p, shipOverrideKeys[i].AntiWarpEnergy, antienergy);
 
 			int initXRadarEnergy = cfg->GetInt(conf, shipname, "XRadarEnergy", 0);
-			int xradarenergy = items->getPropertySumNoLock(p, i, "xradarenergy", initXRadaEnergy);
+			int xradarenergy = items->getPropertySumNoLock(p, i, "xradarenergy", initXRadarEnergy);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].XRadarEnergy, xradarenergy);
 
 			int initBombThrust = cfg->GetInt(conf, shipname, "BombThrust", 0);
