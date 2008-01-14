@@ -89,7 +89,7 @@ local int printCacheEntry(const char *key, void *val, void *clos)
 		}
 		else if (cacheEntry->value != 0)
 		{
-			chat->SendMessage(p, "| %-16s | %-14+i |", key, cacheEntry->value);
+			chat->SendMessage(p, "| %-16s | %+-14i |", key, cacheEntry->value);
 		}
 	}
 
