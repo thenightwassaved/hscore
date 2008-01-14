@@ -176,7 +176,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 			}
 			else
 			{
-				sprintf(propString, "%i%c", prop->value, ignoreCountChar);
+				sprintf(propString, "%+i%c", prop->value, ignoreCountChar);
 			}
 			
 			chat->SendMessage(p, "| %-16s | %-14s |", prop->name, propString);
