@@ -551,11 +551,11 @@ local void addOverrides(Player *p)
 			int soccerprox = items->getPropertySumNoLock(p, i, "soccerprox", initSoccerProx);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].SoccerBallProximity, soccerprox);
 
-			int initGravSpeed = cfg->GetInt(conf, shipname, "Gravity", 0);
+			int initGravSpeed = cfg->GetInt(conf, shipname, "GravityTopSpeed", 0);
 			int gravspeed = items->getPropertySumNoLock(p, i, "gravspeed", initGravSpeed);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].GravityTopSpeed, gravspeed);
 
-			int initGravity = cfg->GetInt(conf, shipname, "GravityTopSpeed", 0);
+			int initGravity = cfg->GetInt(conf, shipname, "Gravity", 0);
 			int grav = items->getPropertySumNoLock(p, i, "grav", initGravity);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].Gravity, grav);
 
