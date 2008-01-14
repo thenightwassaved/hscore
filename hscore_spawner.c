@@ -1011,15 +1011,40 @@ local int handleItemCallback(void *clos)
 		else if (strcasecmp(propName, "antiwarp") == 0)
 			prizeNumber = 20;
 		else if (strcasecmp(propName, "thrust") == 0)
-			prizeNumber = 11;
+		{
+			if (mult*mult2 > 0)
+				prizeNumber = -1;
+			else
+				prizeNumber = 11;
+		}
 		else if (strcasecmp(propName, "speed") == 0)
-			prizeNumber = 12;
+		{
+			if (mult*mult2 > 0)
+				prizeNumber = -1;
+			else
+				prizeNumber = 12;
+		}
 		else if (strcasecmp(propName, "energy") == 0)
-			prizeNumber = 2;
+		{
+			if (mult*mult2 > 0)
+				prizeNumber = -1;
+			else
+				prizeNumber = 2;
+		}
 		else if (strcasecmp(propName, "recharge") == 0)
-			prizeNumber = 1;
+		{
+			if (mult*mult2 > 0)
+				prizeNumber = -1;
+			else
+				prizeNumber = 1;
+		}
 		else if (strcasecmp(propName, "rotation") == 0)
-			prizeNumber = 3;
+		{
+			if (mult*mult2 > 0)
+				prizeNumber = -1;
+			else
+				prizeNumber = 3;
+		}
 		else if (strcasecmp(propName, "bounce") == 0)
 			prizeNumber = 10;
 		else if (strcasecmp(propName, "prox") == 0)
@@ -1190,7 +1215,7 @@ local Ihscorespawner interface =
 	respawn, getFullEnergy
 };
 
-EXPORT const char info_hscore_spawner[] = "v1.0 Dr Brain <drbrain@gmail.com>";
+EXPORT const char info_hscore_spawner[] = "v1.1 Dr Brain <drbrain@gmail.com>";
 
 EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 {
