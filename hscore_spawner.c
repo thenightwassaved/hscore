@@ -357,6 +357,7 @@ local void addOverrides(Player *p)
 
 
 
+
 			int gunlevel = items->getPropertySumNoLock(p, i, "gunlevel", 0);
 			if (gunlevel > 0) clientset->PlayerOverride(p, shipOverrideKeys[i].InitialGuns, gunlevel);
 			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialGuns);
@@ -367,260 +368,208 @@ local void addOverrides(Player *p)
 
 
 
+
 			int thrust = items->getPropertySumNoLock(p, i, "thrust", 0);
-			if (thrust)
-			{
-				int initThrust = cfg->GetInt(conf, shipname, "InitialThrust", 0);
-				int upThrust = cfg->GetInt(conf, shipname, "UpgradeThrust", 0);
-				int newThrust = initThrust + (upThrust * thrust);
-				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialThrust, newThrust);
-			}
-			else
-			{
-				clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialThrust);
-			}
+			int initThrust = cfg->GetInt(conf, shipname, "InitialThrust", 0);
+			int upThrust = cfg->GetInt(conf, shipname, "UpgradeThrust", 0);
+			int newThrust = initThrust + (upThrust * thrust);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialThrust, newThrust);
 
 			int speed = items->getPropertySumNoLock(p, i, "speed", 0);
-			if (speed)
-			{
-				int initSpeed = cfg->GetInt(conf, shipname, "InitialSpeed", 0);
-				int upSpeed = cfg->GetInt(conf, shipname, "UpgradeSpeed", 0);
-				int newSpeed = initSpeed + (upSpeed * speed);
-				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialSpeed, newSpeed);
-			}
-			else
-			{
-				clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialSpeed);
-			}
+			int initSpeed = cfg->GetInt(conf, shipname, "InitialSpeed", 0);
+			int upSpeed = cfg->GetInt(conf, shipname, "UpgradeSpeed", 0);
+			int newSpeed = initSpeed + (upSpeed * speed);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialSpeed, newSpeed);
 
 			int energy = items->getPropertySumNoLock(p, i, "energy", 0);
-			if (energy)
-			{
-				int initEnergy = cfg->GetInt(conf, shipname, "InitialEnergy", 0);
-				int upEnergy = cfg->GetInt(conf, shipname, "UpgradeEnergy", 0);
-				int newEnergy = initEnergy + (upEnergy * energy);
-				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialEnergy, newEnergy);
-			}
-			else
-			{
-				clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialEnergy);
-			}
+			int initEnergy = cfg->GetInt(conf, shipname, "InitialEnergy", 0);
+			int upEnergy = cfg->GetInt(conf, shipname, "UpgradeEnergy", 0);
+			int newEnergy = initEnergy + (upEnergy * energy);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialEnergy, newEnergy);
 
 			int recharge = items->getPropertySumNoLock(p, i, "recharge", 0);
-			if (recharge)
-			{
-				int initRecharge = cfg->GetInt(conf, shipname, "InitialRecharge", 0);
-				int upRecharge = cfg->GetInt(conf, shipname, "UpgradeRecharge", 0);
-				int newRecharge = initRecharge + (upRecharge * recharge);
-				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRecharge, newRecharge);
-			}
-			else
-			{
-				clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialRecharge);
-			}
+			int initRecharge = cfg->GetInt(conf, shipname, "InitialRecharge", 0);
+			int upRecharge = cfg->GetInt(conf, shipname, "UpgradeRecharge", 0);
+			int newRecharge = initRecharge + (upRecharge * recharge);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRecharge, newRecharge);
 
 			int rotation = items->getPropertySumNoLock(p, i, "rotation", 0);
-			if (rotation)
-			{
-				int initRotation = cfg->GetInt(conf, shipname, "InitialRotation", 0);
-				int upRotation = cfg->GetInt(conf, shipname, "UpgradeRotation", 0);
-				int newRotation = initRotation + (upRotation * rotation);
-				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRotation, newRotation);
-			}
-			else
-			{
-				clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialRotation);
-			}
+			int initRotation = cfg->GetInt(conf, shipname, "InitialRotation", 0);
+			int upRotation = cfg->GetInt(conf, shipname, "UpgradeRotation", 0);
+			int newRotation = initRotation + (upRotation * rotation);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRotation, newRotation);
 
 			int maxthrust = items->getPropertySumNoLock(p, i, "maxthrust", 0);
-			if (maxthrust)
-			{
-				int initThrust = cfg->GetInt(conf, shipname, "MaximumThrust", 0);
-				int upThrust = cfg->GetInt(conf, shipname, "UpgradeThrust", 0);
-				int newThrust = initThrust + (upThrust * maxthrust);
-				clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumThrust, newThrust);
-			}
-			else
-			{
-				clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaximumThrust);
-			}
+			int initMaxThrust = cfg->GetInt(conf, shipname, "MaximumThrust", 0);
+			int newMaxThrust = initMaxThrust + (upThrust * maxthrust);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumThrust, newMaxThrust);
 
 			int maxspeed = items->getPropertySumNoLock(p, i, "maxspeed", 0);
-			if (maxspeed)
-			{
-				int initSpeed = cfg->GetInt(conf, shipname, "MaximumSpeed", 0);
-				int upSpeed = cfg->GetInt(conf, shipname, "UpgradeSpeed", 0);
-				int newSpeed = initSpeed + (upSpeed * maxspeed);
-				clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumSpeed, newSpeed);
-			}
-			else
-			{
-				clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaximumSpeed);
-			}
+			int initMaxSpeed = cfg->GetInt(conf, shipname, "MaximumSpeed", 0);
+			int newMaxSpeed = initMaxSpeed + (upSpeed * maxspeed);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumSpeed, newMaxSpeed);
 
 			int afterburner = items->getPropertySumNoLock(p, i, "afterburner", 0);
-			if (afterburner)
-			{
-				int upRecharge = cfg->GetInt(conf, shipname, "UpgradeRecharge", 0);
-				clientset->PlayerOverride(p, shipOverrideKeys[i].AfterburnerEnergy, upRecharge * afterburner);
-			}
-			else
-			{
-				clientset->PlayerUnoverride(p, shipOverrideKeys[i].AfterburnerEnergy);
-			}
+			int initAfterburner =  cfg->GetInt(conf, shipname, "AfterburnerEnergy", 0);
+			int newAfterburner = initAfterburner + (upRecharge * afterburner);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].AfterburnerEnergy, newAfterburner);
+
+
 
 
 			int initBurst = cfg->GetInt(conf, shipname, "InitialBurst", 0);
-			int burst = items->getPropertySumNoLock(p, i, "burst", 0) + initBurst;
+			int burst = items->getPropertySumNoLock(p, i, "burst", initBurst);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBurst, burst);
 
 			int initRepel = cfg->GetInt(conf, shipname, "InitialRepel", 0);
-			int repel = items->getPropertySumNoLock(p, i, "repel", 0) + initRepel;
+			int repel = items->getPropertySumNoLock(p, i, "repel", initRepel);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRepel, repel);
 
 			int initDecoy = cfg->GetInt(conf, shipname, "InitialDecoy", 0);
-			int decoy = items->getPropertySumNoLock(p, i, "decoy", 0) + initDecoy;
+			int decoy = items->getPropertySumNoLock(p, i, "decoy", initDecoy);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialDecoy, decoy);
 
 			int initThor = cfg->GetInt(conf, shipname, "InitialThor", 0);
-			int thor = items->getPropertySumNoLock(p, i, "thor", 0) + initThor;
+			int thor = items->getPropertySumNoLock(p, i, "thor", initThor);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialThor, thor);
 
 			int initBrick = cfg->GetInt(conf, shipname, "InitialBrick", 0);
-			int brick = items->getPropertySumNoLock(p, i, "brick", 0) + initBrick;
+			int brick = items->getPropertySumNoLock(p, i, "brick", initBrick);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBrick, brick);
 
 			int initRocket = cfg->GetInt(conf, shipname, "InitialRocket", 0);
-			int rocket = items->getPropertySumNoLock(p, i, "rocket", 0) + initRocket;
+			int rocket = items->getPropertySumNoLock(p, i, "rocket", initRocket);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRocket, rocket);
 
 			int initPortal = cfg->GetInt(conf, shipname, "InitialPortal", 0);
-			int portal = items->getPropertySumNoLock(p, i, "portal", 0) + initPortal;
+			int portal = items->getPropertySumNoLock(p, i, "portal", initPortal);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialPortal, portal);
 
 
 
 
-			int seemines = items->getPropertySumNoLock(p, i, "seemines", 0);
-			if (seemines) clientset->PlayerOverride(p, shipOverrideKeys[i].SeeMines, seemines);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].SeeMines);
+			int initShrapRate = cfg->GetInt(conf, shipname, "ShrapnelRate", 0);
+			int shraprate = items->getPropetySumNoLock(p, i, "shraprate", initShrapRate);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].ShrapnelRate, shraprate);
 
-			int seebomblevel = items->getPropertySumNoLock(p, i, "seebomblevel", 0);
-			if (seebomblevel) clientset->PlayerOverride(p, shipOverrideKeys[i].SeeBombLevel, seebomblevel);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].SeeBombLevel);
-
-			int bulletenergy = items->getPropertySumNoLock(p, i, "bulletenergy", 0);
-			if (bulletenergy) clientset->PlayerOverride(p, shipOverrideKeys[i].BulletFireEnergy, bulletenergy);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].BulletFireEnergy);
-
-			int multienergy = items->getPropertySumNoLock(p, i, "multienergy", 0);
-			if (multienergy) clientset->PlayerOverride(p, shipOverrideKeys[i].MultiFireEnergy, multienergy);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].MultiFireEnergy);
-
-			int bombenergy = items->getPropertySumNoLock(p, i, "bombenergy", 0);
-			if (bombenergy) clientset->PlayerOverride(p, shipOverrideKeys[i].BombFireEnergy, bombenergy);
-
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].BombFireEnergy);
-
-			int bombenergyup = items->getPropertySumNoLock(p, i, "bombenergyup", 0);
-			if (bombenergyup) clientset->PlayerOverride(p, shipOverrideKeys[i].BombFireEnergyUpgrade, bombenergyup);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].BombFireEnergyUpgrade);
-
-			int mineenergy = items->getPropertySumNoLock(p, i, "mineenergy", 0);
-			if (mineenergy) clientset->PlayerOverride(p, shipOverrideKeys[i].LandmineFireEnergy, mineenergy);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].LandmineFireEnergy);
-
-			int mineenergyup = items->getPropertySumNoLock(p, i, "mineenergyup", 0);
-			if (mineenergyup) clientset->PlayerOverride(p, shipOverrideKeys[i].LandmineFireEnergyUpgrade, mineenergyup);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].LandmineFireEnergyUpgrade);
-
-			int cloakenergy = items->getPropertySumNoLock(p, i, "cloakenergy", 0);
-			if (cloakenergy) clientset->PlayerOverride(p, shipOverrideKeys[i].CloakEnergy, cloakenergy);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].CloakEnergy);
-
-			int stealthenergy = items->getPropertySumNoLock(p, i, "stealthenergy", 0);
-			if (stealthenergy) clientset->PlayerOverride(p, shipOverrideKeys[i].StealthEnergy, stealthenergy);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].StealthEnergy);
-
-			int antienergy = items->getPropertySumNoLock(p, i, "antienergy", 0);
-			if (antienergy) clientset->PlayerOverride(p, shipOverrideKeys[i].AntiWarpEnergy, antienergy);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].AntiWarpEnergy);
-
-			int xradarenergy = items->getPropertySumNoLock(p, i, "xradarenergy", 0);
-			if (xradarenergy) clientset->PlayerOverride(p, shipOverrideKeys[i].XRadarEnergy, xradarenergy);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].XRadarEnergy);
-
-			int bombthrust = items->getPropertySumNoLock(p, i, "bombthrust", 0);
-			if (bombthrust) clientset->PlayerOverride(p, shipOverrideKeys[i].BombThrust, bombthrust);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].BombThrust);
-
-			int bulletdelay = items->getPropertySumNoLock(p, i, "bulletdelay", 0);
-			if (bulletdelay) clientset->PlayerOverride(p, shipOverrideKeys[i].BulletFireDelay, bulletdelay);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].BulletFireDelay);
-
-			int multidelay = items->getPropertySumNoLock(p, i, "multidelay", 0);
-			if (multidelay) clientset->PlayerOverride(p, shipOverrideKeys[i].MultiFireDelay, multidelay);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].MultiFireDelay);
-
-			int bombdelay = items->getPropertySumNoLock(p, i, "bombdelay", 0);
-			if (bombdelay) clientset->PlayerOverride(p, shipOverrideKeys[i].BombFireDelay, bombdelay);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].BombFireDelay);
-
-			int minedelay = items->getPropertySumNoLock(p, i, "minedelay", 0);
-			if (minedelay) clientset->PlayerOverride(p, shipOverrideKeys[i].LandmineFireDelay, minedelay);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].LandmineFireDelay);
-
-			int rockettime = items->getPropertySumNoLock(p, i, "rockettime", 0);
-			if (rockettime) clientset->PlayerOverride(p, shipOverrideKeys[i].RocketTime, rockettime);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].RocketTime);
-
-			int initInitialBounty = cfg->GetInt(conf, shipname, "InitialBounty", 0);
-			int initialbounty = items->getPropertySumNoLock(p, i, "initialbounty", 0) + initInitialBounty;
-			if (initialbounty) clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBounty, initialbounty);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialBounty);
-
-			int damagefactor = items->getPropertySumNoLock(p, i, "damagefactor", 0);
-			if (damagefactor) clientset->PlayerOverride(p, shipOverrideKeys[i].DamageFactor, damagefactor);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].DamageFactor);
+			int initMaxMines = cfg->GetInt(conf, shipname, "MaxMines", 0);
+			int maxmines = items->getPropertySumNoLock(p, i, "maxmines", initMaxMines);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].MaxMines, maxmines);
 
 			int initAttachBounty = cfg->GetInt(conf, shipname, "AttachBounty", 0);
-			int attachbounty = items->getPropertySumNoLock(p, i, "attachbounty", 0) + initAttachBounty;
-			if (attachbounty) clientset->PlayerOverride(p, shipOverrideKeys[i].AttachBounty, attachbounty);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].AttachBounty);
+			int attachbounty = items->getPropertySumNoLock(p, i, "attachbounty", initAttachBounty);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].AttachBounty, attachbounty);
+			
+			int initInitialBounty = cfg->GetInt(conf, shipname, "InitialBounty", 0);
+			int initialbounty = items->getPropertySumNoLock(p, i, "initialbounty", initInitialBounty);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBounty, initialbounty);
+			
+			int initSeeMines = cfg->GetInt(conf, shipname, "SeeMines", 0);
+			int seemines = items->getPropertySumNoLock(p, i, "seemines", initSeeMines);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].SeeMines, seemines);
 
-			int soccertime = items->getPropertySumNoLock(p, i, "soccertime", 0);
-			if (soccertime) clientset->PlayerOverride(p, shipOverrideKeys[i].SoccerThrowTime, soccertime);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].SoccerThrowTime);
+			int initSeeBombLevel = cfg->GetInt(conf, shipname, "SeeBombLevel", 0);
+			int seebomblevel = items->getPropertySumNoLock(p, i, "seebomblevel", initSeeBombLevel);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].SeeBombLevel, seebomblevel);
 
-			int soccerprox = items->getPropertySumNoLock(p, i, "soccerprox", 0);
-			if (soccerprox) clientset->PlayerOverride(p, shipOverrideKeys[i].SoccerBallProximity, soccerprox);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].SoccerBallProximity);
+			int initBulletEnergy = cfg->GetInt(conf, shipname, "BulletFireEnergy", 0);
+			int bulletenergy = items->getPropertySumNoLock(p, i, "bulletenergy", initBulletEnergy);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].BulletFireEnergy, bulletenergy);
 
-			//int initMaxMines = cfg->GetInt(conf, shipname, "MaxMines", 0);
-			//int maxmines = items->getPropertySumNoLock(p, i, "maxmines") + initMaxMines;
-			int maxmines = items->getPropertySumNoLock(p, i, "maxmines", 0);
-			if (maxmines) clientset->PlayerOverride(p, shipOverrideKeys[i].MaxMines, maxmines);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaxMines);
+			int initMultiEnergy = cfg->GetInt(conf, shipname, "MultiFireEnergy", 0);
+			int multienergy = items->getPropertySumNoLock(p, i, "multienergy", initMultiEnergy);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].MultiFireEnergy, multienergy);
 
-			int gravspeed = items->getPropertySumNoLock(p, i, "gravspeed", 0);
-			if (gravspeed) clientset->PlayerOverride(p, shipOverrideKeys[i].GravityTopSpeed, gravspeed);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].GravityTopSpeed);
+			int initBombEnergy = cfg->GetInt(conf, shipname, "BombFireEnergy", 0);
+			int bombenergy = items->getPropertySumNoLock(p, i, "bombenergy", initBombEnergy);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].BombFireEnergy, bombenergy);
 
-			int grav = items->getPropertySumNoLock(p, i, "grav", 0);
-			if (grav) clientset->PlayerOverride(p, shipOverrideKeys[i].Gravity, grav);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].Gravity);
+			int initBombEnergyUp = cfg->GetInt(conf, shipname, "BombFireEnergyUpgrade", 0);
+			int bombenergyup = items->getPropertySumNoLock(p, i, "bombenergyup", initBombEnergyUp);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].BombFireEnergyUpgrade, bombenergyup);
 
-			int fastShoot = items->getPropertySumNoLock(p, i, "nofastshoot", 0);
-			if (fastShoot) clientset->PlayerOverride(p, shipOverrideKeys[i].DisableFastShooting, fastShoot);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].DisableFastShooting);
+			int initMineEnergy = cfg->GetInt(conf, shipname, "LandmineFireEnergy", 0);
+			int mineenergy = items->getPropertySumNoLock(p, i, "mineenergy", initMineEnergy);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].LandmineFireEnergy, mineenergy);
 
-			int turretThrust = items->getPropertySumNoLock(p, i, "turretthrust", 0);
-			if (turretThrust) clientset->PlayerOverride(p, shipOverrideKeys[i].TurretThrustPenalty, turretThrust);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].TurretThrustPenalty);
+			int initMineEnergyUp = cfg->GetInt(conf, shipname, "LandmineFireEnergyUpgrade", 0);
+			int mineenergyup = items->getPropertySumNoLock(p, i, "mineenergyup", initMineEnergyUp);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].LandmineFireEnergyUpgrade, mineenergyup);
 
-			int turretSpeed = items->getPropertySumNoLock(p, i, "turretspeed", 0);
-			if (turretSpeed) clientset->PlayerOverride(p, shipOverrideKeys[i].TurretSpeedPenalty, turretSpeed);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].TurretSpeedPenalty);
+			int initBulletDelay = cfg->GetInt(conf, shipname, "BulletFireDelay", 0);
+			int bulletdelay = items->getPropertySumNoLock(p, i, "bulletdelay", initBulletDelay);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].BulletFireDelay, bulletdelay);
+
+			int initMultiDelay = cfg->GetInt(conf, shipname, "MultiFireDelay", 0);
+			int multidelay = items->getPropertySumNoLock(p, i, "multidelay", initMultiDelay);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].MultiFireDelay, multidelay);
+
+			int initBombDelay = cfg->GetInt(conf, shipname, "BombFireDelay", 0);
+			int bombdelay = items->getPropertySumNoLock(p, i, "bombdelay", initBombDelay);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].BombFireDelay, bombdelay);
+
+			int initMineDelay = cfg->GetInt(conf, shipname, "LandmineFireDelay", 0);
+			int minedelay = items->getPropertySumNoLock(p, i, "minedelay", initMineDelay);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].LandmineFireDelay, minedelay);
+
+			int initCloakEnergy = cfg->GetInt(conf, shipname, "CloakEnergy", 0);
+			int cloakenergy = items->getPropertySumNoLock(p, i, "cloakenergy", initCloakEnergy);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].CloakEnergy, cloakenergy);
+
+			int initStealthEnergy = cfg->GetInt(conf, shipname, "StealthEnergy", 0);
+			int stealthenergy = items->getPropertySumNoLock(p, i, "stealthenergy", initStealthEnergy);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].StealthEnergy, stealthenergy);
+
+			int initAntiEnergy = cfg->GetInt(conf, shipname, "AntiWarpEnergy", 0);
+			int antienergy = items->getPropertySumNoLock(p, i, "antienergy", initAntiEnergy);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].AntiWarpEnergy, antienergy);
+
+			int initXRadarEnergy = cfg->GetInt(conf, shipname, "XRadarEnergy", 0);
+			int xradarenergy = items->getPropertySumNoLock(p, i, "xradarenergy", initXRadaEnergy);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].XRadarEnergy, xradarenergy);
+
+			int initBombThrust = cfg->GetInt(conf, shipname, "BombThrust", 0);
+			int bombthrust = items->getPropertySumNoLock(p, i, "bombthrust", initBombThrust);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].BombThrust, bombthrust);
+
+
+
+
+			int initRocketTime = cfg->GetInt(conf, shipname, "RocketTime", 0);
+			int rockettime = items->getPropertySumNoLock(p, i, "rockettime", initRocketTime);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].RocketTime, rockettime);
+
+			int initDamageFactor = cfg->GetInt(conf, shipname, "DamageFactor", 0);
+			int damagefactor = items->getPropertySumNoLock(p, i, "damagefactor", initDamageFactor);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].DamageFactor, damagefactor);
+
+			int initSoccerTime = cfg->GetInt(conf, shipname, "SoccerThrowTime", 0);
+			int soccertime = items->getPropertySumNoLock(p, i, "soccertime", initSoccerTime);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].SoccerThrowTime, soccertime);
+
+			int initSoccerProx = cfg->GetInt(conf, shipname, "SoccerBallProximity", 0);
+			int soccerprox = items->getPropertySumNoLock(p, i, "soccerprox", initSoccerProx);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].SoccerBallProximity, soccerprox);
+
+			int initGravSpeed = cfg->GetInt(conf, shipname, "Gravity", 0);
+			int gravspeed = items->getPropertySumNoLock(p, i, "gravspeed", initGravSpeed);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].GravityTopSpeed, gravspeed);
+
+			int initGravity = cfg->GetInt(conf, shipname, "GravityTopSpeed", 0);
+			int grav = items->getPropertySumNoLock(p, i, "grav", initGravity);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].Gravity, grav);
+
+			int initTurretThrust = cfg->GetInt(conf, shipname, "TurretThrustPenalty", 0);
+			int turretThrust = items->getPropertySumNoLock(p, i, "turretthrust", initTurretThrust);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].TurretThrustPenalty, turretThrust);
+
+			int initTurretSpeed = cfg->GetInt(conf, shipname, "TurretSpeedPenalty", 0);
+			int turretSpeed = items->getPropertySumNoLock(p, i, "turretspeed", initTurretSpeed);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].TurretSpeedPenalty, turretSpeed);
+
+			int initNoFastShoot = cfg->GetInt(conf, shipname, "DisableFastShooting", 0);
+			int fastShoot = items->getPropertySumNoLock(p, i, "nofastshoot", initNoFastShoot);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].DisableFastShooting, fastShoot);
 
 			data->usingPerShip[i] = checkUsingPerShip(p, i);
 		}
@@ -629,97 +578,94 @@ local void addOverrides(Player *p)
 	//add globals if the ship uses them
 	if (p->p_ship != SHIP_SPEC)
 	{
-		int bulletdamage = items->getPropertySumNoLock(p, p->p_ship, "bulletdamage", 0) * 1000;
-		if (bulletdamage) clientset->PlayerOverride(p, globalOverrideKeys.BulletDamageLevel, bulletdamage);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.BulletDamageLevel);
+		int initBulletDamage = cfg->GetInt(conf, "Bullet", "BulletDamageLevel", 0);
+		int bulletdamage = items->getPropertySumNoLock(p, p->p_ship, "bulletdamage", initBulletDamage) * 1000;
+		clientset->PlayerOverride(p, globalOverrideKeys.BulletDamageLevel, bulletdamage);
 
-		int bulletdamageup = items->getPropertySumNoLock(p, p->p_ship, "bulletdamageup", 0) * 1000;
-		if (bulletdamageup) clientset->PlayerOverride(p, globalOverrideKeys.BulletDamageUpgrade, bulletdamageup);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.BulletDamageUpgrade);
+		int initBulletDamageUp = cfg->GetInt(conf, "Bullet", "BulletDamageUpgrade", 0);
+		int bulletdamageup = items->getPropertySumNoLock(p, p->p_ship, "bulletdamageup", initBulletDamageUp) * 1000;
+		clientset->PlayerOverride(p, globalOverrideKeys.BulletDamageUpgrade, bulletdamageup);
 
-		int bombdamage = items->getPropertySumNoLock(p, p->p_ship, "bombdamage", 0) * 1000;
-		if (bombdamage) clientset->PlayerOverride(p, globalOverrideKeys.BombDamageLevel, bombdamage);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.BombDamageLevel);
+		int initBombDamage = cfg->GetInt(conf, "Bomb", "BombDamageLevel", 0);
+		int bombdamage = items->getPropertySumNoLock(p, p->p_ship, "bombdamage", initBombDamage) * 1000;
+		clientset->PlayerOverride(p, globalOverrideKeys.BombDamageLevel, bombdamage);
 
-		int ebombtime = items->getPropertySumNoLock(p, p->p_ship, "ebombtime", 0);
-		if (ebombtime) clientset->PlayerOverride(p, globalOverrideKeys.EBombShutdownTime, ebombtime);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.EBombShutdownTime);
+		int initEBombTime = cfg->GetInt(conf, "Bomb", "EBombShutdownTime", 0);
+		int ebombtime = items->getPropertySumNoLock(p, p->p_ship, "ebombtime", initEBombTime);
+		clientset->PlayerOverride(p, globalOverrideKeys.EBombShutdownTime, ebombtime);
 
-		int ebombdamage = items->getPropertySumNoLock(p, p->p_ship, "ebombdamage", 0);
-		if (ebombdamage) clientset->PlayerOverride(p, globalOverrideKeys.EBombDamagePercent, ebombdamage);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.EBombDamagePercent);
+		int initEBombDamage = cfg->GetInt(conf, "Bomb", "EBombDamagePercent", 0);
+		int ebombdamage = items->getPropertySumNoLock(p, p->p_ship, "ebombdamage", initEBombDamage);
+		clientset->PlayerOverride(p, globalOverrideKeys.EBombDamagePercent, ebombdamage);
 
-		int bbombdamage = items->getPropertySumNoLock(p, p->p_ship, "bbombdamage", 0);
-		if (bbombdamage) clientset->PlayerOverride(p, globalOverrideKeys.BBombDamagePercent, bbombdamage);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.BBombDamagePercent);
+		int initBBombDamage = cfg->GetInt(conf, "Bomb", "BBombDamagePercent", 0);
+		int bbombdamage = items->getPropertySumNoLock(p, p->p_ship, "bbombdamage", initBBombDamage);
+		clientset->PlayerOverride(p, globalOverrideKeys.BBombDamagePercent, bbombdamage);
 
-		int burstdamage = items->getPropertySumNoLock(p, p->p_ship, "burstdamage", 0) * 1000;
-		if (burstdamage) clientset->PlayerOverride(p, globalOverrideKeys.BurstDamageLevel, burstdamage);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.BurstDamageLevel);
+		int initBurstDamage = cfg->GetInt(conf, "Burst", "BurstDamageLevel", 0);
+		int burstdamage = items->getPropertySumNoLock(p, p->p_ship, "burstdamage", initBurstDamage) * 1000;
+		clientset->PlayerOverride(p, globalOverrideKeys.BurstDamageLevel, burstdamage);
 
-		int jittertime = items->getPropertySumNoLock(p, p->p_ship, "jittertime", 0);
-		if (jittertime) clientset->PlayerOverride(p, globalOverrideKeys.JitterTime, jittertime);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.JitterTime);
+		int initJitterTime = cfg->GetInt(conf, "Bomb", "JitterTime", 0);
+		int jittertime = items->getPropertySumNoLock(p, p->p_ship, "jittertime", initJitterTime);
+		clientset->PlayerOverride(p, globalOverrideKeys.JitterTime, jittertime);
 
-		globalOverrideKeys.JitterTime = clientset->GetOverrideKey("Bomb", "JitterTime");
+		int initDecoyAlive = cfg->GetInt(conf, "Misc", "DecoyAliveTime", 0);
+		int decoyalive = items->getPropertySumNoLock(p, p->p_ship, "decoyalive", initDecoyAlive);
+		clientset->PlayerOverride(p, globalOverrideKeys.DecoyAliveTime, decoyalive);
 
-		int decoyalive = items->getPropertySumNoLock(p, p->p_ship, "decoyalive", 0);
-		if (decoyalive) clientset->PlayerOverride(p, globalOverrideKeys.DecoyAliveTime, decoyalive);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.DecoyAliveTime);
+		int initWarpPointDelay = cfg->GetInt(conf, "Misc", "WarpPointDelay", 0);
+		int warppointdelay = items->getPropertySumNoLock(p, p->p_ship, "warppointdelay", initWarpPointDelay);
+		clientset->PlayerOverride(p, globalOverrideKeys.WarpPointDelay, warppointdelay);
 
-		int warppointdelay = items->getPropertySumNoLock(p, p->p_ship, "warppointdelay", 0);
-		if (warppointdelay) clientset->PlayerOverride(p, globalOverrideKeys.WarpPointDelay, warppointdelay);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.WarpPointDelay);
+		int initRocketThrust = cfg->GetInt(conf, "Rocket", "RocketThrust", 0);
+		int rocketthrust = items->getPropertySumNoLock(p, p->p_ship, "rocketthrust", initRocketThrust);
+		clientset->PlayerOverride(p, globalOverrideKeys.RocketThrust, rocketthrust);
 
-		int rocketthrust = items->getPropertySumNoLock(p, p->p_ship, "rocketthrust", 0);
-		if (rocketthrust) clientset->PlayerOverride(p, globalOverrideKeys.RocketThrust, rocketthrust);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.RocketThrust);
+		int initRocketSpeed = cfg->GetInt(conf, "Rocket", "RocketSpeed", 0);
+		int rocketspeed = items->getPropertySumNoLock(p, p->p_ship, "rocketspeed", initRocketSpeed);
+		clientset->PlayerOverride(p, globalOverrideKeys.RocketSpeed, rocketspeed);
 
-		int rocketspeed = items->getPropertySumNoLock(p, p->p_ship, "rocketspeed", 0);
-		if (rocketspeed) clientset->PlayerOverride(p, globalOverrideKeys.RocketSpeed, rocketspeed);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.RocketSpeed);
+		int initInactShrapDamage = cfg->GetInt(conf, "Shrapnel", "InactiveShrapDamage", 0);
+		int inactshrapdamage = items->getPropertySumNoLock(p, p->p_ship, "inactshrapdamage", initInactShrapDamage) * 1000;
+		clientset->PlayerOverride(p, globalOverrideKeys.InactiveShrapDamage, inactshrapdamage);
 
-		int inactshrapdamage = items->getPropertySumNoLock(p, p->p_ship, "inactshrapdamage", 0) * 1000;
-		if (inactshrapdamage) clientset->PlayerOverride(p, globalOverrideKeys.InactiveShrapDamage, inactshrapdamage);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.InactiveShrapDamage);
+		int initShrapDamage = cfg->GetInt(conf, "Shrapnel", "ShrapnelDamagePercent", 0);
+		int shrapdamage = items->getPropertySumNoLock(p, p->p_ship, "shrapdamage", initShrapDamage);
+		clientset->PlayerOverride(p, globalOverrideKeys.ShrapnelDamagePercent, shrapdamage);
 
-		int shrapdamage = items->getPropertySumNoLock(p, p->p_ship, "shrapdamage", 0);
-		if (shrapdamage) clientset->PlayerOverride(p, globalOverrideKeys.ShrapnelDamagePercent, shrapdamage);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.ShrapnelDamagePercent);
+		int initMapZoom = cfg->GetInt(conf, "Radar", "MapZoomFactor", 0);
+		int mapzoom = items->getPropertySumNoLock(p, p->p_ship, "mapzoom", initMapZoom);
+		clientset->PlayerOverride(p, globalOverrideKeys.MapZoomFactor, mapzoom);
 
-		int mapzoom = items->getPropertySumNoLock(p, p->p_ship, "mapzoom", 0);
-		if (mapzoom) clientset->PlayerOverride(p, globalOverrideKeys.MapZoomFactor, mapzoom);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.MapZoomFactor);
+		int initFlagGunUp = cfg->GetInt(conf, "Flag", "FlaggerGunUpgrade", 0);
+		int flaggunup = items->getPropertySumNoLock(p, p->p_ship, "flaggunup", initFlagGunUp);
+		clientset->PlayerOverride(p, globalOverrideKeys.FlaggerGunUpgrade, flaggunup);
 
-		int flaggunup = items->getPropertySumNoLock(p, p->p_ship, "flaggunup", 0);
-		if (flaggunup) clientset->PlayerOverride(p, globalOverrideKeys.FlaggerGunUpgrade, flaggunup);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.FlaggerGunUpgrade);
+		int initFlagBombUp = cfg->GetInt(conf, "Flag", "FlaggerBombUpgrade", 0);
+		int flagbombup = items->getPropertySumNoLock(p, p->p_ship, "flagbombup", initFlagBombUp);
+		clientset->PlayerOverride(p, globalOverrideKeys.FlaggerBombUpgrade, flagbombup);
 
-		int flagbombup = items->getPropertySumNoLock(p, p->p_ship, "flagbombup", 0);
-		if (flagbombup) clientset->PlayerOverride(p, globalOverrideKeys.FlaggerBombUpgrade, flagbombup);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.FlaggerBombUpgrade);
+		int initSoccerAllowBombs = cfg->GetInt(conf, "Soccer", "AllowBombs", 0);
+		int soccerallowbombs = items->getPropertySumNoLock(p, p->p_ship, "soccerallowbombs", initSoccerAllowBombs);
+		clientset->PlayerOverride(p, globalOverrideKeys.AllowBombs, soccerallowbombs);
 
-		int soccerallowbombs = items->getPropertySumNoLock(p, p->p_ship, "soccerallowbombs", 0);
-		if (soccerallowbombs) clientset->PlayerOverride(p, globalOverrideKeys.AllowBombs, soccerallowbombs);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.AllowBombs);
+		int initSoccerAllowGuns = cfg->GetInt(conf, "Soccer", "AllowGuns", 0);
+		int soccerallowguns = items->getPropertySumNoLock(p, p->p_ship, "soccerallowguns", initSoccerAllowGuns);
+		clientset->PlayerOverride(p, globalOverrideKeys.AllowGuns, soccerallowguns);
 
-		int soccerallowguns = items->getPropertySumNoLock(p, p->p_ship, "soccerallowguns", 0);
-		if (soccerallowguns) clientset->PlayerOverride(p, globalOverrideKeys.AllowGuns, soccerallowguns);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.AllowGuns);
+		int initSoccerUseFlag = cfg->GetInt(conf, "Soccer", "UseFlagger", 0);
+		int socceruseflag = items->getPropertySumNoLock(p, p->p_ship, "socceruseflag", initSoccerUseFlag);
+		clientset->PlayerOverride(p, globalOverrideKeys.UseFlagger, socceruseflag);
 
-		int socceruseflag = items->getPropertySumNoLock(p, p->p_ship, "socceruseflag", 0);
-		if (socceruseflag) clientset->PlayerOverride(p, globalOverrideKeys.UseFlagger, socceruseflag);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.UseFlagger);
+		int initSoccerSeeBall = cfg->GetInt(conf, "Soccer", "BallLocation", 0);
+		int soccerseeball = items->getPropertySumNoLock(p, p->p_ship, "soccerseeball", initSoccerSeeBall);
+		clientset->PlayerOverride(p, globalOverrideKeys.BallLocation, soccerseeball);
 
-		int soccerseeball = items->getPropertySumNoLock(p, p->p_ship, "soccerseeball", 0);
-		if (soccerseeball) clientset->PlayerOverride(p, globalOverrideKeys.BallLocation, soccerseeball);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.BallLocation);
-
-		int doormode = items->getPropertySumNoLock(p, p->p_ship, "doormode", 0);
-		if (doormode) clientset->PlayerOverride(p, globalOverrideKeys.DoorMode, doormode);
-		else clientset->PlayerUnoverride(p, globalOverrideKeys.DoorMode);
+		int initDoorMode = cfg->GetInt(conf, "Door", "DoorMode", 0);
+		int doormode = items->getPropertySumNoLock(p, p->p_ship, "doormode", initDoorMode);
+		clientset->PlayerOverride(p, globalOverrideKeys.DoorMode, doormode);
 	}
-
 }
 
 local void removeOverrides(Player *p)
