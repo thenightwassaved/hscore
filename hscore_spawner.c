@@ -417,6 +417,37 @@ local void addOverrides(Player *p)
 
 
 
+			int initBurstMax = cfg->GetInt(conf, shipname, "BurstMax", 0);
+			int burstMax = items->getPropertySumNoLock(p, i, "burstmax", initBurstMax);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].BurstMax, burstMax);
+			
+			int initRepelMax = cfg->GetInt(conf, shipname, "RepelMax", 0);
+			int repelMax = items->getPropertySumNoLock(p, i, "repelmax", initRepelMax);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].RepelMax, repelMax);
+			
+			int initDecoyMax = cfg->GetInt(conf, shipname, "DecoyMax", 0);
+			int decoyMax = items->getPropertySumNoLock(p, i, "decoymax", initDecoyMax);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].DecoyMax, decoyMax);
+			
+			int initThorMax = cfg->GetInt(conf, shipname, "ThorMax", 0);
+			int thorMax = items->getPropertySumNoLock(p, i, "thormax", initThorMax);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].ThorMax, thorMax);
+			
+			int initBrickMax = cfg->GetInt(conf, shipname, "BrickMax", 0);
+			int brickMax = items->getPropertySumNoLock(p, i, "brickmax", initBrickMax);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].BrickMax, brickMax);
+			
+			int initRocketMax = cfg->GetInt(conf, shipname, "RocketMax", 0);
+			int rocketMax = items->getPropertySumNoLock(p, i, "rocketmax", initRocketMax);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].RocketMax, rocketMax);
+			
+			int initPortalMax = cfg->GetInt(conf, shipname, "PortalMax", 0);
+			int portalMax = items->getPropertySumNoLock(p, i, "portalmax", initPortalMax);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].PortalMax, portalMax);
+
+
+
+
 			int initBurst = cfg->GetInt(conf, shipname, "InitialBurst", 0);
 			int burst = items->getPropertySumNoLock(p, i, "burst", initBurst);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBurst, burst);
