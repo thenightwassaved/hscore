@@ -36,6 +36,12 @@ typedef enum EventAction
 	
 	//sends the event's message as an arena-wide message
 	ACTION_ARENA_MESSAGE,
+	
+	//sets the player's bounty to event->data
+	ACTION_SET_BOUNTY,
+	
+	//tells the spawner to ignore the prize # of event->data for the next second
+	ACTION_IGNORE_PRIZE,
 } EventAction;
 
 typedef struct Event

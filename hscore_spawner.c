@@ -35,7 +35,18 @@ typedef struct PlayerDataStruct
 	short usingPerShip[8];
 	int currentShip;
 	ticks_t lastDeath;
+
+	ticks_t lastSet;
+	int oldBounty;
+	
+	LinkedList ignoredPrizes;
 } PlayerDataStruct;
+
+typedef struct IgnorePrizeStruct
+{
+	int prize;
+	ticks_t timeout;
+} IgnorePrizeStruct;
 
 typedef struct ShipOverrideKeys
 {
@@ -417,30 +428,49 @@ local void addOverrides(Player *p)
 
 
 
+			int initCloakEnergy = cfg->GetInt(conf, shipname, "CloakEnergy");
+			int newCloakEnergy = items->getPropertySumNoLock(p, i, "cloakenergy", initCloakEnergy);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].CloakEnergy, newCloakEnergy);
+
+			int initStealthEnergy = cfg->GetInt(conf, shipname, "StealthEnergy");
+			int newStealthEnergy = items->getPropertySumNoLock(p, i, "stealthenergy", initStealthEnergy);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].StealthEnergy, newStealthEnergy);
+
+			int initAntiWarpEnergy = cfg->GetInt(conf, shipname, "AntiWarpEnergy");
+			int newAntiWarpEnergy = items->getPropertySumNoLock(p, i, "antiwarpenergy", initAntiWarpEnergy);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].AntiWarpEnergy, newAntiWarpEnergy);
+
+			int initXRadarEnergy = cfg->GetInt(conf, shipname, "XRadarEnergy");
+			int newXRadarEnergy = items->getPropertySumNoLock(p, i, "xradarenergy", initXRadarEnergy);
+			clientset->PlayerOverride(p, shipOverrideKeys[i].XRadarEnergy, newXRadarEnergy);
+
+
+
+
 			int initBurstMax = cfg->GetInt(conf, shipname, "BurstMax", 0);
 			int burstMax = items->getPropertySumNoLock(p, i, "burstmax", initBurstMax);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].BurstMax, burstMax);
-			
+
 			int initRepelMax = cfg->GetInt(conf, shipname, "RepelMax", 0);
 			int repelMax = items->getPropertySumNoLock(p, i, "repelmax", initRepelMax);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].RepelMax, repelMax);
-			
+
 			int initDecoyMax = cfg->GetInt(conf, shipname, "DecoyMax", 0);
 			int decoyMax = items->getPropertySumNoLock(p, i, "decoymax", initDecoyMax);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].DecoyMax, decoyMax);
-			
+
 			int initThorMax = cfg->GetInt(conf, shipname, "ThorMax", 0);
 			int thorMax = items->getPropertySumNoLock(p, i, "thormax", initThorMax);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].ThorMax, thorMax);
-			
+
 			int initBrickMax = cfg->GetInt(conf, shipname, "BrickMax", 0);
 			int brickMax = items->getPropertySumNoLock(p, i, "brickmax", initBrickMax);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].BrickMax, brickMax);
-			
+
 			int initRocketMax = cfg->GetInt(conf, shipname, "RocketMax", 0);
 			int rocketMax = items->getPropertySumNoLock(p, i, "rocketmax", initRocketMax);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].RocketMax, rocketMax);
-			
+
 			int initPortalMax = cfg->GetInt(conf, shipname, "PortalMax", 0);
 			int portalMax = items->getPropertySumNoLock(p, i, "portalmax", initPortalMax);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].PortalMax, portalMax);
@@ -490,11 +520,11 @@ local void addOverrides(Player *p)
 			int initAttachBounty = cfg->GetInt(conf, shipname, "AttachBounty", 0);
 			int attachbounty = items->getPropertySumNoLock(p, i, "attachbounty", initAttachBounty);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].AttachBounty, attachbounty);
-			
+
 			int initInitialBounty = cfg->GetInt(conf, shipname, "InitialBounty", 0);
 			int initialbounty = items->getPropertySumNoLock(p, i, "initialbounty", initInitialBounty);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBounty, initialbounty);
-			
+
 			int initSeeMines = cfg->GetInt(conf, shipname, "SeeMines", 0);
 			int seemines = items->getPropertySumNoLock(p, i, "seemines", initSeeMines);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].SeeMines, seemines);
@@ -830,12 +860,16 @@ local void playerActionCallback(Player *p, int action, Arena *arena)
 	{
 		data->underOurControl = 1;
 		data->spawned = 0;
+		LLInit(&data->ignoredPrizes);
 		//the player is entering the arena.
 	}
 	else if (action == PA_LEAVEARENA)
 	{
 		data->underOurControl = 0;
 		removeOverrides(p);
+		
+		LLEnum(&data->ignoredPrizes, afree);
+		LLEmpty(&data->ignoredPrizes);
 	}
 }
 
@@ -962,10 +996,22 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 	pd->Unlock();
 }
 
+local int resetBountyTimerCallback(void *clos)
+{
+	Player *p = (Player*)clos;
+
+	PlayerDataStruct *data = PPDATA(p, playerDataKey);
+
+	warp->WarpPlayerExtra(p, p->position.x, p->position.y, p->position.xspeed, p->position.yspeed, p->position.rotation, p->position.status, data->oldBounty);
+
+	return FALSE;
+}
+
 local int handleItemCallback(void *clos)
 {
 	CallbackData *data = clos;
 	Player *p = data->player;
+	PlayerDataStruct *pdata = PPDATA(p, playerDataKey);
 	int ship = data->ship;
 	Item *item = data->item;
 	int mult = data->mult;
@@ -1087,19 +1133,49 @@ local int handleItemCallback(void *clos)
 
 		if (prizeNumber != -1)
 		{
-			Target t;
-			t.type = T_PLAYER;
-			t.u.p = p;
-			game->GivePrize(&t, mult*mult2*prizeNumber, count);
-			prized = 1;
-			lm->LogP(L_DRIVEL, "hscore_spawner", p, "Prizing %d of #%d", count, mult*mult2*prizeNumber);
+			Link *link;
+			int shouldPrize = 1;
+
+			link = LLGetHead(&pdata->ignoredPrizes);
+			while (link)
+			{
+				IgnorePrizeStruct *entry = link->data;
+				link = link->next;
+				
+				if (entry->timeout < current_ticks())
+				{
+					// remove it
+					afree(entry);
+					LLRemove(&pdata->ignoredPrizes, entry);
+				}
+				else if (prizeNumber == entry->prize)
+				{
+					shouldPrize = 0;
+				}
+			}
+
+			if (shouldPrize)
+			{
+				Target t;
+				t.type = T_PLAYER;
+				t.u.p = p;
+				game->GivePrize(&t, mult*mult2*prizeNumber, count);
+				prized = 1;
+				lm->LogP(L_DRIVEL, "hscore_spawner", p, "Prizing %d of #%d", count, mult*mult2*prizeNumber);
+			}
 		}
 	}
 
 	if (prized)
 	{
-		//set the bounty back
-		warp->WarpPlayerExtra(p, p->position.x, p->position.y, p->position.xspeed, p->position.yspeed, p->position.rotation, p->position.status, oldBounty);
+		if (pdata->lastSet + 100 < current_ticks())
+		{
+			pdata->oldBounty = oldBounty;
+		}
+		
+		pdata->lastSet = current_ticks();
+		ml->ClearTimer(resetBountyTimerCallback, p);
+		ml->SetTimer(resetBountyTimerCallback, 50, 0, p, p);
 	}
 
 	return FALSE;
@@ -1207,7 +1283,7 @@ local void respawn(Player *p)
 }
 
 local int getFullEnergy(Player *p)
-{	
+{
 	if (0 <= p->p_ship && p->p_ship <= 8)
 	{
 		ConfigHandle conf = p->arena->cfg;
@@ -1222,6 +1298,17 @@ local int getFullEnergy(Player *p)
 	{
 		return 0;
 	}
+}
+
+local void ignorePrize(Player *p, int prize)
+{
+	IgnorePrizeStruct *prizeData = amalloc(sizeof(*prizeData));
+	PlayerDataStruct *data = PPDATA(p, playerDataKey);
+
+	prizeData->prize = prize;
+	prizeData->timeout = current_ticks() + 50;
+	
+	LLAdd(&data->ignoredPrizes, prizeData);
 }
 
 local void HSItemReloadCallback(void)
@@ -1243,7 +1330,7 @@ local void HSItemReloadCallback(void)
 local Ihscorespawner interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_SPAWNER, "hscore_spawner")
-	respawn, getFullEnergy
+	respawn, getFullEnergy, ignorePrize
 };
 
 EXPORT const char info_hscore_spawner[] = "v1.1 Dr Brain <drbrain@gmail.com>";
@@ -1302,6 +1389,8 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 		mm->UnregCallback(CB_HS_ITEMRELOAD, HSItemReloadCallback, ALLARENAS);
 
 		net->RemovePacket(C2S_POSITION, Pppk);
+
+		ml->ClearTimer(resetBountyTimerCallback, NULL);
 
 		pd->FreePlayerData(playerDataKey);
 
