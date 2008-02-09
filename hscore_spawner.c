@@ -428,25 +428,6 @@ local void addOverrides(Player *p)
 
 
 
-			int initCloakEnergy = cfg->GetInt(conf, shipname, "CloakEnergy");
-			int newCloakEnergy = items->getPropertySumNoLock(p, i, "cloakenergy", initCloakEnergy);
-			clientset->PlayerOverride(p, shipOverrideKeys[i].CloakEnergy, newCloakEnergy);
-
-			int initStealthEnergy = cfg->GetInt(conf, shipname, "StealthEnergy");
-			int newStealthEnergy = items->getPropertySumNoLock(p, i, "stealthenergy", initStealthEnergy);
-			clientset->PlayerOverride(p, shipOverrideKeys[i].StealthEnergy, newStealthEnergy);
-
-			int initAntiWarpEnergy = cfg->GetInt(conf, shipname, "AntiWarpEnergy");
-			int newAntiWarpEnergy = items->getPropertySumNoLock(p, i, "antiwarpenergy", initAntiWarpEnergy);
-			clientset->PlayerOverride(p, shipOverrideKeys[i].AntiWarpEnergy, newAntiWarpEnergy);
-
-			int initXRadarEnergy = cfg->GetInt(conf, shipname, "XRadarEnergy");
-			int newXRadarEnergy = items->getPropertySumNoLock(p, i, "xradarenergy", initXRadarEnergy);
-			clientset->PlayerOverride(p, shipOverrideKeys[i].XRadarEnergy, newXRadarEnergy);
-
-
-
-
 			int initBurstMax = cfg->GetInt(conf, shipname, "BurstMax", 0);
 			int burstMax = items->getPropertySumNoLock(p, i, "burstmax", initBurstMax);
 			clientset->PlayerOverride(p, shipOverrideKeys[i].BurstMax, burstMax);
