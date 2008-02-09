@@ -719,7 +719,16 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event, LinkedList *u
 	}
 	else if (action == ACTION_IGNORE_PRIZE)
 	{
-		
+		spawner = mm->GetInterface(I_HSCORE_SPAWNER, p->arena);
+		if (spawner)
+		{
+			spawner->ignorePrize(p, event->data);
+			mm->ReleaseInterface(spawner);
+		}
+		else
+		{
+			lm->LogP(L_ERROR, "hscore_items", p, "Can't locate spawner module for ignore prize action");
+		}
 	}
 	else
 	{
