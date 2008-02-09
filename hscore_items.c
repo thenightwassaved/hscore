@@ -719,7 +719,7 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event, LinkedList *u
 	}
 	else if (action == ACTION_IGNORE_PRIZE)
 	{
-		spawner = mm->GetInterface(I_HSCORE_SPAWNER, p->arena);
+		Ihscorespawner *spawner = mm->GetInterface(I_HSCORE_SPAWNER, p->arena);
 		if (spawner)
 		{
 			spawner->ignorePrize(p, event->data);
