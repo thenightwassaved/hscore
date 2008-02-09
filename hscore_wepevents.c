@@ -1,11 +1,19 @@
 #include "asss.h"
 #include "hscore.h"
 
+typedef struct pdata
+{
+	ticks_t lastRepel;
+} pdata;
+
 //modules
 local Imodman *mm;
 local Ilogman *lm;
 local Inet *net;
 local Ihscoreitems *items;
+local Iplayerdata *pd;
+
+local int pdkey;
 
 local void Pppk(Player *p, byte *p2, int len)
 {
@@ -33,8 +41,15 @@ local void Pppk(Player *p, byte *p2, int len)
 			items->triggerEvent(p, p->p_ship, "bomb");
 			break;
 		case W_REPEL:
-			items->triggerEvent(p, p->p_ship, "repel");
+		{
+			pdata *data = PPDATA(p, pdkey);
+			if (data->lastRepel + 10 < pos->time)
+			{
+				data->lastRepel = pos->time;
+				items->triggerEvent(p, p->p_ship, "repel");
+			}
 			break;
+		}
 		case W_DECOY:
 			items->triggerEvent(p, p->p_ship, "decoy");
 			break;
@@ -58,17 +73,22 @@ EXPORT int MM_hscore_wepevents(int action, Imodman *_mm, Arena *arena)
 		lm = mm->GetInterface(I_LOGMAN, ALLARENAS);
 		net = mm->GetInterface(I_NET, ALLARENAS);
 		items = mm->GetInterface(I_HSCORE_ITEMS, ALLARENAS);
+		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
 
-		if (!lm || !net || !items)
+		if (!lm || !net || !items || !pd)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(net);
 			mm->ReleaseInterface(items);
+			mm->ReleaseInterface(pd);
 
 			return MM_FAIL;
 		}
 
 		net->AddPacket(C2S_POSITION, Pppk);
+		
+		pdkey = pd->AllocatePlayerData(sizeof(pdata));
+		if (pdkey == -1) return MM_FAIL;
 
 		return MM_OK;
 	}
@@ -76,9 +96,12 @@ EXPORT int MM_hscore_wepevents(int action, Imodman *_mm, Arena *arena)
 	{
 		net->RemovePacket(C2S_POSITION, Pppk);
 
+		pd->FreePlayerData(pdkey);
+
 		mm->ReleaseInterface(lm);
 		mm->ReleaseInterface(net);
 		mm->ReleaseInterface(items);
+		mm->ReleaseInterface(pd);
 
 		return MM_OK;
 	}
