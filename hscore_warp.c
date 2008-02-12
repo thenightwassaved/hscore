@@ -91,7 +91,7 @@ void WarpPlayerWithWeapon(Player *p, int dest_x, int dest_y, int v_x, int v_y, i
 		mm->ReleaseInterface(hs_interdict);
 	}
 
-	p->position.bounty = packet->bounty;
+	p->position.bounty = packet.bounty;
 	
 	net->SendToArena(p->arena, NULL, (byte*)&packet, sizeof(struct S2CWeapons) - sizeof(struct ExtraPosData), NET_RELIABLE);	
 }
@@ -110,7 +110,7 @@ local void WarpPlayerExtra(Player *p, int dest_x, int dest_y, int v_x, int v_y, 
 		mm->ReleaseInterface(hs_interdict);
 	}
 
-	p->position.bounty = packet->bounty;
+	p->position.bounty = packet.bounty;
 	
 	net->SendToArena(p->arena, NULL, (byte*)&packet, sizeof(struct S2CWeapons) - sizeof(struct ExtraPosData), NET_RELIABLE);	
 }
