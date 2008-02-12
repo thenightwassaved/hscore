@@ -983,7 +983,10 @@ local int resetBountyTimerCallback(void *clos)
 
 	PlayerDataStruct *data = PPDATA(p, playerDataKey);
 
-	warp->WarpPlayerExtra(p, p->position.x, p->position.y, p->position.xspeed, p->position.yspeed, p->position.rotation, p->position.status, data->oldBounty);
+	if (data->oldBounty < p->position.bounty)
+	{
+		warp->WarpPlayerExtra(p, p->position.x, p->position.y, p->position.xspeed, p->position.yspeed, p->position.rotation, p->position.status, data->oldBounty);
+	}
 
 	return FALSE;
 }
