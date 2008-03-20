@@ -370,12 +370,28 @@ local void addOverrides(Player *p)
 
 
 			int gunlevel = items->getPropertySumNoLock(p, i, "gunlevel", 0);
-			if (gunlevel > 0) clientset->PlayerOverride(p, shipOverrideKeys[i].InitialGuns, gunlevel);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialGuns);
+			if (gunlevel > 0) 
+			{
+				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialGuns, gunlevel);
+				clientset->PlayerOverride(p, shipOverrideKeys[i].MaxGuns, gunlevel);
+			}
+			else 
+			{
+				clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialGuns);
+				clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaxGuns);
+			}
 
 			int bomblevel = items->getPropertySumNoLock(p, i, "bomblevel", 0);
-			if (bomblevel > 0) clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBombs, bomblevel);
-			else clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialBombs);
+			if (bomblevel > 0) 
+			{
+				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBombs, bomblevel);
+				clientset->PlayerOverride(p, shipOverrideKeys[i].MaxBombs, bomblevel);
+			}
+			else
+			{
+				clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialBombs);
+				clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaxBombs);
+			}
 
 
 
