@@ -1,7 +1,7 @@
 #ifndef HSCORE_ITEMS_H
 #define HSCORE_ITEMS_H
 
-#define I_HSCORE_ITEMS "hscore_items-8"
+#define I_HSCORE_ITEMS "hscore_items-9"
 
 //callback
 #define CB_EVENT_ACTION "eventaction"
@@ -22,6 +22,7 @@ typedef struct Ihscoreitems
 	int (*getItemCount)(Player *p, Item *item, int ship);
 	int (*getItemCountNoLock)(Player *p, Item *item, int ship);
 	int (*addItem)(Player *p, Item *item, int ship, int amount);
+	int (*addItemCheckLimits)(Player *p, Item *item, int ship, int amount);
 
 	Item * (*getItemByName)(const char *name, Arena *arena);
 	Item * (*getItemByPartialName)(const char *name, Arena *arena);	

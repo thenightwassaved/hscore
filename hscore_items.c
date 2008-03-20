@@ -36,6 +36,7 @@ local void recaclulateEntireCache(Player *p, int ship);
 local int getItemCount(Player *p, Item *item, int ship);
 local int getItemCountNoLock(Player *p, Item *item, int ship);
 local int addItem(Player *p, Item *item, int ship, int amount);
+local int addItemCheckLimits(Player *p, Item *item, int ship, int amount);
 local Item * getItemByName(const char *name, Arena *arena);
 local Item * getItemByPartialName(const char *name, Arena *arena);
 local int getPropertySum(Player *p, int ship, const char *prop, int def);
@@ -834,7 +835,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 
 	if (amount == 0)
 	{
-		lm->LogP(L_WARN, "hscore_items", p, "asked to add 0 of item %s", item->name);
+		lm->LogP(L_DRIVEL, "hscore_items", p, "asked to add 0 of item %s", item->name);
 		//return 0;
 	}
 
@@ -910,11 +911,12 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 	for (ammoLink = LLGetHead(&item->ammoUsers); ammoLink; ammoLink = ammoLink->next)
 	{
 		Item *user = ammoLink->data;
+		int userCount;
 
 		if (!user->needsAmmo)
 			continue;
 
-		int userCount = getItemCountNoLock(p, user, ship);
+		userCount = getItemCountNoLock(p, user, ship);
 
 		if (userCount != 0)
 		{
@@ -944,6 +946,81 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 	{
 		return 0;
 	}
+}
+
+local int addItemCheckLimits(Player *p, Item *item, int ship, int amount) //call with lock
+{
+	PerPlayerData *playerData = database->getPerPlayerData(p);
+	Link *link;
+	LinkedList *inventoryList;
+	int data = 0;
+	int currentAmount;
+
+	if (item == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to add a NULL item.");
+		return 0;
+	}
+	
+	if (!database->areShipsLoaded(p))
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to add item to a player with unloaded ships");
+		return 0;
+	}
+	
+	if (ship < 0 || 7 < ship)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to add item to ship %i", ship);
+		return 0;
+	}
+	
+	if (playerData->hull[ship] == NULL)
+	{
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to add item to unowned ship %i", ship);
+		return 0;
+	}
+	
+	if (amount == 0)
+	{
+		//this will be warned in addItem
+		//lm->LogP(L_WARN, "hscore_items", p, "asked to add 0 of item %s", item->name);
+		//return 0;
+	}
+	
+	if (item->max != 0 && (currentAmount = getItemCount(p, item, ship)) + amount > item->max)
+	{
+		int excess = item->max - (currentAmount + amount);
+		lm->LogP(L_DRIVEL, "hscore_items", p, "asked to add %i of item %s, but that exceeds the max by %i. truncating.", amount, item->name, excess);
+		amount = item->max - currentAmount;
+	}
+	
+	//if amount < 0 then uh.. whatever. for now
+	if (amount > 0)
+	{
+		int i;
+		Link *link;
+		database->lock();
+		for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
+		{
+			int freeSpots;
+			ItemTypeEntry *entry = link->data;
+
+			if ((freeSpots = getFreeItemTypeSpotsNoLock(p, entry->itemType, ship)) - (entry->delta * amount) < 0) //have no free spots
+			{
+				int excess = (entry->delta * amount) - freeSpots;
+				lm->LogP(L_DRIVEL, "hscore_items", p, "asked to add %i of item %s, but that exceeds available %s by %i. truncating.", amount, item->name, entry->itemType->name, excess);
+				amount -= excess;
+				if (amount <= 0)
+					break;
+			}
+		}
+		database->unlock();
+
+		if (amount < 0)
+			amount = 0;
+	}
+
+	return addItem(p, item, ship, amount);
 }
 
 local Item * getItemByName(const char *name, Arena *arena) //call with no lock
@@ -1487,6 +1564,7 @@ local void recaclulateEntireCache(Player *p, int ship)
 		for (propLink = LLGetHead(&item->propertyList); propLink; propLink = propLink->next)
 		{
 			Property *prop = propLink->data;
+			PropertyCacheEntry *propertySum;
 
 			int propDifference;
 
@@ -1500,7 +1578,7 @@ local void recaclulateEntireCache(Player *p, int ship)
 			}
 
 			//get it out of the cache
-			PropertyCacheEntry *propertySum = (PropertyCacheEntry*)HashGetOne(table, prop->name);
+			propertySum = (PropertyCacheEntry*)HashGetOne(table, prop->name);
 			if (propertySum != NULL)
 			{
 				propertySum->value += propDifference;
@@ -1527,12 +1605,12 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 local Ihscoreitems interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_ITEMS, "hscore_items")
-	getItemCount, getItemCountNoLock, addItem, getItemByName, getItemByPartialName,
+	getItemCount, getItemCountNoLock, addItem, addItemCheckLimits, getItemByName, getItemByPartialName,
 	getPropertySum, getPropertySumNoLock, triggerEvent, triggerEventOnItem, getFreeItemTypeSpotsNoLock,
 	hasItemsLeftOnShip, recaclulateEntireCache,
 };
 
-EXPORT const char info_hscore_items[] = "v1.0 Dr Brain <drbrain@gmail.com>";
+EXPORT const char info_hscore_items[] = "v1.01 Dr Brain <drbrain@gmail.com>";
 
 EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 {
