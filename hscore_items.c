@@ -1020,6 +1020,9 @@ local int addItemCheckLimits(Player *p, Item *item, int ship, int amount) //call
 			amount = 0;
 	}
 
+	if (amount == 0)
+		return 0;
+
 	return addItem(p, item, ship, amount);
 }
 
