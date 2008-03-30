@@ -879,7 +879,6 @@ local void shipsLoadedCallback(Player *p)
 	database->unlock();
 	//send the packet the first time
 	clientset->SendClientSettings(p);
-	lm->LogP(L_DRIVEL, "hscore_spawner", p, "Sending clientset packet");
 
 	data->dirty = 0;
 	data->currentShip = p->p_ship;
@@ -894,7 +893,6 @@ local void itemCountChangedCallback(Player *p, Item *item, InventoryEntry *entry
 		data->dirty = 0;
 		addOverrides(p);
 		clientset->SendClientSettings(p);
-		lm->LogP(L_DRIVEL, "hscore_spawner", p, "Sending clientset packet");
 	}
 	else //check if it changed anything in clientset, and if it did, recompute and flag dirty
 	{
@@ -920,7 +918,6 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		addOverrides(killed);
 		database->unlock();
 		clientset->SendClientSettings(killed);
-		lm->LogP(L_DRIVEL, "hscore_spawner", killed, "Sending clientset packet");
 	}
 }
 
@@ -936,7 +933,6 @@ local void freqChangeCallback(Player *p, int newfreq)
 		{
 			data->dirty = 0;
 			clientset->SendClientSettings(p);
-			lm->LogP(L_DRIVEL, "hscore_spawner", p, "Sending clientset packet");
 		}
 	}
 }
@@ -962,7 +958,6 @@ local void shipChangeCallback(Player *p, int newship, int newfreq)
 		addOverrides(p);
 		database->unlock();
 		clientset->SendClientSettings(p);
-		lm->LogP(L_DRIVEL, "hscore_spawner", p, "Sending clientset packet");
 	}
 
 	if (newship != SHIP_SPEC)
@@ -986,7 +981,6 @@ local void flagWinCallback(Arena *arena, int freq, int *points)
 			{
 				data->dirty = 0;
 				clientset->SendClientSettings(p);
-				lm->LogP(L_DRIVEL, "hscore_spawner", p, "Sending clientset packet");
 			}
 		}
 	}
@@ -1161,7 +1155,6 @@ local int handleItemCallback(void *clos)
 				t.u.p = p;
 				game->GivePrize(&t, mult*mult2*prizeNumber, count);
 				prized = 1;
-				lm->LogP(L_DRIVEL, "hscore_spawner", p, "Prizing %d of #%d", count, mult*mult2*prizeNumber);
 			}
 		}
 	}
@@ -1197,7 +1190,6 @@ local void ammoAddedCallback(Player *p, int ship, Item *ammoUser) //warnings: ca
 		pdata->dirty = 0;
 		addOverrides(p);
 		clientset->SendClientSettings(p);
-		lm->LogP(L_DRIVEL, "hscore_spawner", p, "Sending clientset packet");
 	}
 	else //check if it changed anything in clientset, and if it did, recompute and flag dirty
 	{
@@ -1208,7 +1200,6 @@ local void ammoAddedCallback(Player *p, int ship, Item *ammoUser) //warnings: ca
 		}
 	}
 
-	lm->LogP(L_DRIVEL, "hscore_spawner", p, "Ammo added callback on %s", ammoUser->name);
 	handleItemCallback(data);
 }
 
@@ -1228,7 +1219,6 @@ local void ammoRemovedCallback(Player *p, int ship, Item *ammoUser) //warnings: 
 		pdata->dirty = 0;
 		addOverrides(p);
 		clientset->SendClientSettings(p);
-		lm->LogP(L_DRIVEL, "hscore_spawner", p, "Sending clientset packet");
 	}
 	else //check if it changed anything in clientset, and if it did, recompute and flag dirty
 	{
@@ -1239,7 +1229,6 @@ local void ammoRemovedCallback(Player *p, int ship, Item *ammoUser) //warnings: 
 		}
 	}
 
-	lm->LogP(L_DRIVEL, "hscore_spawner", p, "Ammo removed callback on %s", ammoUser->name);
 	handleItemCallback(data);
 }
 
@@ -1253,7 +1242,6 @@ local void triggerEventCallback(Player *p, Item *item, int ship, const char *eve
 		data->item = item;
 		data->mult = 1;
 		data->force = 0;
-		lm->LogP(L_DRIVEL, "hscore_spawner", p, "Item added callback on %s", item->name);
 		handleItemCallback(data);
 	}
 	else if (strcasecmp(eventName, "del") == 0)
@@ -1264,7 +1252,6 @@ local void triggerEventCallback(Player *p, Item *item, int ship, const char *eve
 		data->item = item;
 		data->mult = -1;
 		data->force = 0;
-		lm->LogP(L_DRIVEL, "hscore_spawner", p, "Item del callback on %s", item->name);
 		handleItemCallback(data);
 	}
 	else
@@ -1322,7 +1309,6 @@ local void HSItemReloadCallback(void)
 		addOverrides(p);
 		database->unlock();
 		clientset->SendClientSettings(p);
-		lm->LogP(L_DRIVEL, "hscore_spawner", p, "Sending clientset packet");
 	}
 	pd->Unlock();
 }
