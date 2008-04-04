@@ -147,6 +147,7 @@ typedef struct GlobalOverrideKeys
 	override_key_t BallLocation;
 	override_key_t DoorMode;
 	override_key_t JitterTime;
+	override_key_t BombExplodePixels;
 } GlobalOverrideKeys;
 
 //modules
@@ -306,6 +307,8 @@ local void loadOverrides()
 	globalOverrideKeys.BallLocation = clientset->GetOverrideKey("Soccer", "BallLocation");
 
 	globalOverrideKeys.DoorMode = clientset->GetOverrideKey("Door", "DoorMode");
+	
+	globalOverrideKeys.BombExplodePixels = clientset->GetOverrideKey("Bomb", "BombExplodePixels");
 }
 
 local int checkUsingPerShip(Player *p, int ship)
@@ -331,6 +334,7 @@ local int checkUsingPerShip(Player *p, int ship)
 	if (items->getPropertySumNoLock(p, ship, "socceruseflag", 0)) return 1;
 	if (items->getPropertySumNoLock(p, ship, "soccerseeball", 0)) return 1;
 	if (items->getPropertySumNoLock(p, ship, "jittertime", 0)) return 1;
+	if (items->getPropertySumNoLock(p, ship, "explodepixels", 0)) return 1;
 
 	return 0;
 }
@@ -723,6 +727,10 @@ local void addOverrides(Player *p)
 		int initDoorMode = cfg->GetInt(conf, "Door", "DoorMode", 0);
 		int doormode = items->getPropertySumNoLock(p, p->p_ship, "doormode", initDoorMode);
 		clientset->PlayerOverride(p, globalOverrideKeys.DoorMode, doormode);
+		
+		int initExplodePixels = cfg->GetInt(conf, "Bomb", "BombExplodePixels", 0);
+		int explodePixels = items->getPropertySumNoLock(p, p->p_ship, "explodepixels", initExplodePixels);
+		clientset->PlayerOverride(p, globalOverrideKeys.BombExplodePixels, explodePixels);
 	}
 }
 
@@ -822,6 +830,7 @@ local void removeOverrides(Player *p)
 	clientset->PlayerUnoverride(p, globalOverrideKeys.UseFlagger);
 	clientset->PlayerUnoverride(p, globalOverrideKeys.BallLocation);
 	clientset->PlayerUnoverride(p, globalOverrideKeys.DoorMode);
+	clientset->PlayerUnoverride(p, globalOverrideKeys.BombExplodePixels);
 }
 
 local void Pppk(Player *p, byte *p2, int len)
