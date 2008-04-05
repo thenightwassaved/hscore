@@ -201,7 +201,13 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 			{
 				if (money->getExp(p) >= item->expRequired)
 				{
-					if (item->max == 0 || items->getItemCount(p, item, ship) + count <= item->max)
+					int maxCount = item->max - items->getItemCount(p, item, ship);
+					if (item->max != 0 && maxCount < count)
+					{
+						count = maxCount;
+					}
+					
+					if (0 < count)
 					{
 						Ihscorestoreman *storeman = mm->GetInterface(I_HSCORE_STOREMAN, p->arena);
 						int storemanOk;
@@ -231,7 +237,14 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 							{
 								ItemTypeEntry *entry = link->data;
 
-								if (items->getFreeItemTypeSpotsNoLock(p, entry->itemType, ship) - (entry->delta * count) < 0) //have no free spots
+								int freeSpots = items->getFreeItemTypeSpotsNoLock(p, entry->itemType, ship);
+								int maxCount = freeSpots / entry->delta;
+								if (maxCount < count)
+								{
+									count = maxCount;
+								}
+								
+								if (count <= 0) //have no free spots
 								{
 									chat->SendMessage(p, "You do not have enough free %s spots.", entry->itemType->name);
 									database->unlock();
