@@ -993,7 +993,7 @@ local Ihscoremoney interface =
 	giveExp, setExp, getExp,
 };
 
-EXPORT const char info_hscore_money[] = "v1.0 Dr Brain <drbrain@gmail.com>";
+EXPORT const char info_hscore_moneycjf[] = "v1.0 Dr Brain <drbrain@gmail.com>; CypherJF <sscypherjf@yahoo.com>";
 
 EXPORT int MM_hscore_moneycjf(int action, Imodman *_mm, Arena *arena)
 {
