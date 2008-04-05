@@ -1405,7 +1405,7 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 	}
 	else if (action == MM_ATTACH)
 	{
-		mm->RegInterface(&interface, ALLARENAS);
+		mm->RegInterface(&interface, arena);
 
 		mm->RegCallback(CB_WARZONEWIN, flagWinCallback, arena);
 		mm->RegCallback(CB_SHIPS_LOADED, shipsLoadedCallback, arena);
@@ -1423,7 +1423,7 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 	}
 	else if (action == MM_DETACH)
 	{
-		if (mm->UnregInterface(&interface, ALLARENAS))
+		if (mm->UnregInterface(&interface, arena))
 		{
 			return MM_FAIL;
 		}
