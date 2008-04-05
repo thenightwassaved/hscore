@@ -239,7 +239,7 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 
 								int freeSpots = items->getFreeItemTypeSpotsNoLock(p, entry->itemType, ship);
 								int maxCount = freeSpots / entry->delta;
-								if (maxCount < count)
+								if (0 <= maxCount && maxCount < count)
 								{
 									count = maxCount;
 								}
