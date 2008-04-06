@@ -42,6 +42,9 @@ typedef enum EventAction
 	
 	//tells the spawner to ignore the prize # of event->data for the next second
 	ACTION_IGNORE_PRIZE,
+	
+	//adds to the player's bounty
+	ACTION_ADD_BOUNTY,
 } EventAction;
 
 typedef struct Event

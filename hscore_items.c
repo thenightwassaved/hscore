@@ -37,7 +37,6 @@ local int getItemCount(Player *p, Item *item, int ship);
 local int getItemCountNoLock(Player *p, Item *item, int ship);
 local int addItem(Player *p, Item *item, int ship, int amount);
 local int addItemCheckLimits(Player *p, Item *item, int ship, int amount);
-local int addItemCheckLimitsNoLock(Player *p, Item *item, int ship, int amount);
 local Item * getItemByName(const char *name, Arena *arena);
 local Item * getItemByPartialName(const char *name, Arena *arena);
 local int getPropertySum(Player *p, int ship, const char *prop, int def);
@@ -172,7 +171,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 		{
 			Property *prop = link->data;
 			char ignoreCountChar = prop->ignoreCount ? '!' : ' ';
-
+			
 			if (prop->absolute)
 			{
 				sprintf(propString, "=%i%c", prop->value, ignoreCountChar);
@@ -181,7 +180,7 @@ local void itemInfoCommand(const char *command, const char *params, Player *p, c
 			{
 				sprintf(propString, "%+i%c", prop->value, ignoreCountChar);
 			}
-
+			
 			chat->SendMessage(p, "| %-16s | %-14s |", prop->name, propString);
 			link = link->next;
 		}
@@ -719,6 +718,20 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event, LinkedList *u
 	{
 		warp->WarpPlayerExtra(p, p->position.x, p->position.y, p->position.xspeed, p->position.yspeed, p->position.rotation, p->position.status, event->data);
 	}
+	else if (action == ACTION_ADD_BOUNTY)
+	{
+		if (p->p_ship != SHIP_SPEC)
+		{
+			int newBounty = event->data + p->position.bounty;
+			int initialBounty = cfg->cfg->GetInt(p->arena->cfg, shipNames[p->p_ship], "InitialBounty", 0);
+
+			if (newBounty < initialBounty)
+				newBounty = initialBounty;
+			
+			if (newBounty != p->position.bounty)
+				warp->WarpPlayerExtra(p, p->position.x, p->position.y, p->position.xspeed, p->position.yspeed, p->position.rotation, p->position.status, newBounty);
+		}
+	}
 	else if (action == ACTION_IGNORE_PRIZE)
 	{
 		Ihscorespawner *spawner = mm->GetInterface(I_HSCORE_SPAWNER, p->arena);
@@ -949,16 +962,7 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 	}
 }
 
-local int addItemCheckLimits(Player *p, Item *item, int ship, int amount)
-{
-	int result;
-	database->lock();
-		result = addItemCheckLimitsNoLock(p, item, ship, amount);
-	database->unlock();
-	return result;
-}
-
-local int addItemCheckLimitsNoLock(Player *p, Item *item, int ship, int amount) //call with lock
+local int addItemCheckLimits(Player *p, Item *item, int ship, int amount) //call with lock
 {
 	PerPlayerData *playerData = database->getPerPlayerData(p);
 	Link *link;
@@ -971,45 +975,45 @@ local int addItemCheckLimitsNoLock(Player *p, Item *item, int ship, int amount) 
 		lm->LogP(L_ERROR, "hscore_items", p, "asked to add a NULL item.");
 		return 0;
 	}
-
+	
 	if (!database->areShipsLoaded(p))
 	{
 		lm->LogP(L_ERROR, "hscore_items", p, "asked to add item to a player with unloaded ships");
 		return 0;
 	}
-
+	
 	if (ship < 0 || 7 < ship)
 	{
 		lm->LogP(L_ERROR, "hscore_items", p, "asked to add item to ship %i", ship);
 		return 0;
 	}
-
+	
 	if (playerData->hull[ship] == NULL)
 	{
 		lm->LogP(L_ERROR, "hscore_items", p, "asked to add item to unowned ship %i", ship);
 		return 0;
 	}
-
+	
 	if (amount == 0)
 	{
 		//this will be warned in addItem
 		//lm->LogP(L_WARN, "hscore_items", p, "asked to add 0 of item %s", item->name);
 		//return 0;
 	}
-
-	if (item->max != 0 && (currentAmount = getItemCountNoLock(p, item, ship)) + amount > item->max)
+	
+	if (item->max != 0 && (currentAmount = getItemCount(p, item, ship)) + amount > item->max)
 	{
 		int excess = item->max - (currentAmount + amount);
 		lm->LogP(L_DRIVEL, "hscore_items", p, "asked to add %i of item %s, but that exceeds the max by %i. truncating.", amount, item->name, excess);
 		amount = item->max - currentAmount;
 	}
-
+	
 	//if amount < 0 then uh.. whatever. for now
 	if (amount > 0)
 	{
 		int i;
 		Link *link;
-
+		database->lock();
 		for (link = LLGetHead(&item->itemTypeEntries); link; link = link->next)
 		{
 			int freeSpots;
@@ -1024,7 +1028,7 @@ local int addItemCheckLimitsNoLock(Player *p, Item *item, int ship, int amount) 
 					break;
 			}
 		}
-
+		database->unlock();
 
 		if (amount < 0)
 			amount = 0;
@@ -1192,7 +1196,7 @@ local int getPropertySumNoLock(Player *p, int ship, const char *propString, int 
 				{
 					count += prop->value * entry->count;
 				}
-
+				
 				absolute = absolute || prop->absolute;
 				break;
 			}
@@ -1618,7 +1622,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 local Ihscoreitems interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_ITEMS, "hscore_items")
-	getItemCount, getItemCountNoLock, addItem, addItemCheckLimits, addItemCheckLimitsNoLock, getItemByName, getItemByPartialName,
+	getItemCount, getItemCountNoLock, addItem, addItemCheckLimits, getItemByName, getItemByPartialName,
 	getPropertySum, getPropertySumNoLock, triggerEvent, triggerEventOnItem, getFreeItemTypeSpotsNoLock,
 	hasItemsLeftOnShip, recaclulateEntireCache,
 };
