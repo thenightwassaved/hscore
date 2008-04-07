@@ -972,13 +972,16 @@ local void giveDegrantToPlayer(const char *name, int amount)
        /* only allow grants when he is online */
        if (cplayer != NULL) {
           if (database->isLoaded(cplayer)) {
-             giveMoney(cplayer, -1 * amount, MONEY_TYPE_GRANT);
+          
+          int newAmount = -1 * amount;
+          
+          giveMoney(cplayer, newAmount, MONEY_TYPE_GRANT);
              
-	         mysql->Query(NULL, NULL, 0, "INSERT INTO hs_transactions (srcplayer, tgtplayer, action, amount) VALUES(#,#,#,#)",
+	        mysql->Query(NULL, NULL, 0, "INSERT INTO hs_transactions (srcplayer, tgtplayer, action, amount) VALUES(#,#,#,#)",
 					database->getPerPlayerData(cplayer)->id,
 					database->getPerPlayerData(cplayer)->id,
 					MONEY_TYPE_GRANT,
-					amount);
+					newAmount);
 		  }
 		}
 	}
