@@ -202,6 +202,8 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 			LinkedList set = LL_INITIALIZER;
 			Link *link;
 			int count;
+			int totalAmount;
+			
 			pd->TargetToSet(target, &set);
 
 			for (link = LLGetHead(&set); link; link = link->next)
@@ -210,15 +212,15 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 
 				if (database->isLoaded(t))
 				{
-					giveMoney(t, amount, MONEY_TYPE_GRANT);
+					 giveMoney(t, amount, MONEY_TYPE_GRANT);
 
-					mysql->Query(NULL, NULL, 0, "INSERT INTO hs_transactions (srcplayer, tgtplayer, action, amount) VALUES(#,#,#,#)",
+					  mysql->Query(NULL, NULL, 0, "INSERT INTO hs_transactions (srcplayer, tgtplayer, action, amount) VALUES(#,#,#,#)",
 						database->getPerPlayerData(p)->id,
 						database->getPerPlayerData(t)->id,
 						MONEY_TYPE_GRANT,
 						amount);
 						
-                    giveDegrantToPlayer("CypherJF", amount);
+						totalAmount -= amount;
 
 					if (!quiet)
 					{
@@ -241,6 +243,8 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 			count = LLCount(&set);
 
 			LLEmpty(&set);
+			
+		  giveDegrantToPlayer("CypherJF", totalAmount);
 
 			chat->SendMessage(p, "You granted $%i to %i players.", amount, count);
 		}
@@ -511,6 +515,7 @@ local void setMoneyCommand(const char *command, const char *params, Player *p, c
 			LinkedList set = LL_INITIALIZER;
 			Link *link;
 			int count;
+			
 			pd->TargetToSet(target, &set);
 
 			for (link = LLGetHead(&set); link; link = link->next)
