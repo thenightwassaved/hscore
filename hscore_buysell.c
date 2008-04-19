@@ -197,7 +197,13 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 	{
 		if (item->buyPrice)
 		{
-			if (money->getMoney(p) >= item->buyPrice * count)
+			int maxCount = money->getMoney(p) / item->buyPrice;
+			if (maxCount < count)
+			{
+				count = maxCount;
+			}
+			
+			if (0 < count)
 			{
 				if (money->getExp(p) >= item->expRequired)
 				{
