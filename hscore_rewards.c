@@ -8,6 +8,7 @@
 #include <math.h>
 #include "hscore_teamnames.h"
 #include "jackpot.h"
+#include "persist.h"
 
 typedef struct PData
 {
@@ -24,6 +25,7 @@ local Ichat *chat;
 local Iconfig *cfg;
 local Icmdman *cmd;
 local Ihscoremoney *money;
+local Ipersist *persist;
 
 local int pdkey;
 
@@ -464,6 +466,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 
 					money->giveMoney(p, reward, MONEY_TYPE_KILL);
 
+					PData *tdata = PPDATA(p, pdkey);
 					//check if they received more than %30. if they did, message them. otherwise, don't bother.
 					if (tdata->min_shared_money_to_notify != -1 && tdata->min_shared_money_to_notify <= reward)
 					{
@@ -587,7 +590,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		mm->RegCallback(CB_WARZONEWIN, flagWinCallback, arena);
 		mm->RegCallback(CB_KILL, killCallback, arena);
 
-		cmdman->AddCommand("killmessages", Ckillmessages, arena, killmessages_help);
+		cmd->AddCommand("killmessages", Ckillmessages, arena, killmessages_help);
 
 		return MM_OK;
 	}
@@ -595,7 +598,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 	{
 		mm->UnregInterface(&periodicInterface, arena);
 
-		cmdman->RemoveCommand("killmessages", Ckillmessages, arena);
+		cmd->RemoveCommand("killmessages", Ckillmessages, arena);
 
 		mm->UnregCallback(CB_WARZONEWIN, flagWinCallback, arena);
 		mm->UnregCallback(CB_KILL, killCallback, arena);
