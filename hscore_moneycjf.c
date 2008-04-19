@@ -173,13 +173,22 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 				}
 				else
 				{
+					char messageType;
+					Link plink = {NULL, t};
+					LinkedList lst = { &plink, &plink };
+				
+					if (amount > 0)
+						messageType = MSG_ARENA;
+					else
+						messageType = MSG_SYSOPWARNING;
+
 					if (message == NULL)
 					{
-						chat->SendMessage(t, "You were granted $%i.", amount);
+						chat->SendAnyMessage(&lst, messageType, 0, NULL, "You were granted $%i.", amount);
 					}
 					else
 					{
-						chat->SendMessage(t, "You were granted $%i %s", amount, message);
+						chat->SendAnyMessage(&lst, messageType, 0, NULL, "You were granted $%i %s", amount, message);
 					}
 
 					chat->SendMessage(p, "Granted player %s $%i.", t->name, amount);
