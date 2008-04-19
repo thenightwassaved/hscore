@@ -9,6 +9,12 @@
 #include "hscore_teamnames.h"
 #include "jackpot.h"
 
+typedef struct PData
+{
+	int min_kill_money_to_notify;
+	int min_kill_exp_to_notify;
+	int min_shared_money_to_notify;
+} PData;
 
 //modules
 local Imodman *mm;
@@ -16,7 +22,10 @@ local Ilogman *lm;
 local Iplayerdata *pd;
 local Ichat *chat;
 local Iconfig *cfg;
+local Icmdman *cmd;
 local Ihscoremoney *money;
+
+local int pdkey;
 
 local int minmax(int min, int x, int max)
 {
@@ -45,6 +54,74 @@ local double minmax_double(double min, double x, double max)
 	
 	return x;
 }
+
+
+
+local helptext_t killmessages_help =
+"Targets: none\n"
+"Args: none\n"
+"Toggles the kill reward messages on and off";
+
+local void Ckillmessages(const char *command, const char *params, Player *p, const Target *target)
+{
+	PData *pdata = PPDATA(p, pdkey);
+	
+	if (pdata->min_kill_money_to_notify == 0)
+	{
+		pdata->min_kill_money_to_notify = -1;
+		pdata->min_kill_exp_to_notify = -1;
+		pdata->min_shared_money_to_notify = -1;
+		
+		chat->SendMessage(p, "Kill messages disabled!");
+	}
+	else
+	{
+		pdata->min_kill_money_to_notify = 0;
+		pdata->min_kill_exp_to_notify = 0;
+		pdata->min_shared_money_to_notify = 20;
+		
+		chat->SendMessage(p, "Kill messages enabled!");
+	}
+}
+
+local int GetPersistData(Player *p, void *data, int len, void *clos)
+{
+	PData *pdata = PPDATA(p, pdkey);
+	
+	PData *persist_data = (PData*)data;
+	
+	persist_data->min_kill_money_to_notify = pdata->min_kill_money_to_notify;
+	persist_data->min_kill_exp_to_notify = pdata->min_kill_exp_to_notify;
+	persist_data->min_shared_money_to_notify = pdata->min_shared_money_to_notify;
+	
+	return sizeof(PData);
+}
+
+local void SetPersistData(Player *p, void *data, int len, void *clos)
+{
+	PData *pdata = PPDATA(p, pdkey);
+	
+	PData *persist_data = (PData*)data;
+	
+	pdata->min_kill_money_to_notify = persist_data->min_kill_money_to_notify;
+	pdata->min_kill_exp_to_notify = persist_data->min_kill_exp_to_notify;
+	pdata->min_shared_money_to_notify = persist_data->min_shared_money_to_notify;
+}
+
+local void ClearPersistData(Player *p, void *clos)
+{
+	PData *pdata = PPDATA(p, pdkey);
+	
+	pdata->min_kill_money_to_notify = 0;
+	pdata->min_kill_exp_to_notify = 0;
+	pdata->min_shared_money_to_notify = 20;
+}
+
+local PlayerPersistentData my_persist_data =
+{
+	11504, INTERVAL_FOREVER, PERSIST_GLOBAL, 
+	GetPersistData, SetPersistData, ClearPersistData
+};
 
 //This is assuming we're using fg_wz.py
 local void flagWinCallback(Arena *arena, int freq, int *pts)
@@ -297,6 +374,8 @@ local int calculateBaseMoneyReward(Player *killer, Player *killed)
 
 local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty, int flags, int *pts, int *green)
 {
+	PData *pdata = PPDATA(killer, pdkey);
+
 	if(killer->p_freq == killed->p_freq)
 	{
 		chat->SendMessage(killer, "No reward for teamkill of %s.", killed->name);
@@ -323,6 +402,9 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 			bonusMoney = 0;
 		}
 		
+		int notify_for_exp = pdata->min_kill_exp_to_notify != -1 && pdata->min_kill_exp_to_notify <= experience;
+		int notify_for_money = pdata->min_kill_money_to_notify != -1 && pdata->min_kill_money_to_notify <= baseMoney + bonusMoney;
+		
 		//Distribute Wealth
 		if (!disableExpRewards)
 		{
@@ -330,7 +412,10 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 			
 			if (disableMoneyRewards)
 			{
-				chat->SendMessage(killer, "You received %d exp for killing %s.", experience, killed->name);
+				if (notify_for_exp)
+				{
+					chat->SendMessage(killer, "You received %d exp for killing %s.", experience, killed->name);
+				}
 			}
 		}
 		
@@ -340,11 +425,17 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 			
 			if (disableExpRewards)
 			{
-				chat->SendMessage(killer, "You received $%d for killing %s.", baseMoney + bonusMoney, killed->name);
+				if (notify_for_money)
+				{
+					chat->SendMessage(killer, "You received $%d for killing %s.", baseMoney + bonusMoney, killed->name);
+				}
 			}			
 			else
 			{
-				chat->SendMessage(killer, "You received $%d and %d exp for killing %s.", baseMoney + bonusMoney, experience, killed->name);
+				if (notify_for_money || notify_for_exp)
+				{
+					chat->SendMessage(killer, "You received $%d and %d exp for killing %s.", baseMoney + bonusMoney, experience, killed->name);
+				}
 			}
 		
 			//give money to teammates
@@ -374,7 +465,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 					money->giveMoney(p, reward, MONEY_TYPE_KILL);
 
 					//check if they received more than %30. if they did, message them. otherwise, don't bother.
-					if (reward > (int)(0.30 * maxReward))
+					if (tdata->min_shared_money_to_notify != -1 && tdata->min_shared_money_to_notify <= reward)
 					{
 						chat->SendMessage(p, "You received $%d for %s's kill of %s.", reward, killer->name, killed->name);
 					}
@@ -437,7 +528,7 @@ local Iperiodicpoints periodicInterface =
 	getPeriodicPoints
 };
 
-EXPORT const char info_hscore_rewards[] = "v1.1 D1st0rt";
+EXPORT const char info_hscore_rewards[] = "v1.2 D1st0rt & Dr Brain";
 
 EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 {
@@ -450,27 +541,42 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		chat = mm->GetInterface(I_CHAT, ALLARENAS);
 		cfg = mm->GetInterface(I_CONFIG, ALLARENAS);
 		money = mm->GetInterface(I_HSCORE_MONEY, ALLARENAS);
+		cmd = mm->GetInterface(I_CMDMAN, ALLARENAS);
+		persist = mm->GetInterface(I_PERSIST, ALLARENAS);
 
-		if (!lm || !chat || !cfg || !money || !pd)
+		if (!lm || !chat || !cfg || !money || !pd || !cmd || !persist)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(pd);
 			mm->ReleaseInterface(chat);
 			mm->ReleaseInterface(cfg);
 			mm->ReleaseInterface(money);
+			mm->ReleaseInterface(cmd);
+			mm->ReleaseInterface(persist);
 
 			return MM_FAIL;
 		}
+
+		pdkey = pd->AllocatePlayerData(sizeof(PData));
+		if (pdkey == -1) return MM_FAIL;
+		
+		persist->RegPlayerPD(&my_persist_data);
 
 		return MM_OK;
 	}
 	else if (action == MM_UNLOAD)
 	{
+		persist->UnregPlayerPD(&my_persist_data);
+	
+		pd->FreePlayerData(pdkey);
+	
 		mm->ReleaseInterface(lm);
 		mm->ReleaseInterface(pd);
 		mm->ReleaseInterface(chat);
 		mm->ReleaseInterface(cfg);
 		mm->ReleaseInterface(money);
+		mm->ReleaseInterface(cmd);
+		mm->ReleaseInterface(persist);
 
 		return MM_OK;
 	}
@@ -481,11 +587,15 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		mm->RegCallback(CB_WARZONEWIN, flagWinCallback, arena);
 		mm->RegCallback(CB_KILL, killCallback, arena);
 
+		cmdman->AddCommand("killmessages", Ckillmessages, arena, killmessages_help);
+
 		return MM_OK;
 	}
 	else if (action == MM_DETACH)
 	{
 		mm->UnregInterface(&periodicInterface, arena);
+
+		cmdman->RemoveCommand("killmessages", Ckillmessages, arena);
 
 		mm->UnregCallback(CB_WARZONEWIN, flagWinCallback, arena);
 		mm->UnregCallback(CB_KILL, killCallback, arena);
