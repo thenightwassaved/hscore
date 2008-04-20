@@ -211,7 +211,7 @@ local void grantCommand(const char *command, const char *params, Player *p, cons
 			LinkedList set = LL_INITIALIZER;
 			Link *link;
 			int count;
-			int totalAmount;
+			int totalAmount = 0;
 			
 			pd->TargetToSet(target, &set);
 
