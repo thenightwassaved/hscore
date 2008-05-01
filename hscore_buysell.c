@@ -193,6 +193,8 @@ local void printShipList(Player *p)
 
 local void buyItem(Player *p, Item *item, int count, int ship)
 {
+	int origCount = count;
+	
 	if ((item->shipsAllowed >> ship) & 0x1)
 	{
 		if (item->buyPrice)
@@ -311,7 +313,7 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 			}
 			else
 			{
-				chat->SendMessage(p, "You do not have enough money to buy item %s. You need $%i more.", item->name, item->buyPrice * count - money->getMoney(p));
+				chat->SendMessage(p, "You do not have enough money to buy item %s. You need $%i more.", item->name, item->buyPrice * origCount - money->getMoney(p));
 			}
 		}
 		else
