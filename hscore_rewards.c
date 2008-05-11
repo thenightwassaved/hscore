@@ -36,13 +36,27 @@ local Iplayerdata *pd;
 local Ichat *chat;
 local Iconfig *cfg;
 local Icmdman *cmd;
-local Ihscoremoney *money;
+local Ihscoremoney *hsmoney;
 local Ipersist *persist;
 local Iformula *formula;
 local Iarenaman *aman;
 
 local int pdkey;
 local int adkey;
+
+local int minmax(int min, int x, int max)
+{
+	if (min > x)
+	{
+		x = min;
+	}
+	else if (max < x)
+	{
+		x = max;
+	}
+
+	return x;
+}
 
 local helptext_t killmessages_help =
 "Targets: none\n"
@@ -113,7 +127,7 @@ local PlayerPersistentData my_persist_data =
 //This is assuming we're using fg_wz.py
 local void flagWinCallback(Arena *arena, int freq, int *pts)
 {
-	AData *adata = P_ARENA_DATA(arena, adata_key);
+	AData *adata = P_ARENA_DATA(arena, adkey);
 
 	if (adata->flag_money_formula || adata->flag_exp_formula)
 	{
@@ -140,11 +154,11 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 				IS_HUMAN(i))
 			{
 				players++;
-				totalexp += money->getExp(i);
+				totalexp += hsmoney->getExp(i);
 				if (i->p_freq == freq)
 				{
 					freq_size++;
-					teamexp += money->getExp(i);
+					teamexp += hsmoney->getExp(i);
 				}
 			}
 		pd->Unlock();
@@ -198,8 +212,8 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 		{
 			if(i->arena == arena && i->p_freq == freq && i->p_ship != SHIP_SPEC)
 			{
-				money->giveMoney(i, money, MONEY_TYPE_FLAG);
-				money->giveExp(i, exp);
+				hsmoney->giveMoney(i, money, MONEY_TYPE_FLAG);
+				hsmoney->giveExp(i, exp);
 				//no need to send message, as the team announcement works just fine
 				//chat->SendMessage(p, "You received $%d and %d exp for a flag victory.", reward, exp);
 			}
@@ -217,8 +231,8 @@ local int calculateExpReward(Player *killer, Player *killed)
 	
 	//get exp
 	//add one to prevent divide by zero errors
-	double kexp = (double) money->getExp(killer) + 1;
-	double dexp = (double) money->getExp(killed) + 1;
+	double kexp = (double) hsmoney->getExp(killer) + 1;
+	double dexp = (double) hsmoney->getExp(killed) + 1;
 	
 	int reward = 0;
 	
@@ -293,8 +307,8 @@ local int calculateBaseMoneyReward(Player *killer, Player *killed)
 	 * base money = base multipiler * exponental formula. */
 	double baseMultiplier = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "BaseMultiplier",  75);
 	
-	double kexp = (double) money->getExp(killer) + 1;
-	double dexp = (double) money->getExp(killed) + 1;
+	double kexp = (double) hsmoney->getExp(killer) + 1;
+	double dexp = (double) hsmoney->getExp(killed) + 1;
 	
 	double baseMoney = exp( -kexp / (dexp + 1)) * baseMultiplier;
 	
@@ -303,7 +317,6 @@ local int calculateBaseMoneyReward(Player *killer, Player *killed)
 
 local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty, int flags, int *pts, int *green)
 {
-	AData *adata = P_ARENA_DATA(arena, adata_key);
 	PData *pdata = PPDATA(killer, pdkey);
 
 	if(killer->p_freq == killed->p_freq)
@@ -338,7 +351,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		//Distribute Wealth
 		if (!disableExpRewards)
 		{
-			money->giveExp(killer, experience);
+			hsmoney->giveExp(killer, experience);
 			
 			if (disableMoneyRewards)
 			{
@@ -351,7 +364,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		
 		if (!disableMoneyRewards)
 		{
-			money->giveMoney(killer, baseMoney + bonusMoney, MONEY_TYPE_KILL);
+			hsmoney->giveMoney(killer, baseMoney + bonusMoney, MONEY_TYPE_KILL);
 			
 			if (disableExpRewards)
 			{
@@ -392,7 +405,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 
 					int reward = (int)(maxReward * exp(-distPercentage));
 
-					money->giveMoney(p, reward, MONEY_TYPE_KILL);
+					hsmoney->giveMoney(p, reward, MONEY_TYPE_KILL);
 
 					PData *tdata = PPDATA(p, pdkey);
 					//check if they received more than %30. if they did, message them. otherwise, don't bother.
@@ -409,7 +422,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 
 local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalplayers, int flagsowned)
 {
-	AData *adata = P_ARENA_DATA(arena, adata_key);
+	AData *adata = P_ARENA_DATA(arena, adkey);
 
 	if (adata->periodic_money_formula || adata->periodic_exp_formula)
 	{
@@ -453,8 +466,8 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 		{
 			if(p->arena == arena && p->p_freq == freq && p->p_ship != SHIP_SPEC)
 			{
-				money->giveMoney(p, reward, MONEY_TYPE_FLAG);
-				money->giveExp(p, exp);
+				hsmoney->giveMoney(p, reward, MONEY_TYPE_FLAG);
+				hsmoney->giveExp(p, exp);
 				chat->SendMessage(p, "You received $%d and %d exp for holding %d %s.", money, exp, flagsowned, flagstring);
 			}
 		}
@@ -466,7 +479,7 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 
 local void get_formulas(Arena *arena)
 {
-	AData *adata = P_ARENA_DATA(arena, adata_key);
+	AData *adata = P_ARENA_DATA(arena, adkey);
 	char *kill_money, *kill_exp;
 	char *flag_money, *flag_exp;
 	char *periodic_money, *periodic_exp;
@@ -540,7 +553,7 @@ local void get_formulas(Arena *arena)
 
 local void free_formulas(Arena *arena)
 {
-	AData *adata = P_ARENA_DATA(arena, adata_key);
+	AData *adata = P_ARENA_DATA(arena, adkey);
 	
 	if (adata->kill_money_formula)
 	{
@@ -605,19 +618,19 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
 		chat = mm->GetInterface(I_CHAT, ALLARENAS);
 		cfg = mm->GetInterface(I_CONFIG, ALLARENAS);
-		money = mm->GetInterface(I_HSCORE_MONEY, ALLARENAS);
+		hsmoney = mm->GetInterface(I_HSCORE_MONEY, ALLARENAS);
 		cmd = mm->GetInterface(I_CMDMAN, ALLARENAS);
 		persist = mm->GetInterface(I_PERSIST, ALLARENAS);
 		formula = mm->GetInterface(I_FORMULA, ALLARENAS);
-		aman = mm->GetInterface(I_A
+		aman = mm->GetInterface(I_ARENAMAN, ALLARENAS);
 
-		if (!lm || !chat || !cfg || !money || !pd || !cmd || !persist || !formula || !aman)
+		if (!lm || !chat || !cfg || !hsmoney || !pd || !cmd || !persist || !formula || !aman)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(pd);
 			mm->ReleaseInterface(chat);
 			mm->ReleaseInterface(cfg);
-			mm->ReleaseInterface(money);
+			mm->ReleaseInterface(hsmoney);
 			mm->ReleaseInterface(cmd);
 			mm->ReleaseInterface(persist);
 			mm->ReleaseInterface(formula);
@@ -647,7 +660,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(pd);
 		mm->ReleaseInterface(chat);
 		mm->ReleaseInterface(cfg);
-		mm->ReleaseInterface(money);
+		mm->ReleaseInterface(hsmoney);
 		mm->ReleaseInterface(cmd);
 		mm->ReleaseInterface(persist);
 		mm->ReleaseInterface(formula);
@@ -657,7 +670,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 	}
 	else if (action == MM_ATTACH)
 	{
-		AData *adata = P_ARENA_DATA(arena, adata_key);
+		AData *adata = P_ARENA_DATA(arena, adkey);
 		mm->RegInterface(&periodicInterface, arena);
 
 		adata->on = 1;
@@ -679,7 +692,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 	}
 	else if (action == MM_DETACH)
 	{
-		AData *adata = P_ARENA_DATA(arena, adata_key);
+		AData *adata = P_ARENA_DATA(arena, adkey);
 		mm->UnregInterface(&periodicInterface, arena);
 
 		cmd->RemoveCommand("killmessages", Ckillmessages, arena);
