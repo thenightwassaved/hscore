@@ -9,6 +9,7 @@
 #include "hscore_teamnames.h"
 #include "jackpot.h"
 #include "persist.h"
+#include "formula.h"
 
 typedef struct PData
 {
@@ -16,6 +17,17 @@ typedef struct PData
 	int min_kill_exp_to_notify;
 	int min_shared_money_to_notify;
 } PData;
+
+typedef struct AData
+{
+	int on;
+	Formula *kill_money_formula;
+	Formula *kill_exp_formula;
+	Formula *flag_money_formula;
+	Formula *flag_exp_formula;
+	Formula *periodic_money_formula;
+	Formula *periodic_exp_formula;
+} AData;
 
 //modules
 local Imodman *mm;
@@ -26,38 +38,11 @@ local Iconfig *cfg;
 local Icmdman *cmd;
 local Ihscoremoney *money;
 local Ipersist *persist;
+local Iformula *formula;
+local Iarenaman *aman;
 
 local int pdkey;
-
-local int minmax(int min, int x, int max)
-{
-	if (min > x)
-	{
-		x = min;
-	}
-	else if (max < x)
-	{
-		x = max;
-	}
-	
-	return x;
-}
-
-local double minmax_double(double min, double x, double max)
-{
-	if (min > x)
-	{
-		x = min;
-	}
-	else if (max < x)
-	{
-		x = max;
-	}
-	
-	return x;
-}
-
-
+local int adkey;
 
 local helptext_t killmessages_help =
 "Targets: none\n"
@@ -128,157 +113,99 @@ local PlayerPersistentData my_persist_data =
 //This is assuming we're using fg_wz.py
 local void flagWinCallback(Arena *arena, int freq, int *pts)
 {
-	int players = 0, onfreq = 0, points, exp;
-	int totalexp = 0, teamexp = 0;
-	Player *i;
-	Link *link;
-	Ijackpot *jackpot;
-	Iteamnames *teamnames;
+	AData *adata = P_ARENA_DATA(arena, adata_key);
 
-	pd->Lock();
-	FOR_EACH_PLAYER(i)
-		if (i->status == S_PLAYING &&
-			i->arena == arena &&
-			i->p_ship != SHIP_SPEC &&
-			IS_HUMAN(i))
-		{
-			players++;
-			totalexp += money->getExp(i);
-			if (i->p_freq == freq)
+	if (adata->flag_money_formula || adata->flag_exp_formula)
+	{
+		double players = 0;
+		double freq_size = 0;
+		double jackpot_points = 0;
+		double totalexp = 0;
+		double teamexp = 0;
+		int money = 0;
+		int exp = 0;
+		
+		HashTable *vars = HashAlloc();
+		
+		Player *i;
+		Link *link;
+		Ijackpot *jackpot;
+		Iteamnames *teamnames;
+
+		pd->Lock();
+		FOR_EACH_PLAYER(i)
+			if (i->status == S_PLAYING &&
+				i->arena == arena &&
+				i->p_ship != SHIP_SPEC &&
+				IS_HUMAN(i))
 			{
-				onfreq++;
-				teamexp += money->getExp(i);
+				players++;
+				totalexp += money->getExp(i);
+				if (i->p_freq == freq)
+				{
+					freq_size++;
+					teamexp += money->getExp(i);
+				}
 			}
-		}
-	pd->Unlock();
-	
-	if (onfreq < 1) onfreq = 1; //no division by zero, please
+		pd->Unlock();
 
-	jackpot = mm->GetInterface(I_JACKPOT, arena);
-	if (jackpot)
-	{
-		points = jackpot->GetJP(arena);
-		mm->ReleaseInterface(jackpot);
-	}
-	
-	exp = (players - onfreq);
-	
-	/* cfghelp: Hyperspace:FlagMoneyMult, arena, int, def: 1000, mod: hscore_rewards
-	 * Multiplier for flag money. 1000 = 100% */
-	points *= (double)cfg->GetInt(arena->cfg, "Hyperspace", "FlagMoneyMult", 1000) / 1000.0;	
-	
-	/* cfghelp: Hyperspace:ExpMoneyMult, arena, int, def: 1000, mod: hscore_rewards
-	 * Multiplier for flag exp reward. 1000 = 100% */
-	exp *= (double)cfg->GetInt(arena->cfg, "Hyperspace", "ExpMoneyMult", 1000) / 1000.0;
-
-	/* cfghelp: Hyperspace:FlagUseRatio, arena, int, def: 1, mod: hscore_rewards
-	 * If the flag reward should take into account the ratio of arena exp to team exp. */
-	if (cfg->GetInt(arena->cfg, "Hyperspace", "FlagUseRatio", 1) && (players - onfreq) > 0)
-	{
-		/* cfghelp: Hyperspace:MaxExpRatio, arena, int, def: 2500, mod: hscore_rewards
-		 * Maximum exp ratio for flag reward. 1000=1 */
-		double max = (double)cfg->GetInt(arena->cfg, "Hyperspace", "MaxExpRatio", 2500) / 1000.0;
-		/* cfghelp: Hyperspace:MinExpRatio, arena, int, def: 100, mod: hscore_rewards
-		 * Minimum exp ratio for flag reward. 1000=1.0 */
-		double min = (double)cfg->GetInt(arena->cfg, "Hyperspace", "MinExpRatio", 100) / 1000.0;
-
-		double averageOpposingExp = ((double)(totalexp - teamexp)) / ((double)(players - onfreq));
-		double averageTeamExp = ((double)(teamexp)) / ((double)(onfreq));
-		
-		double ratio = (averageOpposingExp + 1) / (averageTeamExp + 1);
-		
-		
-		ratio = minmax_double(min, ratio, max);
-		
-		exp = (int)(ratio * (double)exp);
-	}
-	
-	if (onfreq > 0 && cfg->GetInt(arena->cfg, "Flag", "SplitPoints", 0))
-		points /= onfreq;
-
-	if (onfreq > players - onfreq) //team is bigger than the rest of the arena combined
-	{
-		/* cfghelp: Hyperspace:FlagBigTeamPenalty, arena, int, def: 1000, mod: hscore_rewards
-		 * Percentage multiplier applied to a big team's reward. 1000=full reward */
-		double bigTeamPenalty = (double)cfg->GetInt(arena->cfg, "Hyperspace", "FlagBigTeamPenalty", 1000) / 1000.0;
-		points = (int)(bigTeamPenalty * (double)points);
-		exp = (int)(bigTeamPenalty * (double)exp);
-	}
-		
-	teamnames = mm->GetInterface(I_TEAMNAMES, arena);
-	if (teamnames)
-	{
-		const char *name = teamnames->getFreqTeamName(freq, arena);
-		if (name != NULL)
+		jackpot = mm->GetInterface(I_JACKPOT, arena);
+		if (jackpot)
 		{
-			chat->SendArenaMessage(arena, "%s won flag game. Reward: $%d (%d exp)", name, points, exp);
+			jackpot_points = jackpot->GetJP(arena);
+			mm->ReleaseInterface(jackpot);
+		}
+		
+		HashAdd(vars, "totalsize", &players);
+		HashAdd(vars, "teamsize", &freq_size);
+		HashAdd(vars, "jackpot", &jackpot_points);
+		HashAdd(vars, "totalexp", &totalexp);
+		HashAdd(vars, "teamexp", &teamexp);
+		
+		if (adata->flag_money_formula)
+		{
+			money = formula->EvaluateFormulaInt(adata->flag_money_formula, vars, 0);
+		}
+
+		if (adata->flag_exp_formula)
+		{
+			exp = formula->EvaluateFormulaInt(adata->flag_exp_formula, vars, 0);
+		}
+		
+		HashFree(vars);
+				
+		teamnames = mm->GetInterface(I_TEAMNAMES, arena);
+		if (teamnames)
+		{
+			const char *name = teamnames->getFreqTeamName(freq, arena);
+			if (name != NULL)
+			{
+				chat->SendArenaMessage(arena, "%s won flag game. Reward: $%d (%d exp)", name, money, exp);
+			}
+			else
+			{
+				chat->SendArenaMessage(arena, "Unidentified team won flag game. Reward: $%d (%d exp)", money, exp);
+			}
 		}
 		else
 		{
-			chat->SendArenaMessage(arena, "Unidentified team won flag game. Reward: $%d (%d exp)", points, exp);
+			chat->SendArenaMessage(arena, "Reward: $%d (%d exp)", money, exp);
 		}
-	}
-	else
-	{
-		chat->SendArenaMessage(arena, "Reward: $%d (%d exp)", points, exp);
-	}
 
-	 //Distribute Wealth
-	pd->Lock();
-	FOR_EACH_PLAYER(i)
-	{
-		if(i->arena == arena && i->p_freq == freq && i->p_ship != SHIP_SPEC)
+		 //Distribute Wealth
+		pd->Lock();
+		FOR_EACH_PLAYER(i)
 		{
-			money->giveMoney(i, points, MONEY_TYPE_FLAG);
-			money->giveExp(i, exp);
-			//no need to send message, as the team announcement works just fine
-			//chat->SendMessage(p, "You received $%d and %d exp for a flag victory.", reward, exp);
+			if(i->arena == arena && i->p_freq == freq && i->p_ship != SHIP_SPEC)
+			{
+				money->giveMoney(i, money, MONEY_TYPE_FLAG);
+				money->giveExp(i, exp);
+				//no need to send message, as the team announcement works just fine
+				//chat->SendMessage(p, "You received $%d and %d exp for a flag victory.", reward, exp);
+			}
 		}
+		pd->Unlock();
 	}
-	pd->Unlock();
-}
-
-local void goalCallback(Arena *arena, Player *scorer, int bid, int x, int y)
-{
-	/*
-	 * money = coefficient * (pop^0.5) + minimum
-	 * Defaults:
-	 * coefficient = 500, minimum = 300
-	 */
-
-	//Variable Declarations
-	double amount, coeff, min;
-	int reward, exp;
-	Player *p;
-	Link *link;
-
-	//Read Settings
-	/* cfghelp: Hyperspace:GoalCoeff, arena, int, def: 50, mod: hscore_rewards
-	 * The goal reward coefficient. */
-	coeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "GoalCoeff", 50);
-	/* cfghelp: Hyperspace:GoalMin, arena, int, def: 30, mod: hscore_rewards
-	 * The amount to add to the goal reward. */
-	min   = (double)cfg->GetInt(arena->cfg, "Hyperspace", "GoalMin",   30);
-
-	//Calculate Reward
-	amount = pow((double)arena->playing, 0.5);
-	amount *= coeff;
-	amount += min;
-	reward  = (int)amount;
-	exp = (int)(amount / 10);
-
-	//Distribute Wealth
-	pd->Lock();
-	FOR_EACH_PLAYER(p)
-	{
-		if(p->arena == arena && p->p_freq == scorer->p_freq && p->p_ship != SHIP_SPEC)
-		{
-			money->giveMoney(p, reward, MONEY_TYPE_BALL);
-			money->giveExp(p, exp);
-			chat->SendMessage(p, "You received $%d and %d exp for a team goal.", reward, exp);
-		}
-	}
-	pd->Unlock();
 }
 
 local int calculateExpReward(Player *killer, Player *killed)
@@ -376,6 +303,7 @@ local int calculateBaseMoneyReward(Player *killer, Player *killed)
 
 local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty, int flags, int *pts, int *green)
 {
+	AData *adata = P_ARENA_DATA(arena, adata_key);
 	PData *pdata = PPDATA(killer, pdkey);
 
 	if(killer->p_freq == killed->p_freq)
@@ -481,48 +409,182 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 
 local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalplayers, int flagsowned)
 {
-	/*
-	 * money = (flagcoeff * flagcount) / (teamcoeff * teamsize)
-	 * Defaults:
-	 * flagcoeff = 200, teamcoeff = 1
-	 */
+	AData *adata = P_ARENA_DATA(arena, adata_key);
 
-	//Variable Declarations
-	double amount, fcoeff, tcoeff;
-	int reward, exp;
-	Player *p;
-	Link *link;
-
-
-	//Read Settings
-	/* cfghelp: Hyperspace:PeriodicCoeff, arena, int, def: 200, mod: hscore_rewards
-	 * Periodic Flag Coefficient. */
-	fcoeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "PeriodicCoeff", 200);
-	/* cfghelp: Hyperspace:PeriodicCoeff, arena, int, def: 200, mod: hscore_rewards
-	 * Periodic Team Coefficient. */
-	tcoeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "PeriodicTeamCoeff", 200);
-
-
-	//Calculate reward
-	amount  = (fcoeff * (double)flagsowned);
-	amount /= (tcoeff * (double)freqplayers);
-	reward = (int)amount;
-	exp = (int)(amount / 15);
-
-	//Distribute Wealth
-	pd->Lock();
-	FOR_EACH_PLAYER(p)
+	if (adata->periodic_money_formula || adata->periodic_exp_formula)
 	{
-		if(p->p_freq == freq && p->p_ship != SHIP_SPEC)
+		char *flagstring;
+		int money = 0;
+		int exp = 0;
+		Player *p;
+		Link *link;
+		HashTable *vars = HashAlloc();
+		double totalsize = (double)totalplayers;
+		double teamsize = (double)freqplayers;
+		double flags = (double)flagsowned;
+		
+		HashAdd(vars, "totalsize", &totalsize);
+		HashAdd(vars, "teamsize", &teamsize);
+		HashAdd(vars, "flags", &flags);
+
+		if (adata->periodic_money_formula)
 		{
-			money->giveMoney(p, reward, MONEY_TYPE_FLAG);
-			money->giveExp(p, exp);
-			chat->SendMessage(p, "You received $%d and %d exp for holding %d flag(s).", reward, exp, flagsowned);
+			money = formula->EvaluateFormulaInt(adata->periodic_money_formula, vars, 0);
+		}
+		
+		if (adata->periodic_exp_formula)
+		{
+			exp = formula->EvaluateFormulaInt(adata->periodic_exp_formula, vars, 0);
+		}
+		
+		HashFree(vars);
+
+		if (flagsowned == 1)
+		{
+			flagstring = "flag";
+		}
+		else
+		{
+			flagstring = "flags";
+		}
+		
+		pd->Lock();
+		FOR_EACH_PLAYER(p)
+		{
+			if(p->arena == arena && p->p_freq == freq && p->p_ship != SHIP_SPEC)
+			{
+				money->giveMoney(p, reward, MONEY_TYPE_FLAG);
+				money->giveExp(p, exp);
+				chat->SendMessage(p, "You received $%d and %d exp for holding %d %s.", money, exp, flagsowned, flagstring);
+			}
+		}
+		pd->Unlock();
+
+		return money;
+	}
+}
+
+local void get_formulas(Arena *arena)
+{
+	AData *adata = P_ARENA_DATA(arena, adata_key);
+	char *kill_money, *kill_exp;
+	char *flag_money, *flag_exp;
+	char *periodic_money, *periodic_exp;
+	char error[200];
+	error[0] = '\0';
+	
+	// free the formulas if they already exist
+	free_formulas(arena);
+	
+	kill_money = cfg->GetString(arena->cfg, "Hyperspace", "KillMoneyFormula");
+	kill_exp = cfg->GetString(arena->cfg, "Hyperspace", "KillExpFormula");
+	flag_money = cfg->GetString(arena->cfg, "Hyperspace", "FlagMoneyFormula");
+	flag_exp = cfg->GetString(arena->cfg, "Hyperspace", "FlagExpFormula");
+	periodic_money = cfg->GetString(arena->cfg, "Hyperspace", "PeriodicMoneyFormula");
+	periodic_exp = cfg->GetString(arena->cfg, "Hyperspace", "PeriodicExpFormula");
+	
+	if (kill_money && *kill_money)
+	{
+		adata->kill_money_formula = formula->ParseFormula(kill_money, error, sizeof(error));
+		if (adata->kill_money_formula == NULL)
+		{
+			lm->LogA(L_WARN, "hscore_rewards", arena, "Error parsing kill money reward formula: %s", error);
 		}
 	}
-	pd->Unlock();
 
-	return reward;
+	if (kill_exp && *kill_exp)
+	{
+		adata->kill_exp_formula = formula->ParseFormula(kill_exp, error, sizeof(error));
+		if (adata->kill_exp_formula == NULL)
+		{
+			lm->LogA(L_WARN, "hscore_rewards", arena, "Error parsing kill exp reward formula: %s", error);
+		}
+	}
+	
+	if (flag_money && *flag_money)
+	{
+		adata->flag_money_formula = formula->ParseFormula(flag_money, error, sizeof(error));
+		if (adata->flag_money_formula == NULL)
+		{
+			lm->LogA(L_WARN, "hscore_rewards", arena, "Error parsing flag money reward formula: %s", error);
+		}
+	}
+	
+	if (flag_exp && *flag_exp)
+	{
+		adata->flag_exp_formula = formula->ParseFormula(flag_exp, error, sizeof(error));
+		if (adata->flag_exp_formula == NULL)
+		{
+			lm->LogA(L_WARN, "hscore_rewards", arena, "Error parsing flag exp reward formula: %s", error);
+		}
+	}
+	
+	if (periodic_money && *periodic_money)
+	{
+		adata->periodic_money_formula = formula->ParseFormula(periodic_money, error, sizeof(error));
+		if (adata->periodic_money_formula == NULL)
+		{
+			lm->LogA(L_WARN, "hscore_rewards", arena, "Error parsing periodic money reward formula: %s", error);
+		}
+	}
+
+	if (periodic_exp && *periodic_exp)
+	{
+		adata->periodic_exp_formula = formula->ParseFormula(periodic_exp, error, sizeof(error));
+		if (adata->periodic_exp_formula == NULL)
+		{
+			lm->LogA(L_WARN, "hscore_rewards", arena, "Error parsing periodic exp reward formula: %s", error);
+		}
+	}
+}
+
+local void free_formulas(Arena *arena)
+{
+	AData *adata = P_ARENA_DATA(arena, adata_key);
+	
+	if (adata->kill_money_formula)
+	{
+		formula->FreeFormula(adata->kill_money_formula);
+		adata->kill_money_formula = NULL;
+	}
+
+	if (adata->kill_exp_formula)
+	{
+		formula->FreeFormula(adata->kill_exp_formula);
+		adata->kill_exp_formula = NULL;
+	}
+	
+	if (adata->flag_money_formula)
+	{
+		formula->FreeFormula(adata->flag_money_formula);
+		adata->flag_money_formula = NULL;
+	}
+	
+	if (adata->flag_exp_formula)
+	{
+		formula->FreeFormula(adata->flag_exp_formula);
+		adata->flag_exp_formula = NULL;
+	}
+	
+	if (adata->periodic_money_formula)
+	{
+		formula->FreeFormula(adata->periodic_money_formula);
+		adata->periodic_money_formula = NULL;
+	}
+	
+	if (adata->periodic_exp_formula)
+	{
+		formula->FreeFormula(adata->periodic_exp_formula);
+		adata->periodic_exp_formula = NULL;
+	}
+}
+
+local void aaction(Arena *arena, int action)
+{
+	if (action == AA_CONFCHANGED)
+	{
+		get_formulas(arena);
+	}
 }
 
 local Iperiodicpoints periodicInterface =
@@ -546,8 +608,10 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		money = mm->GetInterface(I_HSCORE_MONEY, ALLARENAS);
 		cmd = mm->GetInterface(I_CMDMAN, ALLARENAS);
 		persist = mm->GetInterface(I_PERSIST, ALLARENAS);
+		formula = mm->GetInterface(I_FORMULA, ALLARENAS);
+		aman = mm->GetInterface(I_A
 
-		if (!lm || !chat || !cfg || !money || !pd || !cmd || !persist)
+		if (!lm || !chat || !cfg || !money || !pd || !cmd || !persist || !formula || !aman)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(pd);
@@ -556,12 +620,17 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 			mm->ReleaseInterface(money);
 			mm->ReleaseInterface(cmd);
 			mm->ReleaseInterface(persist);
+			mm->ReleaseInterface(formula);
+			mm->ReleaseInterface(aman);
 
 			return MM_FAIL;
 		}
 
 		pdkey = pd->AllocatePlayerData(sizeof(PData));
 		if (pdkey == -1) return MM_FAIL;
+		
+		adkey = aman->AllocateArenaData(sizeof(AData));
+		if (adkey == -1) return MM_FAIL;
 		
 		persist->RegPlayerPD(&my_persist_data);
 
@@ -572,6 +641,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		persist->UnregPlayerPD(&my_persist_data);
 	
 		pd->FreePlayerData(pdkey);
+		aman->FreeArenaData(adkey);
 	
 		mm->ReleaseInterface(lm);
 		mm->ReleaseInterface(pd);
@@ -580,15 +650,28 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(money);
 		mm->ReleaseInterface(cmd);
 		mm->ReleaseInterface(persist);
+		mm->ReleaseInterface(formula);
+		mm->ReleaseInterface(aman);
 
 		return MM_OK;
 	}
 	else if (action == MM_ATTACH)
 	{
+		AData *adata = P_ARENA_DATA(arena, adata_key);
 		mm->RegInterface(&periodicInterface, arena);
+
+		adata->on = 1;
+		adata->kill_money_formula = NULL;
+		adata->kill_exp_formula = NULL;
+		adata->flag_money_formula = NULL;
+		adata->flag_exp_formula = NULL;
+		adata->periodic_money_formula = NULL;
+		adata->periodic_exp_formula = NULL;
+		get_formulas(arena);
 
 		mm->RegCallback(CB_WARZONEWIN, flagWinCallback, arena);
 		mm->RegCallback(CB_KILL, killCallback, arena);
+		mm->RegCallback(CB_ARENAACTION, aaction, arena);
 
 		cmd->AddCommand("killmessages", Ckillmessages, arena, killmessages_help);
 
@@ -596,12 +679,18 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 	}
 	else if (action == MM_DETACH)
 	{
+		AData *adata = P_ARENA_DATA(arena, adata_key);
 		mm->UnregInterface(&periodicInterface, arena);
 
 		cmd->RemoveCommand("killmessages", Ckillmessages, arena);
-
+		
 		mm->UnregCallback(CB_WARZONEWIN, flagWinCallback, arena);
 		mm->UnregCallback(CB_KILL, killCallback, arena);
+		mm->UnregCallback(CB_ARENAACTION, aaction, arena);
+		
+		
+		adata->on = 0;
+		free_formulas(arena);
 
 		return MM_OK;
 	}
