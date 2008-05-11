@@ -466,7 +466,7 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 		{
 			if(p->arena == arena && p->p_freq == freq && p->p_ship != SHIP_SPEC)
 			{
-				hsmoney->giveMoney(p, reward, MONEY_TYPE_FLAG);
+				hsmoney->giveMoney(p, money, MONEY_TYPE_FLAG);
 				hsmoney->giveExp(p, exp);
 				chat->SendMessage(p, "You received $%d and %d exp for holding %d %s.", money, exp, flagsowned, flagstring);
 			}
@@ -474,6 +474,49 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 		pd->Unlock();
 
 		return money;
+	}
+	
+	return 0;
+}
+
+local void free_formulas(Arena *arena)
+{
+	AData *adata = P_ARENA_DATA(arena, adkey);
+	
+	if (adata->kill_money_formula)
+	{
+		formula->FreeFormula(adata->kill_money_formula);
+		adata->kill_money_formula = NULL;
+	}
+
+	if (adata->kill_exp_formula)
+	{
+		formula->FreeFormula(adata->kill_exp_formula);
+		adata->kill_exp_formula = NULL;
+	}
+	
+	if (adata->flag_money_formula)
+	{
+		formula->FreeFormula(adata->flag_money_formula);
+		adata->flag_money_formula = NULL;
+	}
+	
+	if (adata->flag_exp_formula)
+	{
+		formula->FreeFormula(adata->flag_exp_formula);
+		adata->flag_exp_formula = NULL;
+	}
+	
+	if (adata->periodic_money_formula)
+	{
+		formula->FreeFormula(adata->periodic_money_formula);
+		adata->periodic_money_formula = NULL;
+	}
+	
+	if (adata->periodic_exp_formula)
+	{
+		formula->FreeFormula(adata->periodic_exp_formula);
+		adata->periodic_exp_formula = NULL;
 	}
 }
 
@@ -489,12 +532,12 @@ local void get_formulas(Arena *arena)
 	// free the formulas if they already exist
 	free_formulas(arena);
 	
-	kill_money = cfg->GetString(arena->cfg, "Hyperspace", "KillMoneyFormula");
-	kill_exp = cfg->GetString(arena->cfg, "Hyperspace", "KillExpFormula");
-	flag_money = cfg->GetString(arena->cfg, "Hyperspace", "FlagMoneyFormula");
-	flag_exp = cfg->GetString(arena->cfg, "Hyperspace", "FlagExpFormula");
-	periodic_money = cfg->GetString(arena->cfg, "Hyperspace", "PeriodicMoneyFormula");
-	periodic_exp = cfg->GetString(arena->cfg, "Hyperspace", "PeriodicExpFormula");
+	kill_money = cfg->GetStr(arena->cfg, "Hyperspace", "KillMoneyFormula");
+	kill_exp = cfg->GetStr(arena->cfg, "Hyperspace", "KillExpFormula");
+	flag_money = cfg->GetStr(arena->cfg, "Hyperspace", "FlagMoneyFormula");
+	flag_exp = cfg->GetStr(arena->cfg, "Hyperspace", "FlagExpFormula");
+	periodic_money = cfg->GetStr(arena->cfg, "Hyperspace", "PeriodicMoneyFormula");
+	periodic_exp = cfg->GetStr(arena->cfg, "Hyperspace", "PeriodicExpFormula");
 	
 	if (kill_money && *kill_money)
 	{
@@ -548,47 +591,6 @@ local void get_formulas(Arena *arena)
 		{
 			lm->LogA(L_WARN, "hscore_rewards", arena, "Error parsing periodic exp reward formula: %s", error);
 		}
-	}
-}
-
-local void free_formulas(Arena *arena)
-{
-	AData *adata = P_ARENA_DATA(arena, adkey);
-	
-	if (adata->kill_money_formula)
-	{
-		formula->FreeFormula(adata->kill_money_formula);
-		adata->kill_money_formula = NULL;
-	}
-
-	if (adata->kill_exp_formula)
-	{
-		formula->FreeFormula(adata->kill_exp_formula);
-		adata->kill_exp_formula = NULL;
-	}
-	
-	if (adata->flag_money_formula)
-	{
-		formula->FreeFormula(adata->flag_money_formula);
-		adata->flag_money_formula = NULL;
-	}
-	
-	if (adata->flag_exp_formula)
-	{
-		formula->FreeFormula(adata->flag_exp_formula);
-		adata->flag_exp_formula = NULL;
-	}
-	
-	if (adata->periodic_money_formula)
-	{
-		formula->FreeFormula(adata->periodic_money_formula);
-		adata->periodic_money_formula = NULL;
-	}
-	
-	if (adata->periodic_exp_formula)
-	{
-		formula->FreeFormula(adata->periodic_exp_formula);
-		adata->periodic_exp_formula = NULL;
 	}
 }
 
