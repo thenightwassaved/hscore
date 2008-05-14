@@ -718,7 +718,7 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event, LinkedList *u
 	}
 	else if (action == ACTION_SET_BOUNTY)
 	{
-		warp->WarpPlayerExtra(p, p->position.x, p->position.y, p->position.xspeed, p->position.yspeed, p->position.rotation, p->position.status, event->data);
+		selfpos->SetBounty(p, event->data);
 	}
 	else if (action == ACTION_ADD_BOUNTY)
 	{
@@ -731,7 +731,7 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event, LinkedList *u
 				newBounty = initialBounty;
 			
 			if (newBounty != p->position.bounty)
-				warp->WarpPlayerExtra(p, p->position.x, p->position.y, p->position.xspeed, p->position.yspeed, p->position.rotation, p->position.status, newBounty);
+				selfpos->SetBounty(p, newBounty);
 		}
 	}
 	else if (action == ACTION_IGNORE_PRIZE)
