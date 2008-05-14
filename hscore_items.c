@@ -7,6 +7,7 @@
 #include "hscore_database.h"
 #include "hscore_shipnames.h"
 #include "hscore_spawner.h"
+#include "selfpos.h"
 
 typedef struct RemovalEntry
 {
@@ -24,7 +25,7 @@ local Igame *game;
 local Ihscoredatabase *database;
 local Imainloop *ml;
 local Iconfig *cfg;
-local Ihscorewarp *warp;
+local Iselfpos *selfpos;
 
 //a few internal functions
 
@@ -1649,9 +1650,9 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
 		ml = mm->GetInterface(I_MAINLOOP, ALLARENAS);
 		cfg = mm->GetInterface(I_CONFIG, ALLARENAS);
-		warp = mm->GetInterface(I_HSCORE_WARP, ALLARENAS);
+		selfpos = mm->GetInterface(I_SELFPOS, ALLARENAS);
 
-		if (!lm || !chat || !cmd || !pd || !game || !database || !ml || !cfg || !warp)
+		if (!lm || !chat || !cmd || !pd || !game || !database || !ml || !cfg || !selfpos)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(chat);
@@ -1661,7 +1662,7 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 			mm->ReleaseInterface(database);
 			mm->ReleaseInterface(ml);
 			mm->ReleaseInterface(cfg);
-			mm->ReleaseInterface(warp);
+			mm->ReleaseInterface(selfpos);
 
 			return MM_FAIL;
 		}
@@ -1697,7 +1698,7 @@ EXPORT int MM_hscore_items(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(database);
 		mm->ReleaseInterface(ml);
 		mm->ReleaseInterface(cfg);
-		mm->ReleaseInterface(warp);
+		mm->ReleaseInterface(selfpos);
 
 		return MM_OK;
 	}

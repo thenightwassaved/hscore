@@ -523,9 +523,9 @@ local void free_formulas(Arena *arena)
 local void get_formulas(Arena *arena)
 {
 	AData *adata = P_ARENA_DATA(arena, adkey);
-	char *kill_money, *kill_exp;
-	char *flag_money, *flag_exp;
-	char *periodic_money, *periodic_exp;
+	const char *kill_money, *kill_exp;
+	const char *flag_money, *flag_exp;
+	const char *periodic_money, *periodic_exp;
 	char error[200];
 	error[0] = '\0';
 	

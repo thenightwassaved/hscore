@@ -10,6 +10,7 @@
 #include "hscore_spawner.h"
 #include "hscore_shipnames.h"
 #include "fg_wz.h"
+#include "selfpos.h"
 
 typedef struct PrizeData
 {
@@ -162,7 +163,7 @@ local Ihscoreitems *items;
 local Iclientset *clientset;
 local Ihscoredatabase *database;
 local Imainloop *ml;
-local Ihscorewarp *warp;
+local Iselfpos *selfpos;
 
 local int playerDataKey;
 
@@ -1004,7 +1005,7 @@ local int resetBountyTimerCallback(void *clos)
 
 	if (data->oldBounty < p->position.bounty)
 	{
-		warp->WarpPlayerExtra(p, p->position.x, p->position.y, p->position.xspeed, p->position.yspeed, p->position.rotation, p->position.status, data->oldBounty);
+		warp->SetBounty(p, data->oldBounty);
 	}
 
 	return FALSE;
@@ -1346,9 +1347,9 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 		clientset = mm->GetInterface(I_CLIENTSET, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
 		ml = mm->GetInterface(I_MAINLOOP, ALLARENAS);
-		warp = mm->GetInterface(I_HSCORE_WARP, ALLARENAS);
+		selfpos = mm->GetInterface(I_SELFPOS, ALLARENAS);
 
-		if (!lm || !pd || !net || !game || !chat || !cfg || !items || !clientset || !database || !ml || !warp)
+		if (!lm || !pd || !net || !game || !chat || !cfg || !items || !clientset || !database || !ml || !selfpos)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(pd);
@@ -1360,7 +1361,7 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 			mm->ReleaseInterface(clientset);
 			mm->ReleaseInterface(database);
 			mm->ReleaseInterface(ml);
-			mm->ReleaseInterface(warp);
+			mm->ReleaseInterface(selfpos);
 
 			return MM_FAIL;
 		}
@@ -1399,7 +1400,7 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(clientset);
 		mm->ReleaseInterface(database);
 		mm->ReleaseInterface(ml);
-		mm->ReleaseInterface(warp);
+		mm->ReleaseInterface(selfpos);
 
 		return MM_OK;
 	}
