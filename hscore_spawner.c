@@ -1005,7 +1005,7 @@ local int resetBountyTimerCallback(void *clos)
 
 	if (data->oldBounty < p->position.bounty)
 	{
-		warp->SetBounty(p, data->oldBounty);
+		selfpos->SetBounty(p, data->oldBounty);
 	}
 
 	return FALSE;
