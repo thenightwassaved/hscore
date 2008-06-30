@@ -1146,7 +1146,7 @@ local int getPropertySumNoLock(Player *p, int ship, const char *propString, int 
 
 	if (ship < 0 || 7 < ship)
 	{
-		lm->LogP(L_ERROR, "hscore_items", p, "asked to get props on ship %i", ship);
+		lm->LogP(L_ERROR, "hscore_items", p, "asked to get prop %s on ship %i", propString, ship);
 		return 0;
 	}
 
