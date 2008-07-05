@@ -5,6 +5,7 @@
 
 typedef enum MoneyType
 {
+	/* pyconst: enum, "MONEY_TYPE_*" */
 	//for /?give
 	MONEY_TYPE_GIVE = 0,
 
@@ -32,17 +33,25 @@ typedef enum MoneyType
 typedef struct Ihscoremoney
 {
 	INTERFACE_HEAD_DECL
+	/* pyint: use, impl */
 
 	void (*giveMoney)(Player *p, int amount, MoneyType type);
+	/* pyint: player, int, int -> void */
 	void (*setMoney)(Player *p, int amount, MoneyType type); //beware. know what you're doing
+	/* pyint: player, int, int -> void */
 
 	int (*getMoney)(Player *p);
+	/* pyint: player -> int */
 	int (*getMoneyType)(Player *p, MoneyType type); //used only for /?money -d
+	/* pyint: player, int -> int */
 
 	void (*giveExp)(Player *p, int amount);
+	/* pyint: player, int -> void */
 	void (*setExp)(Player *p, int amount); //beware. know what you're doing
+	/* pyint: player, int -> void */
 
 	int (*getExp)(Player *p);
+	/* pyint: player -> int */
 } Ihscoremoney;
 
 #endif //HSCORE_MONEY_H
