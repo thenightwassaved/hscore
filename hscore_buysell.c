@@ -10,6 +10,24 @@
 
 #define SEE_HIDDEN_CATEGORIES "seehiddencat"
 
+
+////////////////////////////////////////
+// TEMP STUFFS
+
+#define MIN_COMMAND_DELAY 75
+
+local int bsDataKey;
+
+typedef struct BuySellData {
+
+    int lastCommand;
+
+} BuySellData;
+
+// TEMP STUFFS
+////////////////////////////////////////
+
+
 //modules
 local Imodman *mm;
 local Ilogman *lm;
@@ -438,6 +456,23 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 
 local void buyShip(Player *p, int ship)
 {
+    //////////////////////////////////////////////////
+    // TEMP STUFFS
+    
+    // Ignore extremely fast requests...
+    BuySellData *objData = PPDATA(p, bsDataKey);
+    if(current_ticks() - objData->lastCommand < MIN_COMMAND_DELAY)
+    {
+        chat->SendMessage(p, "Please wait a few moments between ship buy and sell requests");
+        return; // Silently discard quick commands.
+    } else {
+        objData->lastCommand = current_ticks();
+    }
+    
+    // TEMP STUFFS
+    //////////////////////////////////////////////////
+
+
 	int buyPrice = cfg->GetInt(p->arena->cfg, shipNames[ship], "BuyPrice", 0);
 	int expRequired = cfg->GetInt(p->arena->cfg, shipNames[ship], "ExpRequired", 0);
 
@@ -488,6 +523,23 @@ local void buyShip(Player *p, int ship)
 
 local void sellShip(Player *p, int ship)
 {
+    //////////////////////////////////////////////////
+    // TEMP STUFFS
+    
+    // Ignore extremely fast requests...
+    BuySellData *objData = PPDATA(p, bsDataKey);
+    if(current_ticks() - objData->lastCommand < MIN_COMMAND_DELAY)
+    {
+        chat->SendMessage(p, "Please wait a few moments between ship buy and sell requests");
+        return; // Silently discard quick commands.
+    } else {
+        objData->lastCommand = current_ticks();
+    }
+    
+    // TEMP STUFFS
+    //////////////////////////////////////////////////
+
+
 	int sellPrice = cfg->GetInt(p->arena->cfg, shipNames[ship], "SellPrice", 0);
 
 	if (database->areShipsLoaded(p))
@@ -928,6 +980,14 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 
 			return MM_FAIL;
 		}
+		
+		////////////////////////////////////////
+		// TEMP STUFFS
+		
+		bsDataKey = pd->AllocatePlayerData(sizeof(BuySellData));
+		
+		// TEMP STUFFS
+		////////////////////////////////////////
 
 		return MM_OK;
 	}
@@ -941,6 +1001,14 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 		mm->ReleaseInterface(money);
 		mm->ReleaseInterface(items);
 		mm->ReleaseInterface(database);
+
+        ////////////////////////////////////////
+        // TEMP STUFFS
+
+        pd->FreePlayerData(bsDataKey);
+        
+        // TEMP STUFFS
+        ////////////////////////////////////////
 
 		return MM_OK;
 	}
