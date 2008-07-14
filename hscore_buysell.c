@@ -14,7 +14,7 @@
 ////////////////////////////////////////
 // TEMP STUFFS
 
-#define MIN_COMMAND_DELAY 75
+#define MIN_COMMAND_DELAY 300
 
 local int bsDataKey;
 
@@ -35,6 +35,7 @@ local Ichat *chat;
 local Iconfig *cfg;
 local Icmdman *cmd;
 local Icapman *capman;
+local Iplayerdata *pd;
 local Ihscoremoney *money;
 local Ihscoreitems *items;
 local Ihscoredatabase *database;
@@ -963,17 +964,19 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 		cfg = mm->GetInterface(I_CONFIG, ALLARENAS);
 		cmd = mm->GetInterface(I_CMDMAN, ALLARENAS);
 		capman = mm->GetInterface(I_CAPMAN, ALLARENAS);
+		pd = mm->GetInterface(I_PLAYERDATA, ALLARENAS);
 		money = mm->GetInterface(I_HSCORE_MONEY, ALLARENAS);
 		items = mm->GetInterface(I_HSCORE_ITEMS, ALLARENAS);
 		database = mm->GetInterface(I_HSCORE_DATABASE, ALLARENAS);
 
-		if (!lm || !chat || !cfg || !cmd || !capman || !money || !items || !database)
+		if (!lm || !chat || !cfg || !cmd || !capman || !pd || !money || !items || !database)
 		{
 			mm->ReleaseInterface(lm);
 			mm->ReleaseInterface(chat);
 			mm->ReleaseInterface(cfg);
 			mm->ReleaseInterface(cmd);
 			mm->ReleaseInterface(capman);
+			mm->ReleaseInterface(pd);
 			mm->ReleaseInterface(money);
 			mm->ReleaseInterface(items);
 			mm->ReleaseInterface(database);
@@ -993,15 +996,6 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
 	}
 	else if (action == MM_UNLOAD)
 	{
-		mm->ReleaseInterface(lm);
-		mm->ReleaseInterface(chat);
-		mm->ReleaseInterface(cfg);
-		mm->ReleaseInterface(cmd);
-		mm->ReleaseInterface(capman);
-		mm->ReleaseInterface(money);
-		mm->ReleaseInterface(items);
-		mm->ReleaseInterface(database);
-
         ////////////////////////////////////////
         // TEMP STUFFS
 
@@ -1009,6 +1003,16 @@ EXPORT int MM_hscore_buysell(int action, Imodman *_mm, Arena *arena)
         
         // TEMP STUFFS
         ////////////////////////////////////////
+
+		mm->ReleaseInterface(lm);
+		mm->ReleaseInterface(chat);
+		mm->ReleaseInterface(cfg);
+		mm->ReleaseInterface(cmd);
+		mm->ReleaseInterface(capman);
+		mm->ReleaseInterface(pd);
+		mm->ReleaseInterface(money);
+		mm->ReleaseInterface(items);
+		mm->ReleaseInterface(database);
 
 		return MM_OK;
 	}
