@@ -948,6 +948,8 @@ local int addItem(Player *p, Item *item, int ship, int amount) //call with lock
 			}
 		}
 	}
+	
+    DO_CBS(CB_ITEMS_CHANGED, p->arena, ItemsChangedFunction, (p, ship));
 
 	if (doInit)
 	{
