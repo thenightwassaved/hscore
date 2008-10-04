@@ -444,7 +444,7 @@ local void teamKickCommand(const char *command, const char *params, Player *p, c
 				{
 					if (t->p_freq == p->p_freq)
 					{
-						if (t != data->fakep)
+						if (IS_HUMAN(t))
 						{
 							game->SetFreqAndShip(t, SHIP_SPEC, t->arena->specfreq);
 
