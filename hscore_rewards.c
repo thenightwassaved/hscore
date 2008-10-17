@@ -564,10 +564,10 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 
 				hsmoney->giveMoney(p, p_money, MONEY_TYPE_FLAG);
 				hsmoney->giveExp(p, p_exp);
-				chat->SendMessage(p, "You received $%d ($%d) and %d exp (%d) for holding %d %s.", p_money, money, p_exp, exp, flagsowned, flagstring);
+				chat->SendMessage(p, "You received $%d ($%d) and %d exp (%d) for holding %d %s. (%d/%d)", p_money, money, p_exp, exp, flagsowned, flagstring, pdata->periodic_tally, adata->periodic_tally);
 			}
 		}
-		
+
 		adata->reset = 1;
 		pd->Unlock();
 
@@ -837,7 +837,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		mm->UnregCallback(CB_PLAYERACTION, paction, arena);
 
 		ml->ClearTimer(periodic_tick, arena);
-		
+
 		adata->on = 0;
 		free_formulas(arena);
 
