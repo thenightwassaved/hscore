@@ -39,7 +39,7 @@ typedef struct PlayerDataStruct
 
 	ticks_t lastSet;
 	int oldBounty;
-	
+
 	LinkedList ignoredPrizes;
 } PlayerDataStruct;
 
@@ -172,6 +172,18 @@ local GlobalOverrideKeys globalOverrideKeys;
 
 //interface function
 local void respawn(Player *p);
+
+local inline int max(int a, int b)
+{
+	if (a > b)
+	{
+		return a;
+	}
+	else
+	{
+		return b;
+	}
+}
 
 local void spawnPlayer(Player *p)
 {
@@ -308,7 +320,7 @@ local void loadOverrides()
 	globalOverrideKeys.BallLocation = clientset->GetOverrideKey("Soccer", "BallLocation");
 
 	globalOverrideKeys.DoorMode = clientset->GetOverrideKey("Door", "DoorMode");
-	
+
 	globalOverrideKeys.BombExplodePixels = clientset->GetOverrideKey("Bomb", "BombExplodePixels");
 }
 
@@ -375,19 +387,19 @@ local void addOverrides(Player *p)
 
 
 			int gunlevel = items->getPropertySumNoLock(p, i, "gunlevel", 0);
-			if (gunlevel > 0) 
+			if (gunlevel > 0)
 			{
 				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialGuns, gunlevel);
 				clientset->PlayerOverride(p, shipOverrideKeys[i].MaxGuns, gunlevel);
 			}
-			else 
+			else
 			{
 				clientset->PlayerUnoverride(p, shipOverrideKeys[i].InitialGuns);
 				clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaxGuns);
 			}
 
 			int bomblevel = items->getPropertySumNoLock(p, i, "bomblevel", 0);
-			if (bomblevel > 0) 
+			if (bomblevel > 0)
 			{
 				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBombs, bomblevel);
 				clientset->PlayerOverride(p, shipOverrideKeys[i].MaxBombs, bomblevel);
@@ -728,7 +740,7 @@ local void addOverrides(Player *p)
 		int initDoorMode = cfg->GetInt(conf, "Door", "DoorMode", 0);
 		int doormode = items->getPropertySumNoLock(p, p->p_ship, "doormode", initDoorMode);
 		clientset->PlayerOverride(p, globalOverrideKeys.DoorMode, doormode);
-		
+
 		int initExplodePixels = cfg->GetInt(conf, "Bomb", "BombExplodePixels", 0);
 		int explodePixels = items->getPropertySumNoLock(p, p->p_ship, "explodepixels", initExplodePixels);
 		clientset->PlayerOverride(p, globalOverrideKeys.BombExplodePixels, explodePixels);
@@ -874,7 +886,7 @@ local void playerActionCallback(Player *p, int action, Arena *arena)
 	{
 		data->underOurControl = 0;
 		removeOverrides(p);
-		
+
 		LLEnum(&data->ignoredPrizes, afree);
 		LLEmpty(&data->ignoredPrizes);
 	}
@@ -1145,7 +1157,7 @@ local int handleItemCallback(void *clos)
 			{
 				IgnorePrizeStruct *entry = link->data;
 				link = link->next;
-				
+
 				if (entry->timeout < current_ticks())
 				{
 					// remove it
@@ -1175,7 +1187,7 @@ local int handleItemCallback(void *clos)
 		{
 			pdata->oldBounty = oldBounty;
 		}
-		
+
 		pdata->lastSet = current_ticks();
 		ml->ClearTimer(resetBountyTimerCallback, p);
 		ml->SetTimer(resetBountyTimerCallback, 50, 0, p, p);
@@ -1304,7 +1316,7 @@ local void ignorePrize(Player *p, int prize)
 
 	prizeData->prize = prize;
 	prizeData->timeout = current_ticks() + 50;
-	
+
 	LLAdd(&data->ignoredPrizes, prizeData);
 }
 
