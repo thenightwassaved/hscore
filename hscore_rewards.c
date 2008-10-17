@@ -567,6 +567,8 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 				chat->SendMessage(p, "You received $%d ($%d) and %d exp (%d) for holding %d %s.", p_money, money, p_exp, exp, flagsowned, flagstring);
 			}
 		}
+		
+		adata->reset = 1;
 		pd->Unlock();
 
 		return money;
