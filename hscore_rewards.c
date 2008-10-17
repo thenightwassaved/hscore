@@ -548,14 +548,22 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 			if(p->arena == arena && p->p_freq == freq && p->p_ship != SHIP_SPEC)
 			{
 				PData *pdata = PPDATA(p, pdkey);
-				int p_money = (money * pdata->periodic_tally) / adata->periodic_tally;
-				int p_exp = (exp * pdata->periodic_tally) / adata->periodic_tally;
-				if (p_money || p_exp || (!money && !exp))
+				int p_money, p_exp;
+
+				if (adata->periodic_tally)
 				{
-					hsmoney->giveMoney(p, p_money, MONEY_TYPE_FLAG);
-					hsmoney->giveExp(p, p_exp);
-					chat->SendMessage(p, "You received $%d and %d exp for holding %d %s.", p_money, p_exp, flagsowned, flagstring);
+					p_money = (money * pdata->periodic_tally) / adata->periodic_tally;
+					p_exp = (exp * pdata->periodic_tally) / adata->periodic_tally;
 				}
+				else
+				{
+					p_money = money;
+					p_exp = exp;
+				}
+
+				hsmoney->giveMoney(p, p_money, MONEY_TYPE_FLAG);
+				hsmoney->giveExp(p, p_exp);
+				chat->SendMessage(p, "You received $%d ($%d) and %d exp (%d) for holding %d %s.", p_money, money, p_exp, exp, flagsowned, flagstring);
 			}
 		}
 		pd->Unlock();
