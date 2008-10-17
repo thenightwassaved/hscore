@@ -728,7 +728,7 @@ local Iperiodicpoints periodicInterface =
 	getPeriodicPoints
 };
 
-EXPORT const char info_hscore_rewards[] = "v1.2 D1st0rt & Dr Brain";
+EXPORT const char info_hscore_rewards[] = "v1.4 D1st0rt & Dr Brain";
 
 EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 {
