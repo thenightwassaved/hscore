@@ -30,8 +30,8 @@ typedef struct AData
 	Formula *periodic_money_formula;
 	Formula *periodic_exp_formula;
 
-	Region *periodic_include_rgn;
-	Region *periodic_exclude_rgn;
+	Region *periodic_include_region;
+	Region *periodic_exclude_region;
 
 	int periodic_tally;
 	int reset;
