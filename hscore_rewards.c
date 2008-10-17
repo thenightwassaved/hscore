@@ -442,6 +442,7 @@ local int periodic_tick(void *clos)
 	if (adata->reset)
 	{
 		reset = 1;
+		adata->reset = 0;
 		adata->periodic_tally = 0;
 	}
 	else
