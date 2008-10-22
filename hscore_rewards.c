@@ -313,26 +313,26 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		//Calculate Earned Money
 		int bonus = arena->playing >= minBonusPlayers;
 		int money = calculateKillMoneyReward(arena, killer, killed, bounty, bonus);
-		int exp = calculateKillExpReward(arena, killer, killed, bounty, bonus);
+		int experience = calculateKillExpReward(arena, killer, killed, bounty, bonus);
 
-		int notify_for_exp = pdata->min_kill_exp_to_notify != -1 && pdata->min_kill_exp_to_notify <= exp;
+		int notify_for_exp = pdata->min_kill_exp_to_notify != -1 && pdata->min_kill_exp_to_notify <= experience;
 		int notify_for_money = pdata->min_kill_money_to_notify != -1 && pdata->min_kill_money_to_notify <= money;
 
 		//Distribute Wealth
-		hsmoney->giveExp(killer, exp);
+		hsmoney->giveExp(killer, experience);
 		hsmoney->giveMoney(killer, money, MONEY_TYPE_KILL);
 
-		if (exp && notify_for_exp && money == 0)
+		if (experience && notify_for_exp && money == 0)
 		{
-			chat->SendMessage(killer, "You received %d exp for killing %s.", exp, killed->name);
+			chat->SendMessage(killer, "You received %d exp for killing %s.", experience, killed->name);
 		}
 		else if (money && notify_for_money && exp == 0)
 		{
 			chat->SendMessage(killer, "You received $%d for killing %s.", money, killed->name);
 		}
-		else if ((money && notify_for_money) || (exp && notify_for_exp))
+		else if ((money && notify_for_money) || (experience && notify_for_exp))
 		{
-			chat->SendMessage(killer, "You received $%d and %d exp for killing %s.", money, exp, killed->name);
+			chat->SendMessage(killer, "You received $%d and %d exp for killing %s.", money, experience, killed->name);
 		}
 
 		//give money to teammates
@@ -351,7 +351,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		{
 			if(p->arena == killer->arena && p->p_freq == killer->p_freq && p->p_ship != SHIP_SPEC && p != killer && !(p->position.status & STATUS_SAFEZONE))
 			{
-				double maxReward = teammateRewardCoeff * calculateKillMoneyReward(p, killed, bounty, bonus));
+				double maxReward = teammateRewardCoeff * calculateKillMoneyReward(arena, p, killed, bounty, bonus);
 
 				int xdelta = (p->position.x - killer->position.x);
 				int ydelta = (p->position.y - killer->position.y);
