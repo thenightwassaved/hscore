@@ -245,10 +245,10 @@ local int calculateKillExpReward(Arena *arena, Player *killer, Player *killed, i
 	double killer_exp = (double)hsmoney->getExp(killer);
 	double killed_exp = (double)hsmoney->getExp(killed);
 
-	HashAdd(vars, "teamsize", &killer_bounty);
-	HashAdd(vars, "jackpot", &killed_bounty);
-	HashAdd(vars, "totalexp", &killer_exp);
-	HashAdd(vars, "teamexp", &killed_exp);
+	HashAdd(vars, "killerbounty", &killer_bounty);
+	HashAdd(vars, "killedbounty", &killed_bounty);
+	HashAdd(vars, "killerexp", &killer_exp);
+	HashAdd(vars, "killedexp", &killed_exp);
 
 	if (adata->kill_exp_formula)
 	{
