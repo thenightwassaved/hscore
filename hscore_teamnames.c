@@ -234,6 +234,8 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 
 	char name[MAX_TEAM_NAME_LENGTH];
 	const char *password;
+	
+	int max = cfg->GetInt(p->arena->cfg, "Team", "MaxPerPrivateTeam", 0);
 
 	password = delimcpy(name, params, MAX_TEAM_NAME_LENGTH, ':');
 
@@ -250,7 +252,6 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 		return;
 	}
 
-
 	//check for existing team
 
 	lock();
@@ -263,7 +264,7 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 			if (strcmp(entry->password, password) == 0)
 			{
 				int count = count_freq(p->arena, entry->freq, p, INCLSPEC(p->arena->cfg));
-				int max = cfg->GetInt(p->arena->cfg, "Team", "MaxPerPrivateTeam", 0);
+				
 				if (max <= 0 || count < max)
 				{
 					if (entry->freq != p->p_freq)
@@ -291,29 +292,35 @@ local void changeTeamCommand(const char *command, const char *params, Player *p,
 	}
 	unlock();
 
+	if (max >= 0)
+	{
+		//no existing team, create
+		TeamData *team = amalloc(sizeof(*team));
+		astrncpy(team->name, name, MAX_TEAM_NAME_LENGTH);
+		astrncpy(team->password, password, MAX_PASSWORD_LENGTH);
+		team->freq = getFreePrivFreq(p->arena);
+		team->owner = p;
 
+		char fakeName[MAX_TEAM_NAME_LENGTH + 1];
+		fakeName[0] = '^';
+		astrncpy(fakeName + 1, name, MAX_TEAM_NAME_LENGTH);
 
-	//no existing team, create
-	TeamData *team = amalloc(sizeof(*team));
-	astrncpy(team->name, name, MAX_TEAM_NAME_LENGTH);
-	astrncpy(team->password, password, MAX_PASSWORD_LENGTH);
-	team->freq = getFreePrivFreq(p->arena);
-	team->owner = p;
+		team->fakep = fake->CreateFakePlayer(fakeName, p->arena, SHIP_SPEC, team->freq);
 
-	char fakeName[MAX_TEAM_NAME_LENGTH + 1];
-	fakeName[0] = '^';
-	astrncpy(fakeName + 1, name, MAX_TEAM_NAME_LENGTH);
+		//add the team to the list
+		lock();
+		LLAdd(list, team);
+		unlock();
 
-	team->fakep = fake->CreateFakePlayer(fakeName, p->arena, SHIP_SPEC, team->freq);
-
-	//add the team to the list
-	lock();
-	LLAdd(list, team);
-	unlock();
-
-	//assign
-	game->SetFreq(p, team->freq);
-	cleanTeams(p->arena, NULL);
+		//assign
+		game->SetFreq(p, team->freq);
+		cleanTeams(p->arena, NULL);
+	}
+	else
+	{
+		// privs disabled
+		chat->SendMessage(p, "Private teams have been disabled in this arena.");
+	}
 }
 
 local helptext_t teamsHelp =

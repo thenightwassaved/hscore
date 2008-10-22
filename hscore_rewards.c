@@ -25,6 +25,8 @@ typedef struct AData
 	int on;
 	Formula *kill_money_formula;
 	Formula *kill_exp_formula;
+	Formula *bonus_kill_money_formula;
+	Formula *bonus_kill_exp_formula;
 	Formula *flag_money_formula;
 	Formula *flag_exp_formula;
 	Formula *periodic_money_formula;
@@ -232,97 +234,66 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 	}
 }
 
-local int calculateExpReward(Player *killer, Player *killed)
+local int calculateKillExpReward(Arena *arena, Player *killer, Player *killed, int bounty, int bonus)
 {
-	/* cfghelp: Hyperspace:UseDiscrete, arena, int, def: 1, mod: hscore_rewards
-	 * 1 = Use discrete method of calculating exp rewards.
-	 * 0 = Use old exponential method.*/
-	int useDiscrete = cfg->GetInt(killer->arena->cfg, "Hyperspace", "UseDiscrete",  1);
+	AData *adata = P_ARENA_DATA(arena, adkey);
+	int exp = 0;
+	HashTable *vars = HashAlloc();
 
-	//get exp
-	//add one to prevent divide by zero errors
-	double kexp = (double) hsmoney->getExp(killer) + 1;
-	double dexp = (double) hsmoney->getExp(killed) + 1;
+	double killer_bounty = (double)(killer->position.bounty);
+	double killed_bounty = (double)bounty;
+	double killer_exp = (double)hsmoney->getExp(killer);
+	double killed_exp = (double)hsmoney->getExp(killed);
 
-	int reward = 0;
+	HashAdd(vars, "teamsize", &killer_bounty);
+	HashAdd(vars, "jackpot", &killed_bounty);
+	HashAdd(vars, "totalexp", &killer_exp);
+	HashAdd(vars, "teamexp", &killed_exp);
 
-	if (useDiscrete)
+	if (adata->kill_exp_formula)
 	{
-		/* cfghelp: Hyperspace:ExpSlope, arena, int, def: 2000, mod: hscore_rewards
-		 * Discrete slope. The m in exp = floor(m*x + b). 1000 = 1.0*/
-		double m = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "ExpSlope", 2000) / 1000.0;
-		/* cfghelp: Hyperspace:ExpIntercept, arena, int, def: 500, mod: hscore_rewards
-		 * Discrete intercept. The b in exp = floor(m*x + b). 1000 = 1.0*/
-		double b = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "ExpIntercept", 500) / 1000.0;
-		/* cfghelp: Hyperspace:MaxExp, arena, int, def: 6, mod: hscore_rewards
-		 * Maximum exp reward that can be distributed. */
-		int max = cfg->GetInt(killer->arena->cfg, "Hyperspace", "MaxExp", 6);
-		/* cfghelp: Hyperspace:MinExp, arena, int, def: 0, mod: hscore_rewards
-		 * Minimum exp reward that can be distributed. */
-		int min = cfg->GetInt(killer->arena->cfg, "Hyperspace", "MinExp", 0);
-
-		double ratio = dexp / kexp;
-
-		reward = (int)(floor(m * ratio + b));
-		reward = minmax(min, reward, max);
-	}
-	else
-	{
-		/* cfghelp: Hyperspace:KillCoeff, arena, int, def: 10, mod: hscore_rewards
-		 * Kill reward coefficient (if discrete = 0). */
-		double coeff = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "KillCoeff", 10);
-		/* cfghelp: Hyperspace:KillMin, arena, int, def: 1, mod: hscore_rewards
-		 * Amount added to exp (if discrete = 0). */
-		double min   = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "KillMin",   1);
-
-		//Calculate Earned Experience
-		double amount = log(dexp + 1) / log(kexp + 2);
-		amount *= coeff;
-		amount += min;
-		reward = (int)amount;
+		exp = formula->EvaluateFormulaInt(adata->kill_exp_formula, vars, 0);
 	}
 
-	return reward;
+	if (bonus && adata->bonus_kill_exp_formula)
+	{
+		exp += formula->EvaluateFormulaInt(adata->bonus_kill_exp_formula, vars, 0);
+	}
+
+	HashFree(vars);
+
+	return exp;
 }
 
-//bonus money is shared between teammates
-local int calculateBonusMoneyReward(Player *killer, Player *killed, int bounty)
+local int calculateKillMoneyReward(Arena *arena, Player *killer, Player *killed, int bounty, int bonus)
 {
-	/* cfghelp: Hyperspace:KillerBountyMult, arena, int, def: 1, mod: hscore_rewards
-	 * Amount to multiply by killer's bounty to add to the money reward.  1000 = 100%*/
-	double killerBountyMult = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "KillerBountyMult",  1000) / 1000.0;
-	/* cfghelp: Hyperspace:KilleeBountyMult, arena, int, def: 1, mod: hscore_rewards
-	 * Amount to multiply by killee's bounty to add to the money reward. 1000 = 100% */
-	double killeeBountyMult = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "KilleeBountyMult",  1000) / 1000.0;
-	/* cfghelp: Hyperspace:AddToBonus, arena, int, def: 0, mod: hscore_rewards
-	 * Added directly to the bonus calculation */
-	int addToBonus = cfg->GetInt(killer->arena->cfg, "Hyperspace", "AddToBonus",  0);
+	AData *adata = P_ARENA_DATA(arena, adkey);
+	int money = 0;
+	HashTable *vars = HashAlloc();
 
-	double bountyBonus = (double)(killer->position.bounty) * killerBountyMult;
-	bountyBonus += (double)(bounty) * killeeBountyMult;
+	double killer_bounty = (double)(killer->position.bounty);
+	double killed_bounty = (double)bounty;
+	double killer_exp = (double)hsmoney->getExp(killer);
+	double killed_exp = (double)hsmoney->getExp(killed);
 
-	bountyBonus += addToBonus;
+	HashAdd(vars, "killerbounty", &killer_bounty);
+	HashAdd(vars, "killedbounty", &killed_bounty);
+	HashAdd(vars, "killerexp", &killer_exp);
+	HashAdd(vars, "killedexp", &killed_exp);
 
-	//other bonuses can be added here in the future
+	if (adata->kill_money_formula)
+	{
+		money = formula->EvaluateFormulaInt(adata->kill_money_formula, vars, 0);
+	}
 
-	if (bountyBonus > 40000) bountyBonus = 0;
+	if (bonus && adata->bonus_kill_money_formula)
+	{
+		money += formula->EvaluateFormulaInt(adata->bonus_kill_money_formula, vars, 0);
+	}
 
-	return (int)bountyBonus;
-}
+	HashFree(vars);
 
-//base money is for the killing player only
-local int calculateBaseMoneyReward(Player *killer, Player *killed)
-{
-	/* cfghelp: Hyperspace:KilleeBountyMult, arena, int, def: 75, mod: hscore_rewards
-	 * base money = base multipiler * exponental formula. */
-	double baseMultiplier = (double)cfg->GetInt(killer->arena->cfg, "Hyperspace", "BaseMultiplier",  75);
-
-	double kexp = (double) hsmoney->getExp(killer) + 1;
-	double dexp = (double) hsmoney->getExp(killed) + 1;
-
-	double baseMoney = exp( -kexp / (dexp + 1)) * baseMultiplier;
-
-	return (int)baseMoney;
+	return money;
 }
 
 local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty, int flags, int *pts, int *green)
@@ -338,95 +309,66 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		/* cfghelp: Hyperspace:MinBonusPlayers, arena, int, def: 4, mod: hscore_rewards
 		 * Minimum number of players in game required for bonus money. */
 		int minBonusPlayers  = cfg->GetInt(arena->cfg, "Hyperspace", "MinBonusPlayers",  4);
-		/* cfghelp: Hyperspace:DisableMoneyRewards, arena, int, def: 0, mod: hscore_rewards
-		 * If no money should be awarded for kills. */
-		int disableMoneyRewards  = cfg->GetInt(arena->cfg, "Hyperspace", "DisableMoneyRewards",  0);
-		/* cfghelp: Hyperspace:DisableExpRewards, arena, int, def: 0, mod: hscore_rewards
-		 * If no exp should be awarded for kills. */
-		int disableExpRewards  = cfg->GetInt(arena->cfg, "Hyperspace", "DisableExpRewards",  0);
 
 		//Calculate Earned Money
-		int experience = calculateExpReward(killer, killed);
-		int baseMoney = calculateBaseMoneyReward(killer, killed);
-		int bonusMoney = calculateBonusMoneyReward(killer, killed, bounty);
+		int bonus = arena->playing >= minBonusPlayers;
+		int money = calculateKillMoneyReward(arena, killer, killed, bounty, bonus);
+		int exp = calculateKillExpReward(arena, killer, killed, bounty, bonus);
 
-		if (arena->playing < minBonusPlayers)
-		{
-			bonusMoney = 0;
-		}
-
-		int notify_for_exp = pdata->min_kill_exp_to_notify != -1 && pdata->min_kill_exp_to_notify <= experience;
-		int notify_for_money = pdata->min_kill_money_to_notify != -1 && pdata->min_kill_money_to_notify <= baseMoney + bonusMoney;
+		int notify_for_exp = pdata->min_kill_exp_to_notify != -1 && pdata->min_kill_exp_to_notify <= exp;
+		int notify_for_money = pdata->min_kill_money_to_notify != -1 && pdata->min_kill_money_to_notify <= money;
 
 		//Distribute Wealth
-		if (!disableExpRewards)
-		{
-			hsmoney->giveExp(killer, experience);
+		hsmoney->giveExp(killer, exp);
+		hsmoney->giveMoney(killer, money, MONEY_TYPE_KILL);
 
-			if (disableMoneyRewards)
+		if (exp && notify_for_exp && money == 0)
+		{
+			chat->SendMessage(killer, "You received %d exp for killing %s.", exp, killed->name);
+		}
+		else if (money && notify_for_money && exp == 0)
+		{
+			chat->SendMessage(killer, "You received $%d for killing %s.", money, killed->name);
+		}
+		else if ((money && notify_for_money) || (exp && notify_for_exp))
+		{
+			chat->SendMessage(killer, "You received $%d and %d exp for killing %s.", money, exp, killed->name);
+		}
+
+		//give money to teammates
+		Player *p;
+		Link *link;
+		/* cfghelp: Hyperspace:TeammateReward, arena, int, def: 500, mod: hscore_rewards
+		 * The percentage (max) that a teammate can receive from a kill.
+		 * 1000 = 100%*/
+		double teammateRewardCoeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "TeammateReward", 500) / 1000.0; //50%
+		/* cfghelp: Hyperspace:DistFalloff, arena, int, def: 1440000, mod: hscore_rewards
+		 * Distance falloff divisor in pixels^2. */
+		double distanceFalloff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "DistFalloff", 1440000); //pixels^2
+
+		pd->Lock();
+		FOR_EACH_PLAYER(p)
+		{
+			if(p->arena == killer->arena && p->p_freq == killer->p_freq && p->p_ship != SHIP_SPEC && p != killer && !(p->position.status & STATUS_SAFEZONE))
 			{
-				if (notify_for_exp)
+				double maxReward = teammateRewardCoeff * calculateKillMoneyReward(p, killed, bounty, bonus));
+
+				int xdelta = (p->position.x - killer->position.x);
+				int ydelta = (p->position.y - killer->position.y);
+				double distPercentage = ((double)(xdelta * xdelta + ydelta * ydelta)) / distanceFalloff;
+
+				int reward = (int)(maxReward * exp(-distPercentage));
+
+				hsmoney->giveMoney(p, reward, MONEY_TYPE_KILL);
+
+				PData *tdata = PPDATA(p, pdkey);
+				if (tdata->min_shared_money_to_notify != -1 && tdata->min_shared_money_to_notify <= reward)
 				{
-					chat->SendMessage(killer, "You received %d exp for killing %s.", experience, killed->name);
+					chat->SendMessage(p, "You received $%d for %s's kill of %s.", reward, killer->name, killed->name);
 				}
 			}
 		}
-
-		if (!disableMoneyRewards)
-		{
-			hsmoney->giveMoney(killer, baseMoney + bonusMoney, MONEY_TYPE_KILL);
-
-			if (disableExpRewards)
-			{
-				if (notify_for_money)
-				{
-					chat->SendMessage(killer, "You received $%d for killing %s.", baseMoney + bonusMoney, killed->name);
-				}
-			}
-			else
-			{
-				if (notify_for_money || notify_for_exp)
-				{
-					chat->SendMessage(killer, "You received $%d and %d exp for killing %s.", baseMoney + bonusMoney, experience, killed->name);
-				}
-			}
-
-			//give money to teammates
-			Player *p;
-			Link *link;
-			/* cfghelp: Hyperspace:TeammateReward, arena, int, def: 500, mod: hscore_rewards
-			 * The percentage (max) that a teammate can receive from a kill.
-			 * 1000 = 100%*/
-			double teammateRewardCoeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "TeammateReward", 500) / 1000.0; //50%
-			/* cfghelp: Hyperspace:DistFalloff, arena, int, def: 1440000, mod: hscore_rewards
-			 * Distance falloff divisor in pixels^2. */
-			double distanceFalloff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "DistFalloff", 1440000); //pixels^2
-
-			pd->Lock();
-			FOR_EACH_PLAYER(p)
-			{
-				if(p->arena == killer->arena && p->p_freq == killer->p_freq && p->p_ship != SHIP_SPEC && p != killer && !(p->position.status & STATUS_SAFEZONE))
-				{
-					double maxReward = teammateRewardCoeff * (double)(bonusMoney + calculateBaseMoneyReward(p, killed));
-
-					int xdelta = (p->position.x - killer->position.x);
-					int ydelta = (p->position.y - killer->position.y);
-					double distPercentage = ((double)(xdelta * xdelta + ydelta * ydelta)) / distanceFalloff;
-
-					int reward = (int)(maxReward * exp(-distPercentage));
-
-					hsmoney->giveMoney(p, reward, MONEY_TYPE_KILL);
-
-					PData *tdata = PPDATA(p, pdkey);
-					//check if they received more than %30. if they did, message them. otherwise, don't bother.
-					if (tdata->min_shared_money_to_notify != -1 && tdata->min_shared_money_to_notify <= reward)
-					{
-						chat->SendMessage(p, "You received $%d for %s's kill of %s.", reward, killer->name, killed->name);
-					}
-				}
-			}
-			pd->Unlock();
-		}
+		pd->Unlock();
 	}
 }
 
@@ -593,6 +535,18 @@ local void free_formulas(Arena *arena)
 		adata->kill_exp_formula = NULL;
 	}
 
+	if (adata->bonus_kill_money_formula)
+	{
+		formula->FreeFormula(adata->bonus_kill_money_formula);
+		adata->bonus_kill_money_formula = NULL;
+	}
+
+	if (adata->bonus_kill_exp_formula)
+	{
+		formula->FreeFormula(adata->bonus_kill_exp_formula);
+		adata->bonus_kill_exp_formula = NULL;
+	}
+
 	if (adata->flag_money_formula)
 	{
 		formula->FreeFormula(adata->flag_money_formula);
@@ -622,6 +576,7 @@ local void get_formulas(Arena *arena)
 {
 	AData *adata = P_ARENA_DATA(arena, adkey);
 	const char *kill_money, *kill_exp;
+	const char *bonus_kill_money, *bonus_kill_exp;
 	const char *flag_money, *flag_exp;
 	const char *periodic_money, *periodic_exp;
 	const char *include_rgn, *exclude_rgn;
@@ -634,6 +589,8 @@ local void get_formulas(Arena *arena)
 
 	kill_money = cfg->GetStr(arena->cfg, "Hyperspace", "KillMoneyFormula");
 	kill_exp = cfg->GetStr(arena->cfg, "Hyperspace", "KillExpFormula");
+	bonus_kill_money = cfg->GetStr(arena->cfg, "Hyperspace", "BonusKillMoneyFormula");
+	bonus_kill_exp = cfg->GetStr(arena->cfg, "Hyperspace", "BonusKillExpFormula");
 	flag_money = cfg->GetStr(arena->cfg, "Hyperspace", "FlagMoneyFormula");
 	flag_exp = cfg->GetStr(arena->cfg, "Hyperspace", "FlagExpFormula");
 	periodic_money = cfg->GetStr(arena->cfg, "Hyperspace", "PeriodicMoneyFormula");
@@ -674,6 +631,24 @@ local void get_formulas(Arena *arena)
 		if (adata->kill_exp_formula == NULL)
 		{
 			lm->LogA(L_WARN, "hscore_rewards", arena, "Error parsing kill exp reward formula: %s", error);
+		}
+	}
+
+	if (bonus_kill_money && *bonus_kill_money)
+	{
+		adata->bonus_kill_money_formula = formula->ParseFormula(bonus_kill_money, error, sizeof(error));
+		if (adata->bonus_kill_money_formula == NULL)
+		{
+			lm->LogA(L_WARN, "hscore_rewards", arena, "Error parsing bonus kill money reward formula: %s", error);
+		}
+	}
+
+	if (bonus_kill_exp && *bonus_kill_exp)
+	{
+		adata->bonus_kill_exp_formula = formula->ParseFormula(bonus_kill_exp, error, sizeof(error));
+		if (adata->bonus_kill_exp_formula == NULL)
+		{
+			lm->LogA(L_WARN, "hscore_rewards", arena, "Error parsing bonus kill exp reward formula: %s", error);
 		}
 	}
 
