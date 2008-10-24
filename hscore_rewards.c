@@ -28,12 +28,15 @@ typedef struct AData
 	Formula *bonus_kill_money_formula;
 	Formula *bonus_kill_exp_formula;
 	Formula *flag_money_formula;
+	Formula *loss_flag_money_formula;
 	Formula *flag_exp_formula;
+	Formula *loss_flag_exp_formula;
 	Formula *periodic_money_formula;
 	Formula *periodic_exp_formula;
 
 	Region *periodic_include_region;
 	Region *periodic_exclude_region;
+	Region *bonus_region;
 
 	int periodic_tally;
 	int reset;
@@ -55,20 +58,6 @@ local Imainloop *ml;
 
 local int pdkey;
 local int adkey;
-
-local int minmax(int min, int x, int max)
-{
-	if (min > x)
-	{
-		x = min;
-	}
-	else if (max < x)
-	{
-		x = max;
-	}
-
-	return x;
-}
 
 local helptext_t killmessages_help =
 "Targets: none\n"
@@ -149,7 +138,9 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 		double totalexp = 0;
 		double teamexp = 0;
 		int money = 0;
+		int loss_money = 0;
 		int exp = 0;
+		int loss_exp = 0;
 
 		HashTable *vars = HashAlloc();
 
@@ -193,9 +184,19 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 			money = formula->EvaluateFormulaInt(adata->flag_money_formula, vars, 0);
 		}
 
+		if (adata->loss_flag_money_formula)
+		{
+			loss_money = formula->EvaluateFormulaInt(adata->loss_flag_money_formula, vars, 0);
+		}
+
 		if (adata->flag_exp_formula)
 		{
 			exp = formula->EvaluateFormulaInt(adata->flag_exp_formula, vars, 0);
+		}
+
+		if (adata->loss_flag_exp_formula)
+		{
+			loss_exp = formula->EvaluateFormulaInt(adata->loss_flag_exp_formula, vars, 0);
 		}
 
 		HashFree(vars);
@@ -222,12 +223,31 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 		pd->Lock();
 		FOR_EACH_PLAYER(i)
 		{
-			if(i->arena == arena && i->p_freq == freq && i->p_ship != SHIP_SPEC)
+			if(i->arena == arena && i->p_ship != SHIP_SPEC)
 			{
-				hsmoney->giveMoney(i, money, MONEY_TYPE_FLAG);
-				hsmoney->giveExp(i, exp);
-				//no need to send message, as the team announcement works just fine
-				//chat->SendMessage(p, "You received $%d and %d exp for a flag victory.", reward, exp);
+				if (i->p_freq == freq)
+				{
+					hsmoney->giveMoney(i, money, MONEY_TYPE_FLAG);
+					hsmoney->giveExp(i, exp);
+					//no need to send message, as the team announcement works just fine
+				}
+				else
+				{
+					hsmoney->giveMoney(i, loss_money, MONEY_TYPE_FLAG);
+					hsmoney->giveExp(i, loss_exp);
+					if (loss_exp && loss_reward)
+					{
+						chat->SendMessage(i, "You received $%d and %d exp for a flag loss.", loss_money, loss_exp);
+					}
+					else if (loss_exp)
+					{
+						chat->SendMessage(i, "You received %d exp for a flag loss.", loss_exp);
+					}
+					else if (loss_money)
+					{
+						chat->SendMessage(i, "You received $%d for a flag loss.", loss_money);
+					}
+				}
 			}
 		}
 		pd->Unlock();
@@ -257,7 +277,10 @@ local int calculateKillExpReward(Arena *arena, Player *killer, Player *killed, i
 
 	if (bonus && adata->bonus_kill_exp_formula)
 	{
-		exp += formula->EvaluateFormulaInt(adata->bonus_kill_exp_formula, vars, 0);
+		if (adata->bonus_region == NULL || mapdata->Contains(adata->bonus_region, killer->position.x >> 4, killer->position.y >> 4))
+		{
+			exp += formula->EvaluateFormulaInt(adata->bonus_kill_exp_formula, vars, 0);
+		}
 	}
 
 	HashFree(vars);
@@ -288,7 +311,10 @@ local int calculateKillMoneyReward(Arena *arena, Player *killer, Player *killed,
 
 	if (bonus && adata->bonus_kill_money_formula)
 	{
-		money += formula->EvaluateFormulaInt(adata->bonus_kill_money_formula, vars, 0);
+		if (adata->bonus_region == NULL || mapdata->Contains(adata->bonus_region, killer->position.x >> 4, killer->position.y >> 4))
+		{
+			money += formula->EvaluateFormulaInt(adata->bonus_kill_money_formula, vars, 0);
+		}
 	}
 
 	HashFree(vars);
@@ -592,9 +618,21 @@ local void get_formulas(Arena *arena)
 	bonus_kill_money = cfg->GetStr(arena->cfg, "Hyperspace", "BonusKillMoneyFormula");
 	bonus_kill_exp = cfg->GetStr(arena->cfg, "Hyperspace", "BonusKillExpFormula");
 	flag_money = cfg->GetStr(arena->cfg, "Hyperspace", "FlagMoneyFormula");
+	loss_flag_money = cfg->GetStr(arena->cfg, "Hyperspace", "LossFlagMoneyFormula");
 	flag_exp = cfg->GetStr(arena->cfg, "Hyperspace", "FlagExpFormula");
+	loss_flag_exp = cfg->GetStr(arena->cfg, "Hyperspace", "LossFlagExpFormula");
 	periodic_money = cfg->GetStr(arena->cfg, "Hyperspace", "PeriodicMoneyFormula");
 	periodic_exp = cfg->GetStr(arena->cfg, "Hyperspace", "PeriodicExpFormula");
+
+	bonus_rgn = cfg->GetStr(arena->cfg, "Hyperspace", "BonusRegion");
+	if (bonus_rgn)
+	{
+		adata->bonus_region = mapdata->FindRegionByName(arena, bonus_rgn);
+	}
+	else
+	{
+		adata->bonus_region = NULL;
+	}
 
 	include_rgn = cfg->GetStr(arena->cfg, "Hyperspace", "PeriodicIncludeRegion");
 	if (include_rgn)
@@ -658,6 +696,24 @@ local void get_formulas(Arena *arena)
 		if (adata->flag_money_formula == NULL)
 		{
 			lm->LogA(L_WARN, "hscore_rewards", arena, "Error parsing flag money reward formula: %s", error);
+		}
+	}
+
+	if (loss_flag_money && *loss_flag_money)
+	{
+		adata->loss_flag_money_formula = formula->ParseFormula(loss_flag_money, error, sizeof(error));
+		if (adata->loss_flag_money_formula == NULL)
+		{
+			lm->LogA(L_WARN, "hscore_rewards", arena, "Error parsing loss flag money reward formula: %s", error);
+		}
+	}
+
+	if (loss_flag_exp && *loss_flag_exp)
+	{
+		adata->loss_flag_exp_formula = formula->ParseFormula(loss_flag_exp, error, sizeof(error));
+		if (adata->loss_flag_exp_formula == NULL)
+		{
+			lm->LogA(L_WARN, "hscore_rewards", arena, "Error parsing loss flag exp reward formula: %s", error);
 		}
 	}
 
