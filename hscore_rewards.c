@@ -579,6 +579,18 @@ local void free_formulas(Arena *arena)
 		adata->flag_money_formula = NULL;
 	}
 
+	if (adata->loss_flag_money_formula)
+	{
+		formula->FreeFormula(adata->loss_flag_money_formula);
+		adata->loss_flag_money_formula = NULL;
+	}
+
+	if (adata->loss_flag_exp_formula)
+	{
+		formula->FreeFormula(adata->loss_flag_exp_formula);
+		adata->loss_flag_exp_formula = NULL;
+	}
+
 	if (adata->flag_exp_formula)
 	{
 		formula->FreeFormula(adata->flag_exp_formula);
