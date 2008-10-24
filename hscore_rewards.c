@@ -235,7 +235,7 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 				{
 					hsmoney->giveMoney(i, loss_money, MONEY_TYPE_FLAG);
 					hsmoney->giveExp(i, loss_exp);
-					if (loss_exp && loss_reward)
+					if (loss_exp && loss_money)
 					{
 						chat->SendMessage(i, "You received $%d and %d exp for a flag loss.", loss_money, loss_exp);
 					}
@@ -603,9 +603,9 @@ local void get_formulas(Arena *arena)
 	AData *adata = P_ARENA_DATA(arena, adkey);
 	const char *kill_money, *kill_exp;
 	const char *bonus_kill_money, *bonus_kill_exp;
-	const char *flag_money, *flag_exp;
+	const char *flag_money, *loss_flag_money, *flag_exp, *loss_flag_exp;
 	const char *periodic_money, *periodic_exp;
-	const char *include_rgn, *exclude_rgn;
+	const char *include_rgn, *exclude_rgn, *bonus_rgn;
 	char error[200];
 	error[0] = '\0';
 
