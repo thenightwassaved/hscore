@@ -855,7 +855,7 @@ local void Freq(Player *p, int *ship, int *freq)
 	{
 		/* check to make sure the new freq is ok */
 		count = count_freq(arena, f, p, inclspec);
-		if (max > 0 && count >= max)
+		if (max > 0 && count >= max || s == SHIP_SPEC)
 			/* the freq has too many people, assign him to another */
 			f = BalanceFreqs(arena, p, inclspec);
 		/* cfghelp: Team:ForceEvenTeams, arena, boolean, def: 0
