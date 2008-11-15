@@ -7,6 +7,7 @@
 #include "hscore.h"
 #include <math.h>
 #include "hscore_teamnames.h"
+#include "hscore_shipnames.h"
 #include "jackpot.h"
 #include "persist.h"
 #include "formula.h"
@@ -37,6 +38,9 @@ typedef struct AData
 	Region *periodic_include_region;
 	Region *periodic_exclude_region;
 	Region *bonus_region;
+	
+	double teammate_max[8];
+	double dist_coeff[8];
 
 	int periodic_tally;
 	int reset;
@@ -364,24 +368,16 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		//give money to teammates
 		Player *p;
 		Link *link;
-		/* cfghelp: Hyperspace:TeammateReward, arena, int, def: 500, mod: hscore_rewards
-		 * The percentage (max) that a teammate can receive from a kill.
-		 * 1000 = 100%*/
-		double teammateRewardCoeff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "TeammateReward", 500) / 1000.0; //50%
-		/* cfghelp: Hyperspace:DistFalloff, arena, int, def: 1440000, mod: hscore_rewards
-		 * Distance falloff divisor in pixels^2. */
-		double distanceFalloff = (double)cfg->GetInt(arena->cfg, "Hyperspace", "DistFalloff", 1440000); //pixels^2
-
 		pd->Lock();
 		FOR_EACH_PLAYER(p)
 		{
 			if(p->arena == killer->arena && p->p_freq == killer->p_freq && p->p_ship != SHIP_SPEC && p != killer && !(p->position.status & STATUS_SAFEZONE))
 			{
-				double maxReward = teammateRewardCoeff * calculateKillMoneyReward(arena, p, killed, bounty, bonus);
+				double maxReward = adata->teammate_max[p->p_ship] * calculateKillMoneyReward(arena, p, killed, bounty, bonus);
 
 				int xdelta = (p->position.x - killer->position.x);
 				int ydelta = (p->position.y - killer->position.y);
-				double distPercentage = ((double)(xdelta * xdelta + ydelta * ydelta)) / distanceFalloff;
+				double distPercentage = ((double)(xdelta * xdelta + ydelta * ydelta)) / adata->dist_coeff[p->p_ship];
 
 				int reward = (int)(maxReward * exp(-distPercentage));
 
@@ -532,7 +528,18 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 
 				hsmoney->giveMoney(p, p_money, MONEY_TYPE_FLAG);
 				hsmoney->giveExp(p, p_exp);
-				chat->SendMessage(p, "You received $%d ($%d) and %d exp (%d) for holding %d %s. (%d/%d)", p_money, money, p_exp, exp, flagsowned, flagstring, pdata->periodic_tally, adata->periodic_tally);
+				if (p_money && p_exp)
+				{
+					chat->SendMessage(p, "You received $%d and %d exp for holding %d %s.", p_money, p_exp, flagsowned, flagstring);
+				}
+				else if (p_money)
+				{
+					chat->SendMessage(p, "You received $%d for holding %d %s.", p_money, flagsowned, flagstring);
+				}
+				else if (p_exp)
+				{
+					chat->SendMessage(p, "You received %d exp for holding %d %s.", p_exp, flagsowned, flagstring);
+				}
 			}
 		}
 
@@ -754,6 +761,17 @@ local void get_formulas(Arena *arena)
 		{
 			lm->LogA(L_WARN, "hscore_rewards", arena, "Error parsing periodic exp reward formula: %s", error);
 		}
+	}
+	
+	for (int i = SHIP_WARBIRD; i <= SHIP_SHARK; i++)
+	{
+		/* cfghelp: All:TeammateReward, arena, int, def: 500, mod: hscore_rewards
+		 * The percentage (max) money that a teammate can receive from a kill.
+		 * 1000 = 100%*/
+		adata->teammate_max[i] = (double)cfg->GetInt(arena->cfg, shipNames[i], "TeammateReward", 500) / 1000.0;
+		/* cfghelp: All:DistFalloff, arena, int, def: 1440000, mod: hscore_rewards
+		 * Kill reward distance falloff divisor in pixels^2. */
+		adata->dist_coeff[i] = (double)cfg->GetInt(arena->cfg, shipNames[i], "DistFalloff", 1440000); // pixels^2
 	}
 }
 
