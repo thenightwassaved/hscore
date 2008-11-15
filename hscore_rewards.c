@@ -329,6 +329,7 @@ local int calculateKillMoneyReward(Arena *arena, Player *killer, Player *killed,
 local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty, int flags, int *pts, int *green)
 {
 	PData *pdata = PPDATA(killer, pdkey);
+	AData *adata = P_ARENA_DATA(arena, adkey);
 
 	if(killer->p_freq == killed->p_freq)
 	{
