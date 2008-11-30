@@ -63,6 +63,16 @@ local Imainloop *ml;
 local int pdkey;
 local int adkey;
 
+local FormulaVariable * player_exp_callback(Player *p)
+{
+	FormulaVariable *var = amalloc(sizeof(FormulaVariable));
+	var->name = NULL;
+	var->type = VAR_TYPE_DOUBLE;
+	var->value = (double)hsmoney->getExp(p);
+
+	return var;
+}
+
 local helptext_t killmessages_help =
 "Targets: none\n"
 "Args: none\n"
@@ -136,11 +146,6 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 
 	if (adata->flag_money_formula || adata->flag_exp_formula)
 	{
-		double players = 0;
-		double freq_size = 0;
-		double jackpot_points = 0;
-		double totalexp = 0;
-		double teamexp = 0;
 		int money = 0;
 		int loss_money = 0;
 		int exp = 0;
@@ -152,42 +157,24 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 
 		Player *i;
 		Link *link;
-		Ijackpot *jackpot;
+
 		Iteamnames *teamnames;
+		
+		FormulaVariable arena, freq;
+		arena.name = NULL;
+		arena.type = VAR_TYPE_ARENA;
+		arena.arena = arena;
+		freq.name = NULL;
+		freq.type = VAR_TYPE_FREQ;
+		freq.freq.arena = arena;
+		freq.freq.freq = freq;
 
-		pd->Lock();
-		FOR_EACH_PLAYER(i)
-			if (i->status == S_PLAYING &&
-				i->arena == arena &&
-				i->p_ship != SHIP_SPEC &&
-				IS_HUMAN(i))
-			{
-				players++;
-				totalexp += hsmoney->getExp(i);
-				if (i->p_freq == freq)
-				{
-					freq_size++;
-					teamexp += hsmoney->getExp(i);
-				}
-			}
-		pd->Unlock();
-
-		jackpot = mm->GetInterface(I_JACKPOT, arena);
-		if (jackpot)
-		{
-			jackpot_points = jackpot->GetJP(arena);
-			mm->ReleaseInterface(jackpot);
-		}
-
-		HashAdd(vars, "totalsize", &players);
-		HashAdd(vars, "teamsize", &freq_size);
-		HashAdd(vars, "jackpot", &jackpot_points);
-		HashAdd(vars, "totalexp", &totalexp);
-		HashAdd(vars, "teamexp", &teamexp);
+		HashAdd(vars, "arena", &arena);
+		HashAdd(vars, "freq", &freq);
 
 		if (adata->flag_money_formula)
 		{
-			money = formula->EvaluateFormulaInt(adata->flag_money_formula, vars, error_buf, sizeof(error_buf), 0);
+			money = formula->EvaluateFormulaInt(adata->flag_money_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
 			if (error_buf[0] == '\0')
 			{
 				money = 0;
@@ -197,7 +184,7 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 
 		if (adata->loss_flag_money_formula)
 		{
-			loss_money = formula->EvaluateFormulaInt(adata->loss_flag_money_formula, vars, error_buf, sizeof(error_buf), 0);
+			loss_money = formula->EvaluateFormulaInt(adata->loss_flag_money_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
 			if (error_buf[0] == '\0')
 			{
 				loss_money = 0;
@@ -207,7 +194,7 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 
 		if (adata->flag_exp_formula)
 		{
-			exp = formula->EvaluateFormulaInt(adata->flag_exp_formula, vars, error_buf, sizeof(error_buf), 0);
+			exp = formula->EvaluateFormulaInt(adata->flag_exp_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
 			if (error_buf[0] == '\0')
 			{
 				exp = 0;
@@ -217,7 +204,7 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 
 		if (adata->loss_flag_exp_formula)
 		{
-			loss_exp = formula->EvaluateFormulaInt(adata->loss_flag_exp_formula, vars, error_buf, sizeof(error_buf), 0);
+			loss_exp = formula->EvaluateFormulaInt(adata->loss_flag_exp_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
 			if (error_buf[0] == '\0')
 			{
 				loss_exp = 0;
@@ -285,23 +272,28 @@ local int calculateKillExpReward(Arena *arena, Player *killer, Player *killed, i
 	AData *adata = P_ARENA_DATA(arena, adkey);
 	int exp = 0;
 	HashTable *vars = HashAlloc();
-
-	double killer_bounty = (double)(killer->position.bounty);
-	double killed_bounty = (double)bounty;
-	double killer_exp = (double)hsmoney->getExp(killer);
-	double killed_exp = (double)hsmoney->getExp(killed);
-	
 	char error_buf[200];
+	
+	FormulaVariable killer_var, killed_var, bounty_var;
+	killer_var.name = NULL;
+	killer_var.type = VAR_TYPE_PLAYER;
+	killer_var.p = killer;
+	killed_var.name = NULL;
+	killed_var.type = VAR_TYPE_PLAYER;
+	killed_var.p = killed;
+	bounty_var.name = NULL;
+	bounty_var.type = VAR_TYPE_DOUBLE;
+	bounty_var.value = (double)bounty;
+
 	error_buf[0] = '\0';
 
-	HashAdd(vars, "killerbounty", &killer_bounty);
-	HashAdd(vars, "killedbounty", &killed_bounty);
-	HashAdd(vars, "killerexp", &killer_exp);
-	HashAdd(vars, "killedexp", &killed_exp);
+	HashAdd(vars, "killer", &killer_var);
+	HashAdd(vars, "killed", &killed_var);
+	HashAdd(vars, "bounty", &bounty_var);
 
 	if (adata->kill_exp_formula)
 	{
-		exp = formula->EvaluateFormulaInt(adata->kill_exp_formula, vars, error_buf, sizeof(error_buf), 0);
+		exp = formula->EvaluateFormulaInt(adata->kill_exp_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
 		if (error_buf[0] == '\0')
 		{
 			exp = 0;
@@ -313,7 +305,7 @@ local int calculateKillExpReward(Arena *arena, Player *killer, Player *killed, i
 	{
 		if (adata->bonus_region == NULL || mapdata->Contains(adata->bonus_region, killer->position.x >> 4, killer->position.y >> 4))
 		{
-			int bonus = formula->EvaluateFormulaInt(adata->bonus_kill_exp_formula, vars, error_buf, sizeof(error_buf), 0);
+			int bonus = formula->EvaluateFormulaInt(adata->bonus_kill_exp_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
 			if (error_buf[0] == '\0')
 			{
 				bonus = 0;
@@ -333,23 +325,28 @@ local int calculateKillMoneyReward(Arena *arena, Player *killer, Player *killed,
 	AData *adata = P_ARENA_DATA(arena, adkey);
 	int money = 0;
 	HashTable *vars = HashAlloc();
-
-	double killer_bounty = (double)(killer->position.bounty);
-	double killed_bounty = (double)bounty;
-	double killer_exp = (double)hsmoney->getExp(killer);
-	double killed_exp = (double)hsmoney->getExp(killed);
-	
 	char error_buf[200];
+	
+	FormulaVariable killer_var, killed_var, bounty_var;
+	killer_var.name = NULL;
+	killer_var.type = VAR_TYPE_PLAYER;
+	killer_var.p = killer;
+	killed_var.name = NULL;
+	killed_var.type = VAR_TYPE_PLAYER;
+	killed_var.p = killed;
+	bounty_var.name = NULL;
+	bounty_var.type = VAR_TYPE_DOUBLE;
+	bounty_var.value = (double)bounty;
+
 	error_buf[0] = '\0';
 
-	HashAdd(vars, "killerbounty", &killer_bounty);
-	HashAdd(vars, "killedbounty", &killed_bounty);
-	HashAdd(vars, "killerexp", &killer_exp);
-	HashAdd(vars, "killedexp", &killed_exp);
+	HashAdd(vars, "killer", &killer_var);
+	HashAdd(vars, "killed", &killed_var);
+	HashAdd(vars, "bounty", &bounty_var);
 
 	if (adata->kill_money_formula)
 	{
-		money = formula->EvaluateFormulaInt(adata->kill_money_formula, vars, error_buf, sizeof(error_buf), 0);
+		money = formula->EvaluateFormulaInt(adata->kill_money_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
 		if (error_buf[0] == '\0')
 		{
 			money = 0;
@@ -361,7 +358,7 @@ local int calculateKillMoneyReward(Arena *arena, Player *killer, Player *killed,
 	{
 		if (adata->bonus_region == NULL || mapdata->Contains(adata->bonus_region, killer->position.x >> 4, killer->position.y >> 4))
 		{
-			int bonus = formula->EvaluateFormulaInt(adata->bonus_kill_money_formula, vars, error_buf, sizeof(error_buf), 0);
+			int bonus = formula->EvaluateFormulaInt(adata->bonus_kill_money_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
 			if (error_buf[0] == '\0')
 			{
 				bonus = 0;
@@ -529,20 +526,29 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 		Player *p;
 		Link *link;
 		HashTable *vars = HashAlloc();
-		double totalsize = (double)totalplayers;
-		double teamsize = (double)freqplayers;
-		double flags = (double)flagsowned;
+		
+		FormulaVariable arena, freq, flags;
+		arena.name = NULL;
+		arena.type = VAR_TYPE_ARENA;
+		arena.arena = arena;
+		freq.name = NULL;
+		freq.type = VAR_TYPE_FREQ;
+		freq.freq.arena = arena;
+		freq.freq.freq = freq; /* lol */
+		flags.name = NULL;
+		flags.type = VAR_TYPE_DOUBLE;
+		flags.value = flagsowned;
 		
 		char error_buf[200];
 		error_buf[0] = '\0';
 
-		HashAdd(vars, "totalsize", &totalsize);
-		HashAdd(vars, "teamsize", &teamsize);
+		HashAdd(vars, "arena", &arena);
+		HashAdd(vars, "freq", &freq);
 		HashAdd(vars, "flags", &flags);
 
 		if (adata->periodic_money_formula)
 		{
-			money = formula->EvaluateFormulaInt(adata->periodic_money_formula, vars, error_buf, sizeof(error_buf), 0);
+			money = formula->EvaluateFormulaInt(adata->periodic_money_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
 			if (error_buf[0] == '\0')
 			{
 				money = 0;
@@ -552,7 +558,7 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 
 		if (adata->periodic_exp_formula)
 		{
-			exp = formula->EvaluateFormulaInt(adata->periodic_exp_formula, vars, error_buf, sizeof(error_buf), 0);
+			exp = formula->EvaluateFormulaInt(adata->periodic_exp_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
 			if (error_buf[0] == '\0')
 			{
 				exp = 0;
@@ -898,10 +904,14 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 
 		persist->RegPlayerPD(&my_persist_data);
 
+		formula->RegPlayerProperty("exp", player_exp_callback);
+
 		return MM_OK;
 	}
 	else if (action == MM_UNLOAD)
 	{
+		formula->UnregPlayerProperty("exp", player_exp_callback);
+
 		persist->UnregPlayerPD(&my_persist_data);
 
 		pd->FreePlayerData(pdkey);
