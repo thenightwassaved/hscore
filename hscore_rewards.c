@@ -160,17 +160,17 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 
 		Iteamnames *teamnames;
 		
-		FormulaVariable arena, freq;
-		arena.name = NULL;
-		arena.type = VAR_TYPE_ARENA;
-		arena.arena = arena;
-		freq.name = NULL;
-		freq.type = VAR_TYPE_FREQ;
-		freq.freq.arena = arena;
-		freq.freq.freq = freq;
+		FormulaVariable arena_var, freq_var;
+		arena_var.name = NULL;
+		arena_var.type = VAR_TYPE_ARENA;
+		arena_var.arena = arena;
+		freq_var.name = NULL;
+		freq_var.type = VAR_TYPE_FREQ;
+		freq_var.freq.arena = arena;
+		freq_var.freq.freq = freq;
 
-		HashAdd(vars, "arena", &arena);
-		HashAdd(vars, "freq", &freq);
+		HashAdd(vars, "arena", &arena_var);
+		HashAdd(vars, "freq", &freq_var);
 
 		if (adata->flag_money_formula)
 		{
@@ -527,24 +527,24 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 		Link *link;
 		HashTable *vars = HashAlloc();
 		
-		FormulaVariable arena, freq, flags;
-		arena.name = NULL;
-		arena.type = VAR_TYPE_ARENA;
-		arena.arena = arena;
-		freq.name = NULL;
-		freq.type = VAR_TYPE_FREQ;
-		freq.freq.arena = arena;
-		freq.freq.freq = freq; /* lol */
-		flags.name = NULL;
-		flags.type = VAR_TYPE_DOUBLE;
-		flags.value = flagsowned;
+		FormulaVariable arena_var, freq_var, flags_var;
+		arena_var.name = NULL;
+		arena_var.type = VAR_TYPE_ARENA;
+		arena_var.arena = arena;
+		freq_var.name = NULL;
+		freq_var.type = VAR_TYPE_FREQ;
+		freq_var.freq.arena = arena;
+		freq_var.freq.freq = freq; /* lol */
+		flags_var.name = NULL;
+		flags_var.type = VAR_TYPE_DOUBLE;
+		flags_var.value = flagsowned;
 		
 		char error_buf[200];
 		error_buf[0] = '\0';
 
-		HashAdd(vars, "arena", &arena);
-		HashAdd(vars, "freq", &freq);
-		HashAdd(vars, "flags", &flags);
+		HashAdd(vars, "arena", &arena_var);
+		HashAdd(vars, "freq", &freq_var);
+		HashAdd(vars, "flags", &flags_var);
 
 		if (adata->periodic_money_formula)
 		{
