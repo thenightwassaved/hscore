@@ -16,6 +16,20 @@ local Icmdman *cmd;
 local Ihscoreitems *items;
 local Ihscoredatabase *database;
 
+typedef struct KeyCacheEntryPair
+{
+	const char *key;
+	PropertyCacheEntry *cacheEntry;
+} KeyCacheEntryPair;
+
+local int sortKeyCacheEntryPair(const void *_a, const void *_b)
+{
+	const KeyCacheEntryPair *a = (const KeyCacheEntryPair *)_a;
+	const KeyCacheEntryPair *b = (const KeyCacheEntryPair *)_b;
+
+	return (strcmp(a->key, b->key) < 0);
+}
+
 local helptext_t shipsHelp =
 "Targets: none or player\n"
 "Args: none\n"
@@ -93,6 +107,24 @@ local int printCacheEntry(const char *key, void *val, void *clos)
 		}
 	}
 
+	return 0;
+}
+
+local int cacheEntriesToList(const char *key, void *val, void *clos)
+{
+	PropertyCacheEntry *cacheEntry = (PropertyCacheEntry *)val;
+	LinkedList *list = (LinkedList *)clos;
+
+	if (cacheEntry != NULL)
+	{
+		if (cacheEntry->absolute || cacheEntry->value != 0)
+		{
+			KeyCacheEntryPair *pair = amalloc(sizeof(*pair));
+			pair->key = key;
+			pair->val = cacheEntry;
+			LLAdd(list, pair);
+		}
+	}
 	return 0;
 }
 
@@ -502,12 +534,37 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 			}
 			else
 			{
+				LinkedList propertiesList;
+				LLInit(&propertiesList);
+				Link *pairsLink;
+
 				chat->SendMessage(p, "+------------------+-------+--------+-----------------------------------------------------+");
 				chat->SendMessage(p, "| Property Name    | Property Value |");
 				chat->SendMessage(p, "+------------------+----------------+");
 				
 				items->recaclulateEntireCache(t, ship);
-				HashEnum(playerData->hull[ship]->propertySums, printCacheEntry, p);
+				//unsorted method
+				//HashEnum(playerData->hull[ship]->propertySums, printCacheEntry, p);
+
+				//new sorted method
+				HashEnum(playerData->hull[ship]->propertySums, cacheEntriesToList, &propertiesList);
+				LLSort(&propertiesList, sortKeyCacheEntryPair);
+
+				for (pairsLink = LLGetHead(&propertiesList); pairsLink; pairsLink = pairsLink->next)
+				{
+					KeyCacheEntryPair *pair = (KeyCacheEntryPair *)link->data;
+					if (pair->cacheEntry->absolute)
+					{
+						chat->SendMessage(p, "| %-16s | =%-13i |", pair->key, pair->cacheEntry->value);
+					}
+					else
+					{
+						chat->SendMessage(p, "| %-16s | %+-14i |", pair->key, pair->cacheEntry->value);
+					}
+				}
+				LLEnum(&propertiesList, afree);
+				LLEmpty(&propertiesList);
+				//end new sorted method
 
 				chat->SendMessage(p, "+------------------+----------------+");
 			}
