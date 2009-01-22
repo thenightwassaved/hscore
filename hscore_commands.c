@@ -121,7 +121,7 @@ local int cacheEntriesToList(const char *key, void *val, void *clos)
 		{
 			KeyCacheEntryPair *pair = amalloc(sizeof(*pair));
 			pair->key = key;
-			pair->val = cacheEntry;
+			pair->cacheEntry = cacheEntry;
 			LLAdd(list, pair);
 		}
 	}
