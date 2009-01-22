@@ -552,7 +552,7 @@ local void shipStatusCommand(const char *command, const char *params, Player *p,
 
 				for (pairsLink = LLGetHead(&propertiesList); pairsLink; pairsLink = pairsLink->next)
 				{
-					KeyCacheEntryPair *pair = (KeyCacheEntryPair *)link->data;
+					KeyCacheEntryPair *pair = (KeyCacheEntryPair *)pairsLink->data;
 					if (pair->cacheEntry->absolute)
 					{
 						chat->SendMessage(p, "| %-16s | =%-13i |", pair->key, pair->cacheEntry->value);
