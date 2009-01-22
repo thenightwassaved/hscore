@@ -38,7 +38,7 @@ typedef struct AData
 	Region *periodic_include_region;
 	Region *periodic_exclude_region;
 	Region *bonus_region;
-	
+
 	double teammate_max[8];
 	double dist_coeff[8];
 
@@ -69,6 +69,16 @@ local FormulaVariable * player_exp_callback(Player *p)
 	var->name = NULL;
 	var->type = VAR_TYPE_DOUBLE;
 	var->value = (double)hsmoney->getExp(p);
+
+	return var;
+}
+
+local FormulaVariable * player_money_callback(Player *p)
+{
+	FormulaVariable *var = amalloc(sizeof(FormulaVariable));
+	var->name = NULL;
+	var->type = VAR_TYPE_DOUBLE;
+	var->value = (double)hsmoney->getMoney(p);
 
 	return var;
 }
@@ -159,7 +169,7 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 		Link *link;
 
 		Iteamnames *teamnames;
-		
+
 		FormulaVariable arena_var, freq_var;
 		arena_var.name = NULL;
 		arena_var.type = VAR_TYPE_ARENA;
@@ -175,7 +185,7 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 		if (adata->flag_money_formula)
 		{
 			money = formula->EvaluateFormulaInt(adata->flag_money_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
-			if (error_buf[0] == '\0')
+			if (error_buf[0] != '\0')
 			{
 				money = 0;
 				lm->LogA(L_WARN, "hscore_rewards", arena, "Error with flag money formula: %s", error_buf);
@@ -185,7 +195,7 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 		if (adata->loss_flag_money_formula)
 		{
 			loss_money = formula->EvaluateFormulaInt(adata->loss_flag_money_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
-			if (error_buf[0] == '\0')
+			if (error_buf[0] != '\0')
 			{
 				loss_money = 0;
 				lm->LogA(L_WARN, "hscore_rewards", arena, "Error with loss flag money formula: %s", error_buf);
@@ -195,7 +205,7 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 		if (adata->flag_exp_formula)
 		{
 			exp = formula->EvaluateFormulaInt(adata->flag_exp_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
-			if (error_buf[0] == '\0')
+			if (error_buf[0] != '\0')
 			{
 				exp = 0;
 				lm->LogA(L_WARN, "hscore_rewards", arena, "Error with flag exp formula: %s", error_buf);
@@ -205,7 +215,7 @@ local void flagWinCallback(Arena *arena, int freq, int *pts)
 		if (adata->loss_flag_exp_formula)
 		{
 			loss_exp = formula->EvaluateFormulaInt(adata->loss_flag_exp_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
-			if (error_buf[0] == '\0')
+			if (error_buf[0] != '\0')
 			{
 				loss_exp = 0;
 				lm->LogA(L_WARN, "hscore_rewards", arena, "Error with loss flag exp formula: %s", error_buf);
@@ -273,7 +283,7 @@ local int calculateKillExpReward(Arena *arena, Player *killer, Player *killed, i
 	int exp = 0;
 	HashTable *vars = HashAlloc();
 	char error_buf[200];
-	
+
 	FormulaVariable killer_var, killed_var, bounty_var;
 	killer_var.name = NULL;
 	killer_var.type = VAR_TYPE_PLAYER;
@@ -294,7 +304,7 @@ local int calculateKillExpReward(Arena *arena, Player *killer, Player *killed, i
 	if (adata->kill_exp_formula)
 	{
 		exp = formula->EvaluateFormulaInt(adata->kill_exp_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
-		if (error_buf[0] == '\0')
+		if (error_buf[0] != '\0')
 		{
 			exp = 0;
 			lm->LogA(L_WARN, "hscore_rewards", arena, "Error with kill exp formula: %s", error_buf);
@@ -306,7 +316,7 @@ local int calculateKillExpReward(Arena *arena, Player *killer, Player *killed, i
 		if (adata->bonus_region == NULL || mapdata->Contains(adata->bonus_region, killer->position.x >> 4, killer->position.y >> 4))
 		{
 			int bonus = formula->EvaluateFormulaInt(adata->bonus_kill_exp_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
-			if (error_buf[0] == '\0')
+			if (error_buf[0] != '\0')
 			{
 				bonus = 0;
 				lm->LogA(L_WARN, "hscore_rewards", arena, "Error with bonus kill exp formula: %s", error_buf);
@@ -326,7 +336,7 @@ local int calculateKillMoneyReward(Arena *arena, Player *killer, Player *killed,
 	int money = 0;
 	HashTable *vars = HashAlloc();
 	char error_buf[200];
-	
+
 	FormulaVariable killer_var, killed_var, bounty_var;
 	killer_var.name = NULL;
 	killer_var.type = VAR_TYPE_PLAYER;
@@ -347,7 +357,7 @@ local int calculateKillMoneyReward(Arena *arena, Player *killer, Player *killed,
 	if (adata->kill_money_formula)
 	{
 		money = formula->EvaluateFormulaInt(adata->kill_money_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
-		if (error_buf[0] == '\0')
+		if (error_buf[0] != '\0')
 		{
 			money = 0;
 			lm->LogA(L_WARN, "hscore_rewards", arena, "Error with kill money formula: %s", error_buf);
@@ -359,7 +369,7 @@ local int calculateKillMoneyReward(Arena *arena, Player *killer, Player *killed,
 		if (adata->bonus_region == NULL || mapdata->Contains(adata->bonus_region, killer->position.x >> 4, killer->position.y >> 4))
 		{
 			int bonus = formula->EvaluateFormulaInt(adata->bonus_kill_money_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
-			if (error_buf[0] == '\0')
+			if (error_buf[0] != '\0')
 			{
 				bonus = 0;
 				lm->LogA(L_WARN, "hscore_rewards", arena, "Error with bonus kill money formula: %s", error_buf);
@@ -526,7 +536,7 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 		Player *p;
 		Link *link;
 		HashTable *vars = HashAlloc();
-		
+
 		FormulaVariable arena_var, freq_var, flags_var;
 		arena_var.name = NULL;
 		arena_var.type = VAR_TYPE_ARENA;
@@ -538,7 +548,7 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 		flags_var.name = NULL;
 		flags_var.type = VAR_TYPE_DOUBLE;
 		flags_var.value = flagsowned;
-		
+
 		char error_buf[200];
 		error_buf[0] = '\0';
 
@@ -549,7 +559,7 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 		if (adata->periodic_money_formula)
 		{
 			money = formula->EvaluateFormulaInt(adata->periodic_money_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
-			if (error_buf[0] == '\0')
+			if (error_buf[0] != '\0')
 			{
 				money = 0;
 				lm->LogA(L_WARN, "hscore_rewards", arena, "Error with periodic money formula: %s", error_buf);
@@ -559,7 +569,7 @@ local int getPeriodicPoints(Arena *arena, int freq, int freqplayers, int totalpl
 		if (adata->periodic_exp_formula)
 		{
 			exp = formula->EvaluateFormulaInt(adata->periodic_exp_formula, vars, NULL, error_buf, sizeof(error_buf), 0);
-			if (error_buf[0] == '\0')
+			if (error_buf[0] != '\0')
 			{
 				exp = 0;
 				lm->LogA(L_WARN, "hscore_rewards", arena, "Error with periodic exp formula: %s", error_buf);
@@ -832,7 +842,7 @@ local void get_formulas(Arena *arena)
 			lm->LogA(L_WARN, "hscore_rewards", arena, "Error parsing periodic exp reward formula: %s", error);
 		}
 	}
-	
+
 	for (int i = SHIP_WARBIRD; i <= SHIP_SHARK; i++)
 	{
 		/* cfghelp: All:TeammateReward, arena, int, def: 500, mod: hscore_rewards
@@ -905,12 +915,14 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		persist->RegPlayerPD(&my_persist_data);
 
 		formula->RegPlayerProperty("exp", player_exp_callback);
+		formula->RegPlayerProperty("money", player_money_callback);
 
 		return MM_OK;
 	}
 	else if (action == MM_UNLOAD)
 	{
 		formula->UnregPlayerProperty("exp", player_exp_callback);
+		formula->UnregPlayerProperty("money", player_money_callback);
 
 		persist->UnregPlayerPD(&my_persist_data);
 

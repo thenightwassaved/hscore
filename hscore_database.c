@@ -24,7 +24,7 @@ local int hash_enum_remove(const char *key, void *val, void *d);
 local PerArenaData * getPerArenaData(Arena *arena);
 local Item * getItemByID(int id);
 local Item * getItemByIDNoLock(int id);
-local ItemType * getItemTypeByID(int id);
+//local ItemType * getItemTypeByID(int id);
 local ItemType * getItemTypeByIDNoLock(int id);
 local const char * getArenaIdentifier(Arena *arena);
 local void LinkAmmo();
@@ -160,7 +160,7 @@ local Item * getItemByIDNoLock(int id)
 	return returnValue;
 }
 
-local ItemType * getItemTypeByID(int id)
+/*local ItemType * getItemTypeByID(int id)
 {
 	Link *link;
 	ItemType *returnValue = NULL;
@@ -179,7 +179,7 @@ local ItemType * getItemTypeByID(int id)
 	unlock();
 
 	return returnValue;
-}
+}*/
 
 local ItemType * getItemTypeByIDNoLock(int id)
 {
@@ -673,9 +673,9 @@ local void loadItemsQueryCallback(int status, db_res *result, void *passedData)
 		item->sellPrice = atoi(mysql->GetField(row, 5));			//sell_price
 		item->expRequired = atoi(mysql->GetField(row, 6));			//exp_required
 		item->shipsAllowed = atoi(mysql->GetField(row, 7));			//ships_allowed
-		
+
 		item->max = atoi(mysql->GetField(row, 8));					//max
-		
+
 		item->delayStatusWrite = atoi(mysql->GetField(row, 9));		//delay_write
 		item->ammoID = atoi(mysql->GetField(row, 10));				//ammo
 		item->needsAmmo = atoi(mysql->GetField(row, 11));			//needs_ammo
@@ -1566,7 +1566,7 @@ local void StorePlayerShips(Player *p, Arena *arena) //store player ships. MUST 
 
 	if (arena == NULL)
 		return;
-	
+
 	if (areShipsLoaded(p))
 	{
 		int i;
