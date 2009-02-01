@@ -12,6 +12,13 @@
 #include "persist.h"
 #include "formula.h"
 
+typedef struct BountyMap
+{
+	int size; // one dimensional size
+	short *bounty;
+	ticks_t *timeout;
+} BountyMap;
+
 typedef struct PData
 {
 	int min_kill_money_to_notify;
@@ -62,6 +69,7 @@ local Imainloop *ml;
 
 local int pdkey;
 local int adkey;
+local BountyMap bounty_map;
 
 local FormulaVariable * player_exp_callback(Player *p)
 {
@@ -450,6 +458,22 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		}
 		pd->Unlock();
 	}
+}
+
+local void edit_ppk_bounty_cb(Player *p, Player *t, struct C2SPosition *pos, int *modified, int *extralen)
+{
+	int index = p->pid * bounty_map.size + t->pid;
+	ticks_t gtc = current_ticks();
+	if (bounty_map.timeout[index] < gtc)
+	{
+		int minBonusPlayers = cfg->GetInt(p->arena->cfg, "Hyperspace", "MinBonusPlayers",  4);
+		int bonus = p->arena->playing >= minBonusPlayers;
+		int money = calculateKillMoneyReward(p->arena, t, p, pos->bounty, bonus);
+		bounty_map.bounty[index] = 	money;
+		bounty_map.timeout[index] = gtc + 100;
+	}
+	pos->bounty = bounty_map.bounty[index];
+	*modified = 1;
 }
 
 local int periodic_tick(void *clos)
@@ -863,13 +887,34 @@ local void aaction(Arena *arena, int action)
 	}
 }
 
+local void newplayer(Player *p, int isnew)
+{
+	if (p->pid >= bounty_map.size)
+	{
+		int newsize = bounty_map.size * 2;
+		short *newbounty = amalloc(sizeof(*bounty_map.bounty) * newsize * newsize);
+		ticks_t *newtimeout = amalloc(sizeof(*bounty_map.timeout) * newsize * newsize);
+		short *oldbounty = bounty_map.bounty;
+		ticks_t *oldtimeout = bounty_map.timeout;
+
+		// don't need to zero timeout, because amalloc takes care of that
+
+		bounty_map.bounty = newbounty;
+		bounty_map.timeout = newtimeout;
+		bounty_map.size = newsize;
+
+		afree(oldbounty);
+		afree(oldtimeout);
+	}
+}
+
 local Iperiodicpoints periodicInterface =
 {
 	INTERFACE_HEAD_INIT(I_PERIODIC_POINTS, "pp-basic")
 	getPeriodicPoints
 };
 
-EXPORT const char info_hscore_rewards[] = "v1.4 D1st0rt & Dr Brain";
+EXPORT const char info_hscore_rewards[] = "v1.5 D1st0rt & Dr Brain";
 
 EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 {
@@ -906,11 +951,18 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 			return MM_FAIL;
 		}
 
+		// setup the bounty cache
+		bounty_map.size = 16;
+		bounty_map.bounty = amalloc(sizeof(*bounty_map.bounty) * bounty_map.size * bounty_map.size);
+		bounty_map.timeout = amalloc(sizeof(*bounty_map.timeout) * bounty_map.size * bounty_map.size);
+
 		pdkey = pd->AllocatePlayerData(sizeof(PData));
 		if (pdkey == -1) return MM_FAIL;
 
 		adkey = aman->AllocateArenaData(sizeof(AData));
 		if (adkey == -1) return MM_FAIL;
+
+		mm->RegCallback(CB_NEWPLAYER, newplayer, ALLARENAS);
 
 		persist->RegPlayerPD(&my_persist_data);
 
@@ -926,8 +978,12 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 
 		persist->UnregPlayerPD(&my_persist_data);
 
+		mm->UnregCallback(CB_NEWPLAYER, newplayer, ALLARENAS);
+
 		pd->FreePlayerData(pdkey);
 		aman->FreeArenaData(adkey);
+
+		afree(bounty_map.bounty);
 
 		mm->ReleaseInterface(lm);
 		mm->ReleaseInterface(pd);
@@ -962,6 +1018,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		mm->RegCallback(CB_ARENAACTION, aaction, arena);
 		mm->RegCallback(CB_FREQCHANGE, freqChangeCallback, arena);
 		mm->RegCallback(CB_PLAYERACTION, paction, arena);
+		mm->RegCallback(CB_EDITINDIVIDALPPK, edit_ppk_bounty_cb, arena);
 
 		cmd->AddCommand("killmessages", Ckillmessages, arena, killmessages_help);
 
@@ -982,6 +1039,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		mm->UnregCallback(CB_ARENAACTION, aaction, arena);
 		mm->UnregCallback(CB_FREQCHANGE, freqChangeCallback, arena);
 		mm->UnregCallback(CB_PLAYERACTION, paction, arena);
+		mm->UnregCallback(CB_EDITINDIVIDALPPK, edit_ppk_bounty_cb, arena);
 
 		ml->ClearTimer(periodic_tick, arena);
 
