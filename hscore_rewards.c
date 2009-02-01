@@ -462,18 +462,21 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 
 local void edit_ppk_bounty_cb(Player *p, Player *t, struct C2SPosition *pos, int *modified, int *extralen)
 {
-	int index = p->pid * bounty_map.size + t->pid;
-	ticks_t gtc = current_ticks();
-	if (bounty_map.timeout[index] < gtc)
+	if (t->p_ship != SHIP_SPEC)
 	{
-		int minBonusPlayers = cfg->GetInt(p->arena->cfg, "Hyperspace", "MinBonusPlayers",  4);
-		int bonus = p->arena->playing >= minBonusPlayers;
-		int money = calculateKillMoneyReward(p->arena, t, p, pos->bounty, bonus);
-		bounty_map.bounty[index] = 	money;
-		bounty_map.timeout[index] = gtc + 100;
+		int index = p->pid * bounty_map.size + t->pid;
+		ticks_t gtc = current_ticks();
+		if (bounty_map.timeout[index] < gtc)
+		{
+			int minBonusPlayers = cfg->GetInt(p->arena->cfg, "Hyperspace", "MinBonusPlayers",  4);
+			int bonus = p->arena->playing >= minBonusPlayers;
+			int money = calculateKillMoneyReward(p->arena, t, p, pos->bounty, bonus);
+			bounty_map.bounty[index] = 	money;
+			bounty_map.timeout[index] = gtc + 100;
+		}
+		pos->bounty = bounty_map.bounty[index];
+		*modified = 1;
 	}
-	pos->bounty = bounty_map.bounty[index];
-	*modified = 1;
 }
 
 local int periodic_tick(void *clos)
@@ -891,13 +894,23 @@ local void newplayer(Player *p, int isnew)
 {
 	if (p->pid >= bounty_map.size)
 	{
+		int i, j;
 		int newsize = bounty_map.size * 2;
 		short *newbounty = amalloc(sizeof(*bounty_map.bounty) * newsize * newsize);
 		ticks_t *newtimeout = amalloc(sizeof(*bounty_map.timeout) * newsize * newsize);
 		short *oldbounty = bounty_map.bounty;
 		ticks_t *oldtimeout = bounty_map.timeout;
 
-		// don't need to zero timeout, because amalloc takes care of that
+		for (i = 0; i < bounty_map.size; i++)
+		{
+			for (j = 0; j < bounty_map.size; j++)
+			{
+				int new_index = i * newsize + j;
+				int old_index = i * bounty_map.size + j;
+				newbounty[new_index] = oldbounty[old_index];
+				newtimeout[new_index] = oldtimeout[old_index];
+			}
+		}
 
 		bounty_map.bounty = newbounty;
 		bounty_map.timeout = newtimeout;
@@ -952,7 +965,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		}
 
 		// setup the bounty cache
-		bounty_map.size = 16;
+		bounty_map.size = 64;
 		bounty_map.bounty = amalloc(sizeof(*bounty_map.bounty) * bounty_map.size * bounty_map.size);
 		bounty_map.timeout = amalloc(sizeof(*bounty_map.timeout) * bounty_map.size * bounty_map.size);
 
