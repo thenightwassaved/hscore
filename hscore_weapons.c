@@ -1,6 +1,7 @@
 #include "asss.h"
 #include <stdlib.h>
 
+#include "hscore.h"
 #include "hscore_items.h"
 #include "packets/ppk.h"
 
