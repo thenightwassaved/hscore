@@ -1,5 +1,5 @@
 #include "asss.h"
-#include <stdlib.h>
+#define max(a,b) ((a)>(b)?(a):(b))
 
 #include "hscore.h"
 #include "hscore_items.h"
