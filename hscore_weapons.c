@@ -59,7 +59,7 @@ EXPORT int MM_hs_weapons(int action, Imodman *mm, Arena *arena)
 	{
 		mm->UnregCallback(CB_EDITPPK, edit_ppk_func, ALLARENAS);
 
-		mm->ReleaseItems(items);
+		mm->ReleaseInterface(items);
 
 		return MM_OK;
 	}
