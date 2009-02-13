@@ -38,9 +38,9 @@ local void edit_ppk_func(Player *p, struct C2SPosition *pos)
 	}
 }
 
-EXPORT const char info_hs_weapons[] = "v1.0 Arnk Kilo Dylie <kilodylie@rshl.org>";
+EXPORT const char info_hscore_weapons[] = "v1.0 Arnk Kilo Dylie <kilodylie@rshl.org>";
 
-EXPORT int MM_hs_weapons(int action, Imodman *mm, Arena *arena)
+EXPORT int MM_hscore_weapons(int action, Imodman *mm, Arena *arena)
 {
 	if (action == MM_LOAD)
 	{
