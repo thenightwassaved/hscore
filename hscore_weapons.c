@@ -1,4 +1,5 @@
 #include "asss.h"
+#define min(a,b) ((a)<(b)?(a):(b))
 #define max(a,b) ((a)>(b)?(a):(b))
 
 #include "hscore.h"
@@ -32,7 +33,7 @@ local void edit_ppk_func(Player *p, struct C2SPosition *pos)
 			//else = new level (represented in packet as level-1)
 			if (shraplevel > 0)
 			{
-				pos->weapon.shraplevel = max(3, shraplevel-1);
+				pos->weapon.shraplevel = min(3, shraplevel-1);
 			}
 		}
 	}
