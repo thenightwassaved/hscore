@@ -173,6 +173,18 @@ local GlobalOverrideKeys globalOverrideKeys;
 //interface function
 local void respawn(Player *p);
 
+local inline int min(int a, int b)
+{
+	if (a < b)
+	{
+		return a;
+	}
+	else
+	{
+		return b;
+	}
+}
+
 local inline int max(int a, int b)
 {
 	if (a > b)
@@ -386,7 +398,7 @@ local void addOverrides(Player *p)
 
 
 
-			int gunlevel = items->getPropertySumNoLock(p, i, "gunlevel", 0);
+			int gunlevel = min(3, items->getPropertySumNoLock(p, i, "gunlevel", 0));
 			if (gunlevel > 0)
 			{
 				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialGuns, gunlevel);
@@ -398,7 +410,7 @@ local void addOverrides(Player *p)
 				clientset->PlayerUnoverride(p, shipOverrideKeys[i].MaxGuns);
 			}
 
-			int bomblevel = items->getPropertySumNoLock(p, i, "bomblevel", 0);
+			int bomblevel = min(3, items->getPropertySumNoLock(p, i, "bomblevel", 0));
 			if (bomblevel > 0)
 			{
 				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialBombs, bomblevel);
@@ -416,41 +428,41 @@ local void addOverrides(Player *p)
 			int thrust = items->getPropertySumNoLock(p, i, "thrust", 0);
 			int initThrust = cfg->GetInt(conf, shipname, "InitialThrust", 0);
 			int upThrust = cfg->GetInt(conf, shipname, "UpgradeThrust", 0);
-			int newThrust = initThrust + (upThrust * thrust);
+			int newThrust = max(0, initThrust + (upThrust * thrust));
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialThrust, newThrust);
 
 			int speed = items->getPropertySumNoLock(p, i, "speed", 0);
 			int initSpeed = cfg->GetInt(conf, shipname, "InitialSpeed", 0);
 			int upSpeed = cfg->GetInt(conf, shipname, "UpgradeSpeed", 0);
-			int newSpeed = initSpeed + (upSpeed * speed);
+			int newSpeed = max(0, initSpeed + (upSpeed * speed));
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialSpeed, newSpeed);
 
 			int energy = items->getPropertySumNoLock(p, i, "energy", 0);
 			int initEnergy = cfg->GetInt(conf, shipname, "InitialEnergy", 0);
 			int upEnergy = cfg->GetInt(conf, shipname, "UpgradeEnergy", 0);
-			int newEnergy = initEnergy + (upEnergy * energy);
+			int newEnergy = max(0, initEnergy + (upEnergy * energy));
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialEnergy, newEnergy);
 
 			int recharge = items->getPropertySumNoLock(p, i, "recharge", 0);
 			int initRecharge = cfg->GetInt(conf, shipname, "InitialRecharge", 0);
 			int upRecharge = cfg->GetInt(conf, shipname, "UpgradeRecharge", 0);
-			int newRecharge = initRecharge + (upRecharge * recharge);
+			int newRecharge = max(0, initRecharge + (upRecharge * recharge));
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRecharge, newRecharge);
 
 			int rotation = items->getPropertySumNoLock(p, i, "rotation", 0);
 			int initRotation = cfg->GetInt(conf, shipname, "InitialRotation", 0);
 			int upRotation = cfg->GetInt(conf, shipname, "UpgradeRotation", 0);
-			int newRotation = initRotation + (upRotation * rotation);
+			int newRotation = max(0, initRotation + (upRotation * rotation));
 			clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRotation, newRotation);
 
 			int maxthrust = items->getPropertySumNoLock(p, i, "maxthrust", 0);
 			int initMaxThrust = cfg->GetInt(conf, shipname, "MaximumThrust", 0);
-			int newMaxThrust = initMaxThrust + (upThrust * maxthrust);
+			int newMaxThrust = max(0, initMaxThrust + (upThrust * maxthrust));
 			clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumThrust, newMaxThrust);
 
 			int maxspeed = items->getPropertySumNoLock(p, i, "maxspeed", 0);
 			int initMaxSpeed = cfg->GetInt(conf, shipname, "MaximumSpeed", 0);
-			int newMaxSpeed = initMaxSpeed + (upSpeed * maxspeed);
+			int newMaxSpeed = max(0, initMaxSpeed + (upSpeed * maxspeed));
 			clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumSpeed, newMaxSpeed);
 
 			int afterburner = items->getPropertySumNoLock(p, i, "afterburner", 0);

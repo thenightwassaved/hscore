@@ -1,6 +1,8 @@
 #include "asss.h"
-#include <stdlib.h>
+#define min(a,b) ((a)<(b)?(a):(b))
+#define max(a,b) ((a)>(b)?(a):(b))
 
+#include "hscore.h"
 #include "hscore_items.h"
 #include "packets/ppk.h"
 
@@ -31,15 +33,15 @@ local void edit_ppk_func(Player *p, struct C2SPosition *pos)
 			//else = new level (represented in packet as level-1)
 			if (shraplevel > 0)
 			{
-				pos->weapon.shraplevel = max(3, shraplevel-1);
+				pos->weapon.shraplevel = min(3, shraplevel-1);
 			}
 		}
 	}
 }
 
-EXPORT const char info_hs_weapons[] = "v1.0 Arnk Kilo Dylie <kilodylie@rshl.org>";
+EXPORT const char info_hscore_weapons[] = "v1.0 Arnk Kilo Dylie <kilodylie@rshl.org>";
 
-EXPORT int MM_hs_weapons(int action, Imodman *mm, Arena *arena)
+EXPORT int MM_hscore_weapons(int action, Imodman *mm, Arena *arena)
 {
 	if (action == MM_LOAD)
 	{
@@ -58,7 +60,7 @@ EXPORT int MM_hs_weapons(int action, Imodman *mm, Arena *arena)
 	{
 		mm->UnregCallback(CB_EDITPPK, edit_ppk_func, ALLARENAS);
 
-		mm->ReleaseItems(items);
+		mm->ReleaseInterface(items);
 
 		return MM_OK;
 	}

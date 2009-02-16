@@ -445,11 +445,11 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 				double maxReward;
 				if (hsmoney->getExp(p) > killerexp)
 				{
-					maxreward = adata->teammate_max[p->p_ship] * calculateKillMoneyReward(arena, p, killed, bounty, bonus);
+					maxReward = adata->teammate_max[p->p_ship] * calculateKillMoneyReward(arena, p, killed, bounty, bonus);
 				}
 				else
 				{
-					maxreward = adata->teammate_max[p->p_ship] * money;
+					maxReward = adata->teammate_max[p->p_ship] * money;
 				}
 
 				int xdelta = (p->position.x - killer->position.x);
