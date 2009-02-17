@@ -395,6 +395,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 {
 	PData *pdata = PPDATA(killer, pdkey);
 	AData *adata = P_ARENA_DATA(arena, adkey);
+	int killerexp;
 
 	if(killer->p_freq == killed->p_freq)
 	{
@@ -431,6 +432,8 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 			chat->SendMessage(killer, "You received $%d and %d exp for killing %s.", money, experience, killed->name);
 		}
 
+		killerexp = hsmoney->getExp(killer);
+
 		//give money to teammates
 		Player *p;
 		Link *link;
@@ -439,7 +442,15 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 		{
 			if(p->arena == killer->arena && p->p_freq == killer->p_freq && p->p_ship != SHIP_SPEC && p != killer && !(p->position.status & STATUS_SAFEZONE))
 			{
-				double maxReward = adata->teammate_max[p->p_ship] * calculateKillMoneyReward(arena, p, killed, bounty, bonus);
+				double maxReward;
+				if (hsmoney->getExp(p) > killerexp)
+				{
+					maxReward = adata->teammate_max[p->p_ship] * calculateKillMoneyReward(arena, p, killed, bounty, bonus);
+				}
+				else
+				{
+					maxReward = adata->teammate_max[p->p_ship] * money;
+				}
 
 				int xdelta = (p->position.x - killer->position.x);
 				int ydelta = (p->position.y - killer->position.y);
