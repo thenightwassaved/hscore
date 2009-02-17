@@ -1,6 +1,8 @@
 #ifndef HSCORE_ITEMS_H
 #define HSCORE_ITEMS_H
 
+/* pyinclude: hscore/hscore_types.h */
+/* pyinclude: hscore/hscore_items.h */
 /* pytype: opaque, Item *, item */
 
 #define I_HSCORE_ITEMS "hscore_items-10"
