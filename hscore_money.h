@@ -1,6 +1,8 @@
 #ifndef HSCORE_MONEY_H
 #define HSCORE_MONEY_H
 
+/* pyinclude: hscore/hscore_money.h */
+
 #define I_HSCORE_MONEY "hscore_money-1"
 
 typedef enum MoneyType
