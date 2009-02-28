@@ -722,10 +722,8 @@ local void loadItemTypeAssocQueryCallback(int status, db_res *result, void *pass
 		int item_id = atoi(mysql->GetField(row, 0));
 		int type_id = atoi(mysql->GetField(row, 1));
 		int qty = atoi(mysql->GetField(row, 2));
-		if(item == NULL || item->id != item_id)
-		{
-			item = getItemByIDNoLock(item_id);
-		}
+
+		item = getItemByIDNoLock(item_id);
 
 		if(item != NULL)
 		{
