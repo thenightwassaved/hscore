@@ -553,6 +553,7 @@ local void addOverrides(Player *p)
 
 			int initSeeMines = cfg->GetInt(conf, shipname, "SeeMines", 0);
 			int seemines = items->getPropertySumNoLock(p, i, "seemines", initSeeMines);
+			if (seemines) seemines = 1;
 			clientset->PlayerOverride(p, shipOverrideKeys[i].SeeMines, seemines);
 
 			int initSeeBombLevel = cfg->GetInt(conf, shipname, "SeeBombLevel", 0);
