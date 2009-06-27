@@ -956,47 +956,47 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	}
 }
 
-local void freqChangeCallback(Player *p, int newfreq)
-{
-	//check if they were in a safe zone. if not, then need a respawn
-	if ((p->position.status & STATUS_SAFEZONE) == 0) //not in safe
-	{
-		PlayerDataStruct *data = PPDATA(p, playerDataKey);
-		data->spawned = 0;
-
-		if (data->dirty == 1)
-		{
-			data->dirty = 0;
-			clientset->SendClientSettings(p);
-		}
-	}
-}
-
-local void shipChangeCallback(Player *p, int newship, int newfreq)
+local void shipFreqChangeCallback(Player *p, int newship, int oldship, int newfreq, int oldfreq)
 {
 	//they need a respawn whenever they change ships
 	PlayerDataStruct *data = PPDATA(p, playerDataKey);
-	data->spawned = 0;
 
-	int oldship = data->currentShip;
-	if (oldship == SHIP_SPEC) oldship = 0;
-
-	int perShipInUse = (data->usingPerShip[oldship] || (newship != SHIP_SPEC && data->usingPerShip[newship]));
-	int changingIntoNewShip = (newship != SHIP_SPEC && newship != data->currentShip);
-
-
-	//resend the data if it's dirty or if the player changed ships, isn't going into spec, and at least one of the ships uses per ship settings.
-	if (data->dirty == 1 || (changingIntoNewShip && perShipInUse))
+	if (oldship != newship)
 	{
-		data->dirty = 0;
-		database->lock();
-		addOverrides(p);
-		database->unlock();
-		clientset->SendClientSettings(p);
-	}
+		data->spawned = 0;
 
-	if (newship != SHIP_SPEC)
-		data->currentShip = newship;
+		if (oldship == SHIP_SPEC) oldship = 0;
+
+		int perShipInUse = (data->usingPerShip[oldship] || (newship != SHIP_SPEC && data->usingPerShip[newship]));
+		int changingIntoNewShip = (newship != SHIP_SPEC && newship != data->currentShip);
+
+		//resend the data if it's dirty or if the player changed ships, isn't going into spec, and at least one of the ships uses per ship settings.
+		if (data->dirty == 1 || (changingIntoNewShip && perShipInUse))
+		{
+			data->dirty = 0;
+			database->lock();
+			addOverrides(p);
+			database->unlock();
+			clientset->SendClientSettings(p);
+		}
+
+		if (newship != SHIP_SPEC)
+			data->currentShip = newship;
+	}
+	else
+	{
+		//check if they were in a safe zone. if not, then need a respawn
+		if ((p->position.status & STATUS_SAFEZONE) == 0) //not in safe
+		{
+			data->spawned = 0;
+
+			if (data->dirty == 1)
+			{
+				data->dirty = 0;
+				clientset->SendClientSettings(p);
+			}
+		}
+	}
 }
 
 local void flagWinCallback(Arena *arena, int freq, int *points)
@@ -1435,11 +1435,10 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 
 		mm->RegCallback(CB_WARZONEWIN, flagWinCallback, arena);
 		mm->RegCallback(CB_SHIPS_LOADED, shipsLoadedCallback, arena);
-		mm->RegCallback(CB_SHIPCHANGE, shipChangeCallback, arena);
+		mm->RegCallback(CB_SHIPFREQCHANGE, shipFreqChangeCallback, arena);
 		mm->RegCallback(CB_PLAYERACTION, playerActionCallback, arena);
 		mm->RegCallback(CB_KILL, killCallback, arena);
 		mm->RegCallback(CB_ITEM_COUNT_CHANGED, itemCountChangedCallback, arena);
-		mm->RegCallback(CB_FREQCHANGE, freqChangeCallback, arena);
 
 		mm->RegCallback(CB_TRIGGER_EVENT, triggerEventCallback, arena);
 		mm->RegCallback(CB_AMMO_ADDED, ammoAddedCallback, arena);
@@ -1454,11 +1453,10 @@ EXPORT int MM_hscore_spawner(int action, Imodman *_mm, Arena *arena)
 			return MM_FAIL;
 		}
 
-		mm->UnregCallback(CB_FREQCHANGE, freqChangeCallback, arena);
 		mm->UnregCallback(CB_ITEM_COUNT_CHANGED, itemCountChangedCallback, arena);
 		mm->UnregCallback(CB_KILL, killCallback, arena);
 		mm->UnregCallback(CB_PLAYERACTION, playerActionCallback, arena);
-		mm->UnregCallback(CB_SHIPCHANGE, shipChangeCallback, arena);
+		mm->UnregCallback(CB_SHIPFREQCHANGE, shipFreqChangeCallback, arena);
 		mm->UnregCallback(CB_SHIPS_LOADED, shipsLoadedCallback, arena);
 		mm->UnregCallback(CB_WARZONEWIN, flagWinCallback, arena);
 

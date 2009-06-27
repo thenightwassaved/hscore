@@ -453,7 +453,7 @@ local void teamKickCommand(const char *command, const char *params, Player *p, c
 					{
 						if (IS_HUMAN(t))
 						{
-							game->SetFreqAndShip(t, SHIP_SPEC, t->arena->specfreq);
+							game->SetShipAndFreq(t, SHIP_SPEC, t->arena->specfreq);
 
 							chat->SendMessage(t, "You have been kicked off your team.");
 							chat->SendMessage(p, "Player kicked off of the team.");
@@ -908,9 +908,9 @@ local void Freq(Player *p, int *ship, int *freq)
 	*ship = s; *freq = f;
 }
 
-local void shipChangeCallback(Player *p, int newship, int newfreq)
+local void shipFreqChangeCallback(Player *p, int newship, int oldship, int newfreq, int oldfreq)
 {
-	if (newfreq != p->p_freq)
+	if (newfreq != oldfreq)
 	{
 		removeOwnership(p, p->arena);
 		cleanTeams(p->arena, p);
@@ -968,7 +968,7 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 			return MM_FAIL;
 			
 		mm->RegCallback(CB_PLAYERACTION, playerActionCallback, ALLARENAS);
-		mm->RegCallback(CB_SHIPCHANGE, shipChangeCallback, ALLARENAS);
+		mm->RegCallback(CB_SHIPFREQCHANGE, shipFreqChangeCallback, ALLARENAS);
 
 		return MM_OK;
 	}
@@ -981,7 +981,7 @@ EXPORT int MM_hscore_teamnames(int action, Imodman *mm_, Arena *arena)
 		pd->FreePlayerData(playerDataKey);
 
 		mm->UnregCallback(CB_PLAYERACTION, playerActionCallback, ALLARENAS);
-		mm->UnregCallback(CB_SHIPCHANGE, shipChangeCallback, ALLARENAS);
+		mm->UnregCallback(CB_SHIPFREQCHANGE, shipFreqChangeCallback, ALLARENAS);
 
 		mm->ReleaseInterface(aman);
 		mm->ReleaseInterface(lm);

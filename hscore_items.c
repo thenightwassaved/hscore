@@ -697,7 +697,7 @@ local void doEvent(Player *p, InventoryEntry *entry, Event *event, LinkedList *u
 	}
 	else if (action == ACTION_SPEC) //Specs the player.
 	{
-		game->SetFreqAndShip(p, SHIP_SPEC, p->arena->specfreq);
+		game->SetShipAndFreq(p, SHIP_SPEC, p->arena->specfreq);
 	}
 	else if (action == ACTION_SHIP_RESET) //sends a shipreset packet and reprizes all items (antideath, really)
 	{

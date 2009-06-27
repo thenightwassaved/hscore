@@ -292,7 +292,7 @@ local int calculateKillExpReward(Arena *arena, Player *killer, Player *killed, i
 	HashTable *vars = HashAlloc();
 	char error_buf[200];
 
-	FormulaVariable killer_var, killed_var, bounty_var;
+	FormulaVariable killer_var, killed_var, bounty_var, arena_var;
 	killer_var.name = NULL;
 	killer_var.type = VAR_TYPE_PLAYER;
 	killer_var.p = killer;
@@ -302,12 +302,16 @@ local int calculateKillExpReward(Arena *arena, Player *killer, Player *killed, i
 	bounty_var.name = NULL;
 	bounty_var.type = VAR_TYPE_DOUBLE;
 	bounty_var.value = (double)bounty;
+	arena_var.name = NULL;
+	arena_var.type = VAR_TYPE_ARENA;
+	arena_var.arena = arena;
 
 	error_buf[0] = '\0';
 
 	HashAdd(vars, "killer", &killer_var);
 	HashAdd(vars, "killed", &killed_var);
 	HashAdd(vars, "bounty", &bounty_var);
+	HashAdd(vars, "arena", &arena_var);
 
 	if (adata->kill_exp_formula)
 	{
@@ -345,7 +349,7 @@ local int calculateKillMoneyReward(Arena *arena, Player *killer, Player *killed,
 	HashTable *vars = HashAlloc();
 	char error_buf[200];
 
-	FormulaVariable killer_var, killed_var, bounty_var;
+	FormulaVariable killer_var, killed_var, bounty_var, arena_var;
 	killer_var.name = NULL;
 	killer_var.type = VAR_TYPE_PLAYER;
 	killer_var.p = killer;
@@ -355,12 +359,16 @@ local int calculateKillMoneyReward(Arena *arena, Player *killer, Player *killed,
 	bounty_var.name = NULL;
 	bounty_var.type = VAR_TYPE_DOUBLE;
 	bounty_var.value = (double)bounty;
+	arena_var.name = NULL;
+	arena_var.type = VAR_TYPE_ARENA;
+	arena_var.arena = arena;
 
 	error_buf[0] = '\0';
 
 	HashAdd(vars, "killer", &killer_var);
 	HashAdd(vars, "killed", &killed_var);
 	HashAdd(vars, "bounty", &bounty_var);
+	HashAdd(vars, "arena", &arena_var);
 
 	if (adata->kill_money_formula)
 	{
@@ -547,7 +555,7 @@ local int periodic_tick(void *clos)
 	return TRUE;
 }
 
-local void freqChangeCallback(Player *p, int newfreq)
+local void shipFreqChangeCallback(Player *p, int newship, int oldship, int newfreq, int oldfreq)
 {
 	PData *pdata = PPDATA(p, pdkey);
 	pdata->periodic_tally = 0;
@@ -1040,7 +1048,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		mm->RegCallback(CB_WARZONEWIN, flagWinCallback, arena);
 		mm->RegCallback(CB_KILL, killCallback, arena);
 		mm->RegCallback(CB_ARENAACTION, aaction, arena);
-		mm->RegCallback(CB_FREQCHANGE, freqChangeCallback, arena);
+		mm->RegCallback(CB_SHIPFREQCHANGE, shipFreqChangeCallback, arena);
 		mm->RegCallback(CB_PLAYERACTION, paction, arena);
 		mm->RegCallback(CB_EDITINDIVIDALPPK, edit_ppk_bounty_cb, arena);
 
@@ -1061,7 +1069,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		mm->UnregCallback(CB_WARZONEWIN, flagWinCallback, arena);
 		mm->UnregCallback(CB_KILL, killCallback, arena);
 		mm->UnregCallback(CB_ARENAACTION, aaction, arena);
-		mm->UnregCallback(CB_FREQCHANGE, freqChangeCallback, arena);
+		mm->UnregCallback(CB_SHIPFREQCHANGE, shipFreqChangeCallback, arena);
 		mm->UnregCallback(CB_PLAYERACTION, paction, arena);
 		mm->UnregCallback(CB_EDITINDIVIDALPPK, edit_ppk_bounty_cb, arena);
 
