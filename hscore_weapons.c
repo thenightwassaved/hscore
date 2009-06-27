@@ -8,7 +8,7 @@
 
 local Ihscoreitems *items;
 
-local void edit_ppk_func(Player *p, struct C2SPosition *pos)
+local void edit_ppk(Player *p, struct C2SPosition *pos)
 {
 	if ((pos->weapon.type == W_BULLET) || (pos->weapon.type == W_BOUNCEBULLET))
 	{
@@ -39,6 +39,12 @@ local void edit_ppk_func(Player *p, struct C2SPosition *pos)
 	}
 }
 
+local Appk myadv =
+{
+	ADVISER_HEAD_INIT(A_PPK)
+	edit_ppk, NULL
+};
+
 EXPORT const char info_hscore_weapons[] = "v1.0 Arnk Kilo Dylie <kilodylie@rshl.org>";
 
 EXPORT int MM_hscore_weapons(int action, Imodman *mm, Arena *arena)
@@ -52,13 +58,13 @@ EXPORT int MM_hscore_weapons(int action, Imodman *mm, Arena *arena)
 			return MM_FAIL;
 		}
 
-		mm->RegCallback(CB_EDITPPK, edit_ppk_func, ALLARENAS);
+		mm->RegAdviser(&myadv, ALLARENAS);
 
 		return MM_OK;
 	}
 	else if (action == MM_UNLOAD)
 	{
-		mm->UnregCallback(CB_EDITPPK, edit_ppk_func, ALLARENAS);
+		mm->UnregAdviser(&myadv, ALLARENAS);
 
 		mm->ReleaseInterface(items);
 

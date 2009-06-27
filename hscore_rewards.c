@@ -479,7 +479,7 @@ local void killCallback(Arena *arena, Player *killer, Player *killed, int bounty
 	}
 }
 
-local void edit_ppk_bounty_cb(Player *p, Player *t, struct C2SPosition *pos, int *modified, int *extralen)
+local int edit_ppk_bounty(Player *p, Player *t, struct C2SPosition *pos, int *extralen)
 {
 	if (t->p_ship != SHIP_SPEC)
 	{
@@ -494,8 +494,9 @@ local void edit_ppk_bounty_cb(Player *p, Player *t, struct C2SPosition *pos, int
 			bounty_map.timeout[index] = gtc + 100;
 		}
 		pos->bounty = bounty_map.bounty[index];
-		*modified = 1;
+		return 1;
 	}
+	return 0;
 }
 
 local int periodic_tick(void *clos)
@@ -946,6 +947,12 @@ local Iperiodicpoints periodicInterface =
 	getPeriodicPoints
 };
 
+local Appk myadv =
+{
+	ADVISER_HEAD_INIT(A_PPK)
+	NULL, edit_ppk_bounty
+};
+
 EXPORT const char info_hscore_rewards[] = "v1.5 D1st0rt & Dr Brain";
 
 EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
@@ -1035,6 +1042,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 	{
 		AData *adata = P_ARENA_DATA(arena, adkey);
 		mm->RegInterface(&periodicInterface, arena);
+		mm->RegAdviser(&myadv, arena);
 
 		adata->on = 1;
 		adata->kill_money_formula = NULL;
@@ -1050,7 +1058,6 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		mm->RegCallback(CB_ARENAACTION, aaction, arena);
 		mm->RegCallback(CB_SHIPFREQCHANGE, shipFreqChangeCallback, arena);
 		mm->RegCallback(CB_PLAYERACTION, paction, arena);
-		mm->RegCallback(CB_EDITINDIVIDALPPK, edit_ppk_bounty_cb, arena);
 
 		cmd->AddCommand("killmessages", Ckillmessages, arena, killmessages_help);
 
@@ -1063,6 +1070,7 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 	{
 		AData *adata = P_ARENA_DATA(arena, adkey);
 		mm->UnregInterface(&periodicInterface, arena);
+		mm->UnregAdviser(&myadv, arena);
 
 		cmd->RemoveCommand("killmessages", Ckillmessages, arena);
 
@@ -1071,7 +1079,6 @@ EXPORT int MM_hscore_rewards(int action, Imodman *_mm, Arena *arena)
 		mm->UnregCallback(CB_ARENAACTION, aaction, arena);
 		mm->UnregCallback(CB_SHIPFREQCHANGE, shipFreqChangeCallback, arena);
 		mm->UnregCallback(CB_PLAYERACTION, paction, arena);
-		mm->UnregCallback(CB_EDITINDIVIDALPPK, edit_ppk_bounty_cb, arena);
 
 		ml->ClearTimer(periodic_tick, arena);
 
