@@ -29,11 +29,19 @@ local void edit_ppk(Player *p, struct C2SPosition *pos)
 		if (pos->weapon.shrap > 0)
 		{
 			int shraplevel = items->getPropertySum(p, p->p_ship, "shraplevel", 0);
-			//0 = no modification
+			//0 -> shrap level = defshraplevel or, if that's 0 as well, no modification
 			//else = new level (represented in packet as level-1)
 			if (shraplevel > 0)
 			{
 				pos->weapon.shraplevel = min(3, shraplevel-1);
+			}
+			else
+			{
+				int defshraplevel = items->getPropertySum(p, p->p_ship, "defshraplevel", 0);
+				if (defshraplevel > 0)
+				{
+					pos->weapon.shraplevel = min(3, defshraplevel-1);
+				}
 			}
 		}
 	}
