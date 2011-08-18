@@ -40,6 +40,7 @@ local void loadStoreItemsQueryCallback(int status, db_res *result, void *passedD
 local void loadArenaStoresQueryCallback(int status, db_res *result, void *passedData);
 local void loadCategoryItemsQueryCallback(int status, db_res *result, void *passedData);
 local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *passedData);
+local void loadShipPropertyListsQueryCallback(int status, db_res *result, void *passedData);
 local void InitPerPlayerData(Player *p);
 local void InitPerArenaData(Arena *arena);
 local void UnloadPlayerGlobals(Player *p);
@@ -47,6 +48,7 @@ local void UnloadPlayerShip(ShipHull *ship);
 local void UnloadPlayerShips(Player *p);
 local void UnloadCategoryList(Arena *arena);
 local void UnloadStoreList(Arena *arena);
+local void UnloadShipPropertyLists(Arena *arena);
 local void UnloadItemListEnumCallback(const void *ptr);
 local void UnloadItemList();
 local void UnloadItemTypeList();
@@ -59,6 +61,7 @@ local void LoadCategoryItems(Arena *arena);
 local void LoadCategoryList(Arena *arena);
 local void LoadStoreItems(Arena *arena);
 local void LoadStoreList(Arena *arena);
+local void LoadShipPropertyLists(Arena *arena);
 local void LoadEvents();
 local void LoadProperties();
 local void LoadItemList();
@@ -386,6 +389,17 @@ local void LinkAmmo()
 "  PRIMARY KEY  (`id`)" \
 ")"
 
+#define CREATE_SHIP_PROPERTIES_TABLE \
+"CREATE TABLE IF NOT EXISTS `hs_ship_properties` (" \
+"  `ship` tinyint(4) NOT NULL default '0'," \
+"  `name` varchar(32) NOT NULL default ''," \
+"  `value` int(11) NOT NULL default '0'," \
+"  `absolute` tinyint(4) NOT NULL default '0'," \
+"  `arena` varchar(32) NOT NULL default ''," \
+"  `id` int(10) unsigned NOT NULL auto_increment," \
+"  PRIMARY KEY  (`id`)" \
+")"
+
 #define CREATE_TRANSACTIONS_TABLE \
 "CREATE TABLE IF NOT EXISTS `hs_transactions` (" \
 "  `id` int(10) NOT NULL auto_increment," \
@@ -434,6 +448,7 @@ local void initTables()
 	mysql->Query(NULL, NULL, 0, CREATE_PLAYERS_TABLE);
 	mysql->Query(NULL, NULL, 0, CREATE_STORE_ITEMS_TABLE);
 	mysql->Query(NULL, NULL, 0, CREATE_STORES_TABLE);
+	mysql->Query(NULL, NULL, 0, CREATE_SHIP_PROPERTIES_TABLE);
 	mysql->Query(NULL, NULL, 0, CREATE_TRANSACTIONS_TABLE);
 	mysql->Query(NULL, NULL, 0, CREATE_PLAYER_POINTS_TABLE);
 	mysql->Query(NULL, NULL, 0, CREATE_ITEM_TYPE_ASSOC_TABLE);
@@ -1251,7 +1266,51 @@ local void loadArenaCategoriesQueryCallback(int status, db_res *result, void *pa
 
 	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i categories were loaded from MySQL.", results);
 	LoadCategoryItems(arena); //now that all the stores are in, load the items into them.
+}
 
+local void loadShipPropertyListsQueryCallback(int status, db_res *result, void *passedData)
+{
+	int results;
+	db_row *row;
+
+	Arena *arena = passedData;
+	PerArenaData *arenaData = getPerArenaData(arena);
+
+	if (status != 0 || result == NULL)
+	{
+		lm->LogA(L_ERROR, "hscore_database", arena, "Unexpected database error during ship property load.");
+		return;
+	}
+
+	results = mysql->GetRowCount(result);
+
+	if (results == 0)
+	{
+		//no big deal
+		return;
+	}
+
+	lock();
+	while ((row = mysql->GetRow(result)))
+	{
+		int ship = atoi(mysql->GetField(row, 0)); //ship
+		if (ship < 0 || 7 < ship)
+		{
+			lm->LogA(L_ERROR, "hscore_database", arena, "ship property looking for ship %i.", ship);
+			continue;
+		}
+		
+		Property *property = amalloc(sizeof(*property));
+		
+		astrncpy(property->name, mysql->GetField(row, 1), 17);
+		property->value = atoi(mysql->GetField(row, 2));		//value
+		property->absolute = atoi(mysql->GetField(row, 3));		//absolute
+		
+		LLAdd(&arenaData->shipPropertyLists[ship], property);
+	}
+	unlock();
+
+	lm->LogA(L_DRIVEL, "hscore_database", arena, "%i ship properties were loaded from MySQL.", results);
 }
 
 //+------------------+
@@ -1280,6 +1339,12 @@ local void InitPerArenaData(Arena *arena) //called before data is touched
 
 	LLInit(&arenaData->categoryList);
 	LLInit(&arenaData->storeList);
+	
+	int i;
+	for (i = 0; i < 8; i++)
+	{
+		LLInit(&arenaData->shipPropertyLists[i]);
+	}
 }
 
 //+--------------------+
@@ -1357,6 +1422,25 @@ local void UnloadStoreList(Arena *arena)
 	unlock();
 }
 
+local void UnloadShipPropertyLists(Arena *arena)
+{
+	PerArenaData *arenaData = getPerArenaData(arena);
+
+	int i;
+	int count = 0;
+	
+	lock();
+	for (i = 0; i < 8; i++)
+	{
+		LLEnum(&arenaData->shipPropertyLists[i], afree); //can simply free all the Store structs
+		count += LLCount(&arenaData->shipPropertyLists[i]);
+		LLEmpty(&arenaData->shipPropertyLists[i]);
+	}
+	unlock();
+	
+	lm->LogA(L_DRIVEL, "hscore_database", arena, "Freed %i ship properties.", count);
+}
+
 local void UnloadItemListEnumCallback(const void *ptr) //called with lock held
 {
 	Item *item = (Item*)ptr;
@@ -1405,6 +1489,7 @@ local void UnloadAllPerArenaData()
 	{
 		UnloadStoreList(arena);
 		UnloadCategoryList(arena);
+		UnloadShipPropertyLists(arena);
 	}
 	aman->Unlock();
 }
@@ -1497,6 +1582,11 @@ local void LoadStoreItems(Arena *arena)
 local void LoadStoreList(Arena *arena) //leads to LoadStoreItems() being called
 {
 	mysql->Query(loadArenaStoresQueryCallback, arena, 1, "SELECT id, name, description, region FROM hs_stores WHERE arena = ? ORDER BY hs_stores.order ASC", getArenaIdentifier(arena));
+}
+
+local void LoadShipPropertyLists(Arena *arena)
+{
+	mysql->Query(loadShipPropertyListsQueryCallback, arena, 1, "SELECT ship, name, value, absolute, arena FROM hs_ship_properties WHERE arena = ?", getArenaIdentifier(arena));
 }
 
 local void LoadEvents()
@@ -1636,7 +1726,7 @@ local helptext_t reloadItemsHelp =
 "Targets: none\n"
 "Args: none\n"
 "This command will reload all current and new items from the database.\n"
-"It will also reload all arenas stores and categories.\n"
+"It will also reload all arenas stores, categories and ship properties.\n"
 "NOTE: This command will *NOT* remove items no longer in the database.\n";
 
 local void reloadItemsCommand(const char *command, const char *params, Player *p, const Target *target)
@@ -1653,7 +1743,8 @@ local void reloadItemsCommand(const char *command, const char *params, Player *p
 	{
 		LoadStoreList(a);
 		LoadCategoryList(a);
-		chat->SendMessage(p, "...Ran stores/categories queries for arena '%s'", a->name);
+		LoadShipPropertyLists(a);
+		chat->SendMessage(p, "...Ran stores/categories/ship properties queries for arena '%s'", a->name);
 	}
 	aman->Unlock();
 
@@ -1919,6 +2010,7 @@ local void arenaActionCallback(Arena *arena, int action)
 		//in no special order...
 		LoadStoreList(arena);
 		LoadCategoryList(arena);
+		LoadShipPropertyLists(arena);
 	}
 	else if (action == AA_DESTROY)
 	{
@@ -1927,6 +2019,7 @@ local void arenaActionCallback(Arena *arena, int action)
 		//in no special order...
 		UnloadStoreList(arena);
 		UnloadCategoryList(arena);
+		UnloadShipPropertyLists(arena);
 
 		//no need to deallocate the lists, as they weren't allocated
 	}
@@ -1977,6 +2070,18 @@ local LinkedList * getCategoryList(Arena *arena)
 {
 	PerArenaData *arenaData = getPerArenaData(arena);
 	return &arenaData->categoryList;
+}
+
+local LinkedList * getShipPropertyList(Arena *arena, int ship)
+{
+	if (ship < 0 || 7 < ship)
+	{
+		lm->LogA(L_ERROR, "hscore_database", arena, "request for ship property list for ship %i.", ship);
+		return NULL;
+	}
+	
+	PerArenaData *arenaData = getPerArenaData(arena);
+	return &arenaData->shipPropertyLists[ship];
 }
 
 local void lock()
@@ -2302,7 +2407,8 @@ local Ihscoredatabase interface =
 {
 	INTERFACE_HEAD_INIT(I_HSCORE_DATABASE, "hscore_database")
 	areShipsLoaded, isLoaded, getItemList, getStoreList,
-	getCategoryList, lock, unlock, updateItem,
+	getCategoryList, getShipPropertyList,
+	lock, unlock, updateItem,
 	updateItemNoLock, updateInventoryNoLock,
 	addShip, removeShip, getPerPlayerData,
 };
