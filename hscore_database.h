@@ -3,7 +3,7 @@
 #ifndef HSCORE_DATABASE_H
 #define HSCORE_DATABASE_H
 
-#define I_HSCORE_DATABASE "hscore_database-4"
+#define I_HSCORE_DATABASE "hscore_database-5"
 
 typedef struct PerPlayerData
 {
@@ -24,6 +24,7 @@ typedef struct PerArenaData
 {
 	LinkedList storeList;
 	LinkedList categoryList;
+	LinkedList shipPropertyLists[8];
 } PerArenaData;
 
 #define CB_ITEM_COUNT_CHANGED "itemcount-1"
@@ -54,6 +55,7 @@ typedef struct Ihscoredatabase
 	LinkedList * (*getItemList)();
 	LinkedList * (*getStoreList)(Arena *arena);
 	LinkedList * (*getCategoryList)(Arena *arena);
+	LinkedList * (*getShipPropertyList)(Arena *arena, int ship);
 
 	void (*lock)();
 	void (*unlock)();
