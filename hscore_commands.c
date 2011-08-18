@@ -648,6 +648,9 @@ local void shipInfoCommand(const char *command, const char *params, Player *p, c
 		int maxRotation = cfg->GetInt(conf, shipname, "MaximumRotation", 0);
 		int bulletSpeed = cfg->GetInt(conf, shipname, "BulletSpeed", 0);
 		int bombSpeed = cfg->GetInt(conf, shipname, "BombSpeed", 0);
+		
+		LinkedList *shipProperties = database->getShipPropertyList(p->arena, ship);
+		Link *link;
 	
 		chat->SendMessage(p, "+------------------+");
 		chat->SendMessage(p, "| %-16s |", shipname);
@@ -658,10 +661,25 @@ local void shipInfoCommand(const char *command, const char *params, Player *p, c
 		chat->SendMessage(p, "| Init Rotation: %-5d | Bullet Speed:  %-5d |                      |                      |", initRotation, bulletSpeed);
 		chat->SendMessage(p, "| Max Rotation:  %-5d | Bomb Speed:    %-5d |                      |                      |", maxRotation, bombSpeed);
 		chat->SendMessage(p, "+----------------------+----------------------+----------------------+----------------------+");
+		chat->SendMessage(p, "| Property Name        | Property Value       |");
+		chat->SendMessage(p, "+----------------------+----------------------+");
+		for (link = LLGetHead(shipProperties); link; link = link->next)
+		{
+			Property *prop = link->data;
+			if (prop->absolute)
+			{
+				chat->SendMessage(p, "| %-20s | =%-20i |", prop->name, prop->value);
+			}
+			else
+			{
+				chat->SendMessage(p, "| %-20s | %+-20i |", prop->name, prop->value);
+			}
+		}
+		chat->SendMessage(p, "+----------------------+----------------------+");
 	}
 }
 
-EXPORT const char info_hscore_commands[] = "v1.0 Dr Brain <drbrain@gmail.com>";
+EXPORT const char info_hscore_commands[] = "v1.1 Dr Brain <drbrain@gmail.com>";
 
 EXPORT int MM_hscore_commands(int action, Imodman *_mm, Arena *arena)
 {
