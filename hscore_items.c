@@ -1172,8 +1172,20 @@ local int getPropertySumNoLock(Player *p, int ship, const char *propString, int 
 	}
 
 	//not in the cache, look it up
+	LinkedList *shipProperties = database->getShipPropertyList(p->arena, ship);
+	for (link = LLGetHead(shipProperties); link; link = link->next)
+	{
+		Property *prop = link->data;
+		
+		if (strcmp(prop->name, propString) == 0)
+		{
+			count += prop->value;
+			absolute = absolute || prop->absolute;
+			break;
+		}
+	}
+	
 	inventoryList = &playerData->hull[ship]->inventoryEntryList;
-
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
 		Link *propLink;
@@ -1569,8 +1581,32 @@ local void recaclulateEntireCache(Player *p, int ship)
 	HashEnum(table, zeroCacheEntry, NULL);
 
 	//then iterate every property and update the cache with it
-	inventoryList = &playerData->hull[ship]->inventoryEntryList;
+	LinkedList *shipProperties = database->getShipPropertyList(p->arena, ship);
+	for (link = LLGetHead(shipProperties); link; link = link->next)
+	{
+		Property *prop = link->data;
+		PropertyCacheEntry *propertySum;
 
+		int propDifference = prop->value;
+
+		//get it out of the cache
+		propertySum = (PropertyCacheEntry*)HashGetOne(table, prop->name);
+		if (propertySum != NULL)
+		{
+			propertySum->value += propDifference;
+			propertySum->absolute = propertySum->absolute || prop->absolute;
+		}
+		else
+		{
+			//no cache entry; create one
+			propertySum = amalloc(sizeof(*propertySum));
+			propertySum->value = propDifference;
+			propertySum->absolute = prop->absolute;
+			HashAdd(playerData->hull[ship]->propertySums, prop->name, propertySum);
+		}
+	}
+	
+	inventoryList = &playerData->hull[ship]->inventoryEntryList;
 	for (link = LLGetHead(inventoryList); link; link = link->next)
 	{
 		InventoryEntry *entry = link->data;
