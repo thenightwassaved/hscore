@@ -431,11 +431,11 @@ local void addOverrides(Player *p)
 				int output = items->getPropertySumNoLock(p, i, "output", 0);
 				int maxoutput = items->getPropertySumNoLock(p, i, "maxoutput", 0);
 				
-				int thrust = output / (0.04 * mass) - (0.004 * mass);
-				int maxthrust = maxoutput / (0.04 * mass) - (0.004 * mass);
+				int thrust = max(0, (output / (0.04 * mass)) - (0.004 * mass));
+				int maxthrust = max(0, (maxoutput / (0.04 * mass)) - (0.004 * mass));
 				
-				int speed = output / (0.0005 * mass) - mass;
-				int maxspeed = maxoutput / (0.0005 * mass) - mass;
+				int speed = max(0, (output / (0.0005 * mass)) - mass);
+				int maxspeed = max(0, (maxoutput / (0.0005 * mass)) - mass);
 				
 				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialThrust, thrust);
 				clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumThrust, maxthrust);
@@ -443,17 +443,17 @@ local void addOverrides(Player *p)
 				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialSpeed, speed);
 				clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumSpeed, maxspeed);
 				
-				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRotation, speed * 8);
+				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRotation, speed * 7.5);
 				
 				int power = items->getPropertySumNoLock(p, i, "power", 0);
 				int capacity = items->getPropertySumNoLock(p, i, "capacity", 0);
 				int powerdrain = items->getPropertySumNoLock(p, i, "powerdrain", 0);
 				
-				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialEnergy, capacity);
-				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRecharge, power - powerdrain);
+				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialEnergy, max(0, capacity));
+				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRecharge, max(0, power - powerdrain));
 				
 				int afterburner = items->getPropertySumNoLock(p, i, "afterburner", 0);
-				clientset->PlayerOverride(p, shipOverrideKeys[i].AfterburnerEnergy, afterburner);
+				clientset->PlayerOverride(p, shipOverrideKeys[i].AfterburnerEnergy, max(0, afterburner));
 			}
 			else
 			{
