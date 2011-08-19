@@ -431,13 +431,19 @@ local void addOverrides(Player *p)
 				int output = items->getPropertySumNoLock(p, i, "output", 0);
 				int maxoutput = items->getPropertySumNoLock(p, i, "maxoutput", 0);
 				
-				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialThrust, (output - mass) / 100);
-				clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumThrust, (maxoutput - mass) / 100);
+				int thrust = output / (0.04 * mass) - (0.004 * mass);
+				int maxthrust = maxoutput / (0.04 * mass) - (0.004 * mass);
 				
-				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialSpeed, output);
-				clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumSpeed, maxoutput);
+				int speed = output / (0.0005 * mass) - mass;
+				int maxspeed = maxoutput / (0.0005 * mass) - mass;
 				
-				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRotation, (output - mass) / 10);
+				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialThrust, thrust);
+				clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumThrust, maxthrust);
+				
+				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialSpeed, speed);
+				clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumSpeed, maxspeed);
+				
+				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRotation, speed * 8);
 				
 				int power = items->getPropertySumNoLock(p, i, "power", 0);
 				int capacity = items->getPropertySumNoLock(p, i, "capacity", 0);
