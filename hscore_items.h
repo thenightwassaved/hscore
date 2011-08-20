@@ -58,4 +58,21 @@ typedef struct Ihscoreitems
 	void (*recaclulateEntireCache)(Player *p, int ship); //call with lock held
 } Ihscoreitems;
 
+#define A_HSCORE_ITEMS "hscore_items-10"
+typedef struct Ahscoreitems
+{
+	ADVISER_HEAD_DECL
+	
+	/*
+	Called after regular checks. Return 1 to allow the
+	target to be granted the item(s). Return 0 to deny.
+	Send an appropriate message to the player *p using
+	the grantitem command if you deny it. Note that if
+	the granting player uses the 'ignore' flag (-i),
+	this function is never called.
+	*/
+	
+	int (*CanGrantItem)(Player *p /*Granting player*/, Player *t /*Target player who will receive the item*/, Item *item, int ship, int count);
+} Ahscoreitems;
+
 #endif //HSCORE_ITEMS_H
