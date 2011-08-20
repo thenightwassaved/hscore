@@ -663,18 +663,27 @@ local void shipInfoCommand(const char *command, const char *params, Player *p, c
 		chat->SendMessage(p, "+----------------------+----------------------+----------------------+----------------------+");
 		chat->SendMessage(p, "| Property Name        | Property Value       |");
 		chat->SendMessage(p, "+----------------------+----------------------+");
+		
+		int propertyCount = 0;
 		for (link = LLGetHead(shipProperties); link; link = link->next)
 		{
 			Property *prop = link->data;
 			if (prop->absolute)
 			{
-				chat->SendMessage(p, "| %-20s | =%-20i |", prop->name, prop->value);
+				chat->SendMessage(p, "| %-20s | =%-19i |", prop->name, prop->value);
 			}
 			else
 			{
 				chat->SendMessage(p, "| %-20s | %+-20i |", prop->name, prop->value);
 			}
+			propertyCount++;
 		}
+		
+		if (!propertyCount) //Empty line, looks better than no extra line at all
+		{
+			chat->SendMessage(p, "|                      |                      |");
+		}
+		
 		chat->SendMessage(p, "+----------------------+----------------------+");
 	}
 }
