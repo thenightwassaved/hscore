@@ -1290,6 +1290,8 @@ local void loadShipPropertyListsQueryCallback(int status, db_res *result, void *
 		return;
 	}
 
+	UnloadShipPropertyLists(arena);
+	
 	lock();
 	while ((row = mysql->GetRow(result)))
 	{
