@@ -443,7 +443,7 @@ local void addOverrides(Player *p)
 				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialSpeed, speed);
 				clientset->PlayerOverride(p, shipOverrideKeys[i].MaximumSpeed, maxspeed);
 				
-				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRotation, speed * 7.5);
+				clientset->PlayerOverride(p, shipOverrideKeys[i].InitialRotation, thrust * 7.5);
 				
 				int power = items->getPropertySumNoLock(p, i, "power", 0);
 				int capacity = items->getPropertySumNoLock(p, i, "capacity", 0);
