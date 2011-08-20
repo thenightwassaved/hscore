@@ -7,6 +7,7 @@
 #include "hscore_storeman.h"
 #include "hscore_database.h"
 #include "hscore_shipnames.h"
+#include "hscore_buysell.h"
 
 #define SEE_HIDDEN_CATEGORIES "seehiddencat"
 
@@ -279,6 +280,30 @@ local void buyItem(Player *p, Item *item, int count, int ship)
 								}
 							}
 							database->unlock();
+							
+							
+							LinkedList advisers = LL_INITIALIZER;
+							Ahscorebuysell *adviser;
+							int canBuy = 1;
+							
+							mm->GetAdviserList(A_HSCORE_BUYSELL, p->arena, &advisers);
+							FOR_EACH(&advisers, adviser, link)
+							{
+								if (adviser->CanBuy)
+								{
+									if (!adviser->CanBuy(p, item, count, ship))
+									{
+										canBuy = 0;
+									}
+								}
+							}
+							mm->ReleaseAdviserList(&advisers);
+							
+							if (!canBuy)
+							{
+								return;
+							}
+							
 
 							items->addItem(p, item, ship, count);
 
@@ -390,6 +415,30 @@ local void sellItem(Player *p, Item *item, int count, int ship)
 						}
 					}
 					database->unlock();
+					
+					
+					LinkedList advisers = LL_INITIALIZER;
+					Ahscorebuysell *adviser;
+					int canSell = 1;
+					
+					mm->GetAdviserList(A_HSCORE_BUYSELL, p->arena, &advisers);
+					FOR_EACH(&advisers, adviser, link)
+					{
+						if (adviser->CanSell)
+						{
+							if (!adviser->CanSell(p, item, count, ship))
+							{
+								canSell = 0;
+							}
+						}
+					}
+					mm->ReleaseAdviserList(&advisers);
+						
+					if (!canSell)
+					{
+						return;
+					}
+
 
 					//trigger before it's sold!
 					items->triggerEventOnItem(p, item, ship, "sell");
