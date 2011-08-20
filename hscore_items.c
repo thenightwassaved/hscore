@@ -409,6 +409,33 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 						}
 						database->unlock();
 
+						
+						if (!ignore)
+						{
+							LinkedList advisers = LL_INITIALIZER;
+							Ahscoreitems *adviser;
+							int canGrant = 1;
+								
+							mm->GetAdviserList(A_HSCORE_ITEMS, p->arena, &advisers);
+							FOR_EACH(&advisers, adviser, link)
+							{
+								if (adviser->CanGrantItem)
+								{
+									if (!adviser->CanGrantItem(p, t, item, ship, count))
+									{
+										canGrant = 0;
+									}
+								}
+							}
+							mm->ReleaseAdviserList(&advisers);
+							
+							if (!canGrant)
+							{
+								return;
+							}
+						}
+						
+						
 						addItem(t, item, ship, count);
 						if (ship == t->p_ship)
 						{
@@ -506,6 +533,25 @@ local void grantItemCommand(const char *command, const char *params, Player *p, 
 								{
 									chat->SendMessage(p, "Player %s cannot hold item %s on ship %d.", t->name, item->name, t->p_ship + 1);
 									ok = 0;
+								}
+								
+								if (!ignore)
+								{
+									LinkedList advisers = LL_INITIALIZER;
+									Ahscoreitems *adviser;
+								
+									mm->GetAdviserList(A_HSCORE_ITEMS, p->arena, &advisers);
+									FOR_EACH(&advisers, adviser, link)
+									{
+										if (adviser->CanGrantItem)
+										{
+											if (!adviser->CanGrantItem(p, t, item, ship, count))
+											{
+												ok = 0;
+											}
+										}
+									}
+									mm->ReleaseAdviserList(&advisers);
 								}
 
 								if (ok)
